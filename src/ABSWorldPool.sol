@@ -1,0 +1,463 @@
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.24;
+
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/common/ERC2981.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+
+/// @title ABSWorldPool v6
+/// @notice 2026 World Cup Web3 prediction platform on Abstract Chain.
+///         Two parallel games: Nations Cup (ERC-1155 mint) + Top Scorer (ticket voting).
+///         v6: Single main Nations Cup prize pool — eliminations no longer move funds.
+///             Final champion's NFT holders split the entire accumulated pool.
+contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
+    using Strings for uint256;
+
+    // ─────────────────────────────────────────────────────────────
+    // Constants
+    // ─────────────────────────────────────────────────────────────
+
+    uint256 public constant MINT_PRICE    = 0.0022 ether;
+    uint256 public constant TICKET_PRICE  = 0.0018 ether;
+    uint256 public constant DEV_SHARE_BPS = 2000;  // 20% instant to devWallet
+    uint256 public constant POOL_FEE_BPS  = 500;   // 5%  from prize pool at settlement
+    uint96  public constant ROYALTY_BPS   = 500;   // 5%  EIP-2981 secondary sale royalty
+    uint256 public constant MAX_COUNTRIES = 48;
+    uint256 public constant UNCLAIMED_TIMEOUT = 15 days;
+
+    // ─────────────────────────────────────────────────────────────
+    // State
+    // ─────────────────────────────────────────────────────────────
+
+    address public devWallet;
+    string  public baseURI;
+
+    bool public paused;
+    /// @notice Frontend-only flag: site UI reads this to show a maintenance overlay.
+    ///         Does NOT block any on-chain interaction — users can still mint/claim directly.
+    ///         Intentional design: contract state remains accessible; only the UI is gated.
+    bool public maintenanceMode;
+
+    // ─────────────────────────────────────────────────────────────
+    // Mappings — Elimination tracking
+    // ─────────────────────────────────────────────────────────────
+
+    /// @notice True once a country has been officially eliminated from the tournament
+    mapping(uint256 => bool) public countryEliminated;
+
+    uint256 public totalGlobalVolumeETH;
+    uint256 public totalLockedPrizePool;
+
+    /// @notice Single shared pool for all Nations Cup mints.
+    ///         Every mint contributes here regardless of country.
+    ///         Final champion's NFT holders split this entire pool.
+    uint256 public nationsCupPoolBalance;
+    uint256 public topScorerPoolBalance;
+
+    uint256 public winningCountryId;
+    string  public finalTopScorer;
+
+    bool public tournamentFinalized;
+    bool public topScorerFinalized;
+
+    uint256 public finalNationsCupPool;
+    uint256 public finalTopScorerPool;
+
+    uint256 public nationsCupFinalizedAt;
+    uint256 public topScorerFinalizedAt;
+
+    /// @notice Sum of all userUnusedTickets across all wallets — used for correct pool snapshot
+    uint256 public totalUnusedTickets;
+
+    // ─────────────────────────────────────────────────────────────
+    // Mappings — Nations Cup
+    // ─────────────────────────────────────────────────────────────
+
+    mapping(uint256 => uint256) public countryTotalSupply;
+    mapping(address => mapping(uint256 => uint256)) public userMintCount;
+
+    // ─────────────────────────────────────────────────────────────
+    // Mappings — Top Scorer
+    // ─────────────────────────────────────────────────────────────
+
+    mapping(bytes32 => uint256) public playerVoteCounts;
+    mapping(address => mapping(bytes32 => uint256)) public userPlayerVotes;
+    mapping(address => uint256) public userUnusedTickets;
+
+    // ─────────────────────────────────────────────────────────────
+    // Events
+    // ─────────────────────────────────────────────────────────────
+
+    event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp);
+    event TicketPurchased(address indexed user, uint256 quantity, uint256 timestamp);
+    event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp);
+    event NationsCupFinalized(uint256 indexed winningId, uint256 totalPoolSize);
+    event TopScorerFinalizedEvent(string playerName, uint256 totalPoolSize);
+    event NationsCupClaimed(address indexed user, uint256 reward, uint256 timestamp);
+    event TopScorerClaimed(address indexed user, uint256 reward, uint256 timestamp);
+    event UnusedTicketsRefunded(address indexed user, uint256 ticketCount, uint256 refundAmount, uint256 timestamp);
+    event UnclaimedNationsCupWithdrawn(uint256 amount, uint256 timestamp);
+    event UnclaimedTopScorerWithdrawn(uint256 amount, uint256 timestamp);
+    event DevWalletUpdated(address indexed oldWallet, address indexed newWallet);
+    event BaseURIUpdated(string oldURI, string newURI);
+    event PausedStateChanged(bool paused);
+    event MaintenanceModeChanged(bool maintenance);
+    event CountryEliminatedEvent(uint256 indexed countryId);
+    /// @dev ERC-4906: signals marketplaces (OpenSea etc.) to refresh metadata
+    event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
+
+    // ─────────────────────────────────────────────────────────────
+    // Modifier
+    // ─────────────────────────────────────────────────────────────
+
+    modifier whenNotPaused() {
+        require(!paused, "Contract is paused");
+        _;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Constructor
+    // ─────────────────────────────────────────────────────────────
+
+    constructor(address _devWallet, string memory _baseURI)
+        ERC1155("")
+        Ownable(msg.sender)
+    {
+        require(_devWallet != address(0), "Invalid dev wallet");
+        devWallet = _devWallet;
+        baseURI   = _baseURI;
+        _setDefaultRoyalty(_devWallet, ROYALTY_BPS);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // ERC-1155 URI Override
+    // ─────────────────────────────────────────────────────────────
+
+    function uri(uint256 tokenId) public view override returns (string memory) {
+        return string(abi.encodePacked(baseURI, tokenId.toString(), ".json"));
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Game 1: Nations Cup — Mint
+    // ─────────────────────────────────────────────────────────────
+
+    function mintCountryNFT(uint256 countryId, uint256 amount)
+        external payable nonReentrant whenNotPaused
+    {
+        require(!tournamentFinalized,                              "Tournament already finalized");
+        require(countryId >= 1 && countryId <= MAX_COUNTRIES,     "Invalid country ID");
+        require(!countryEliminated[countryId],                     "Country already eliminated");
+        require(amount > 0,                                        "Amount must be > 0");
+        require(msg.value == MINT_PRICE * amount,                 "Incorrect ETH payment");
+
+        uint256 devShare  = (msg.value * DEV_SHARE_BPS) / 10000;
+        uint256 poolShare = msg.value - devShare;
+
+        userMintCount[msg.sender][countryId] += amount;
+        countryTotalSupply[countryId]        += amount;
+        nationsCupPoolBalance                += poolShare;
+        totalGlobalVolumeETH                 += msg.value;
+        totalLockedPrizePool                 += poolShare;
+
+        _mint(msg.sender, countryId, amount, "");
+
+        (bool ok, ) = payable(devWallet).call{value: devShare}("");
+        require(ok, "Dev payout failed");
+
+        emit CountryMinted(msg.sender, countryId, amount, block.timestamp);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Game 2: Top Scorer — Buy Ticket
+    // ─────────────────────────────────────────────────────────────
+
+    function buyScorerTickets(uint256 quantity)
+        external payable nonReentrant whenNotPaused
+    {
+        require(!topScorerFinalized,                   "Top scorer already finalized");
+        require(quantity > 0,                           "Quantity must be > 0");
+        require(msg.value == TICKET_PRICE * quantity,   "Incorrect ETH payment");
+
+        uint256 devShare  = (msg.value * DEV_SHARE_BPS) / 10000;
+        uint256 poolShare = msg.value - devShare;
+
+        userUnusedTickets[msg.sender] += quantity;
+        totalUnusedTickets            += quantity;
+        topScorerPoolBalance          += poolShare;
+        totalGlobalVolumeETH          += msg.value;
+        totalLockedPrizePool          += poolShare;
+
+        (bool ok, ) = payable(devWallet).call{value: devShare}("");
+        require(ok, "Dev payout failed");
+
+        emit TicketPurchased(msg.sender, quantity, block.timestamp);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Game 2: Top Scorer — Vote
+    // ─────────────────────────────────────────────────────────────
+
+    function voteTopScorer(string calldata playerName, uint256 votesToUse)
+        external nonReentrant whenNotPaused
+    {
+        require(!topScorerFinalized,                                    "Top scorer already finalized");
+        require(votesToUse > 0,                                          "Votes must be > 0");
+        require(bytes(playerName).length > 0,                            "Empty player name");
+        require(bytes(playerName).length <= 64,                          "Player name too long");
+        require(userUnusedTickets[msg.sender] >= votesToUse,             "Insufficient tickets");
+
+        bytes32 playerKey = keccak256(abi.encodePacked(playerName));
+
+        userUnusedTickets[msg.sender]          -= votesToUse;
+        totalUnusedTickets                     -= votesToUse;
+        playerVoteCounts[playerKey]            += votesToUse;
+        userPlayerVotes[msg.sender][playerKey] += votesToUse;
+
+        emit VoteCast(msg.sender, playerName, votesToUse, block.timestamp);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Settlement: Nations Cup Claim
+    // ─────────────────────────────────────────────────────────────
+
+    function claimNationsCupRewards() external nonReentrant {
+        require(tournamentFinalized, "Tournament not finalized yet");
+
+        uint256 userTokens = balanceOf(msg.sender, winningCountryId);
+        require(userTokens > 0, "No winning tokens");
+
+        require(nationsCupPoolBalance > 0, "Pool already drained");
+
+        uint256 userEntitlement = (userTokens * finalNationsCupPool) / countryTotalSupply[winningCountryId];
+        require(userEntitlement > 0, "Entitlement rounds to zero");
+
+        uint256 feeCut     = (userEntitlement * POOL_FEE_BPS) / 10000;
+        uint256 userReward = userEntitlement - feeCut;
+
+        nationsCupPoolBalance  -= userEntitlement;
+        totalLockedPrizePool   -= userEntitlement;
+        _burn(msg.sender, winningCountryId, userTokens);
+
+        (bool feeOk, ) = payable(devWallet).call{value: feeCut}("");
+        require(feeOk, "Fee transfer failed");
+
+        (bool rewardOk, ) = payable(msg.sender).call{value: userReward}("");
+        require(rewardOk, "Reward transfer failed");
+
+        emit NationsCupClaimed(msg.sender, userReward, block.timestamp);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Settlement: Top Scorer Claim
+    // ─────────────────────────────────────────────────────────────
+
+    function claimTopScorerRewards() external nonReentrant {
+        require(topScorerFinalized, "Top scorer not finalized yet");
+
+        bytes32 playerKey        = keccak256(abi.encodePacked(finalTopScorer));
+        uint256 userVotes        = userPlayerVotes[msg.sender][playerKey];
+        require(userVotes > 0, "No winning votes");
+
+        uint256 totalWinnerVotes = playerVoteCounts[playerKey];
+        require(topScorerPoolBalance > 0, "Pool already drained");
+
+        uint256 userEntitlement = (userVotes * finalTopScorerPool) / totalWinnerVotes;
+        require(userEntitlement > 0, "Entitlement rounds to zero");
+
+        uint256 feeCut     = (userEntitlement * POOL_FEE_BPS) / 10000;
+        uint256 userReward = userEntitlement - feeCut;
+
+        userPlayerVotes[msg.sender][playerKey] = 0;
+        topScorerPoolBalance                   -= userEntitlement;
+        totalLockedPrizePool                   -= userEntitlement;
+
+        (bool feeOk, ) = payable(devWallet).call{value: feeCut}("");
+        require(feeOk, "Fee transfer failed");
+
+        (bool rewardOk, ) = payable(msg.sender).call{value: userReward}("");
+        require(rewardOk, "Reward transfer failed");
+
+        emit TopScorerClaimed(msg.sender, userReward, block.timestamp);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Settlement: Unused Ticket Refund
+    // ─────────────────────────────────────────────────────────────
+
+    /// @notice After Top Scorer is finalized, users who bought tickets but never voted
+    ///         can reclaim the pool portion (80% of ticket price) of their unused tickets.
+    function refundUnusedTickets() external nonReentrant {
+        require(topScorerFinalized, "Top scorer not finalized yet");
+
+        uint256 unused = userUnusedTickets[msg.sender];
+        require(unused > 0, "No unused tickets");
+
+        uint256 refundPerTicket = (TICKET_PRICE * (10000 - DEV_SHARE_BPS)) / 10000;
+        uint256 totalRefund     = unused * refundPerTicket;
+
+        userUnusedTickets[msg.sender] = 0;
+        totalUnusedTickets            -= unused;
+        topScorerPoolBalance          -= totalRefund;
+        totalLockedPrizePool          -= totalRefund;
+
+        (bool ok, ) = payable(msg.sender).call{value: totalRefund}("");
+        require(ok, "Refund failed");
+
+        emit UnusedTicketsRefunded(msg.sender, unused, totalRefund, block.timestamp);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Admin: Eliminate Countries
+    // ─────────────────────────────────────────────────────────────
+
+    /// @notice Mark countries as eliminated. No pool movement — all funds stay
+    ///         in nationsCupPoolBalance until the champion is declared.
+    /// @param loserIds Country IDs to mark as eliminated
+    function eliminateCountries(uint256[] calldata loserIds) external onlyOwner {
+        require(!tournamentFinalized, "Tournament already finalized");
+        require(loserIds.length > 0,  "Empty loser list");
+
+        for (uint256 i = 0; i < loserIds.length; i++) {
+            uint256 loserId = loserIds[i];
+            require(loserId >= 1 && loserId <= MAX_COUNTRIES, "Invalid country ID");
+            require(!countryEliminated[loserId],               "Country already eliminated");
+
+            countryEliminated[loserId] = true;
+            emit CountryEliminatedEvent(loserId);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Admin: Maintenance Mode
+    // ─────────────────────────────────────────────────────────────
+
+    function setMaintenanceMode(bool _maintenance) external onlyOwner {
+        maintenanceMode = _maintenance;
+        emit MaintenanceModeChanged(_maintenance);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Admin: Finalize
+    // ─────────────────────────────────────────────────────────────
+
+    function finalizeNationsCup(uint256 _winningCountryId) external onlyOwner {
+        require(!tournamentFinalized,                                          "Already finalized");
+        require(_winningCountryId >= 1 && _winningCountryId <= MAX_COUNTRIES, "Invalid country ID");
+        require(countryTotalSupply[_winningCountryId] > 0,                    "Winner has no supply");
+
+        winningCountryId      = _winningCountryId;
+        tournamentFinalized   = true;
+        finalNationsCupPool   = nationsCupPoolBalance;
+        nationsCupFinalizedAt = block.timestamp;
+
+        emit NationsCupFinalized(_winningCountryId, nationsCupPoolBalance);
+    }
+
+    /// @notice Finalize Top Scorer. If the real winner has 0 votes nobody can claim —
+    ///         pool stays locked until withdrawUnclaimedTopScorer() after 30 days.
+    function finalizeTopScorer(string calldata playerName) external onlyOwner {
+        require(!topScorerFinalized,          "Already finalized");
+        require(bytes(playerName).length > 0, "Empty player name");
+
+        uint256 refundPerTicket  = (TICKET_PRICE * (10000 - DEV_SHARE_BPS)) / 10000;
+        uint256 refundableAmount = totalUnusedTickets * refundPerTicket;
+        uint256 voterPool        = topScorerPoolBalance > refundableAmount
+                                    ? topScorerPoolBalance - refundableAmount
+                                    : 0;
+
+        finalTopScorer       = playerName;
+        topScorerFinalized   = true;
+        finalTopScorerPool   = voterPool;
+        topScorerFinalizedAt = block.timestamp;
+
+        emit TopScorerFinalizedEvent(playerName, voterPool);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Admin: Unclaimed Recovery (30 days)
+    // ─────────────────────────────────────────────────────────────
+
+    function withdrawUnclaimedNationsCup() external onlyOwner {
+        require(tournamentFinalized,                                           "Not finalized yet");
+        require(block.timestamp >= nationsCupFinalizedAt + UNCLAIMED_TIMEOUT, "Unclaimed window not passed");
+        uint256 remaining = nationsCupPoolBalance;
+        require(remaining > 0,                                                 "Nothing to withdraw");
+
+        nationsCupPoolBalance = 0;
+        totalLockedPrizePool  -= remaining;
+
+        (bool ok, ) = payable(devWallet).call{value: remaining}("");
+        require(ok, "Transfer failed");
+
+        emit UnclaimedNationsCupWithdrawn(remaining, block.timestamp);
+    }
+
+    function withdrawUnclaimedTopScorer() external onlyOwner {
+        require(topScorerFinalized,                                           "Not finalized yet");
+        require(block.timestamp >= topScorerFinalizedAt + UNCLAIMED_TIMEOUT, "Unclaimed window not passed");
+        uint256 remaining = topScorerPoolBalance;
+        require(remaining > 0,                                                "Nothing to withdraw");
+
+        topScorerPoolBalance = 0;
+        totalLockedPrizePool -= remaining;
+
+        (bool ok, ) = payable(devWallet).call{value: remaining}("");
+        require(ok, "Transfer failed");
+
+        emit UnclaimedTopScorerWithdrawn(remaining, block.timestamp);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Admin: Config
+    // ─────────────────────────────────────────────────────────────
+
+    function setPaused(bool _paused) external onlyOwner {
+        paused = _paused;
+        emit PausedStateChanged(_paused);
+    }
+
+    function setDevWallet(address _newDevWallet) external onlyOwner {
+        require(_newDevWallet != address(0), "Invalid address");
+        emit DevWalletUpdated(devWallet, _newDevWallet);
+        devWallet = _newDevWallet;
+        _setDefaultRoyalty(_newDevWallet, ROYALTY_BPS);
+    }
+
+    function setBaseURI(string calldata _newBaseURI) external onlyOwner {
+        emit BaseURIUpdated(baseURI, _newBaseURI);
+        baseURI = _newBaseURI;
+        emit BatchMetadataUpdate(1, MAX_COUNTRIES);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // View Helpers
+    // ─────────────────────────────────────────────────────────────
+
+    function getPlayerVotes(string calldata playerName) external view returns (uint256) {
+        return playerVoteCounts[keccak256(abi.encodePacked(playerName))];
+    }
+
+    function getUserVotesForPlayer(address user, string calldata playerName) external view returns (uint256) {
+        return userPlayerVotes[user][keccak256(abi.encodePacked(playerName))];
+    }
+
+    /// @notice Returns elimination status for all 48 countries.
+    ///         Index 0 unused; index i corresponds to countryId i.
+    function getAllEliminationStatus() external view returns (bool[49] memory eliminated) {
+        for (uint256 i = 1; i <= MAX_COUNTRIES; i++) {
+            eliminated[i] = countryEliminated[i];
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // EIP-165
+    // ─────────────────────────────────────────────────────────────
+
+    function supportsInterface(bytes4 interfaceId)
+        public view override(ERC1155, ERC2981) returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
+}
