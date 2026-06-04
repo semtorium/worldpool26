@@ -36,6 +36,9 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
 
     /// @notice Stops NFT minting only. Ticket purchases and votes remain open.
     bool public mintClosed;
+    /// @notice Stops ticket purchases and voting only. Minting remains open.
+    ///         Also set automatically when Top Scorer is finalized.
+    bool public votingClosed;
     /// @notice Emergency stop — blocks mint, ticket purchases and votes.
     bool public paused;
     /// @notice Frontend-only flag: site UI reads this to show a maintenance overlay.
@@ -106,6 +109,7 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     event DevWalletUpdated(address indexed oldWallet, address indexed newWallet);
     event BaseURIUpdated(string oldURI, string newURI);
     event MintClosedChanged(bool mintClosed);
+    event VotingClosedChanged(bool votingClosed);
     event PausedStateChanged(bool paused);
     event MaintenanceModeChanged(bool maintenance);
     event CountryEliminatedEvent(uint256 indexed countryId);
@@ -118,6 +122,12 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
 
     modifier whenMintOpen() {
         require(!mintClosed, "Mint is closed");
+        require(!paused, "Contract is paused");
+        _;
+    }
+
+    modifier whenVotingOpen() {
+        require(!votingClosed, "Voting is closed");
         require(!paused, "Contract is paused");
         _;
     }
@@ -184,7 +194,7 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     // ─────────────────────────────────────────────────────────────
 
     function buyScorerTickets(uint256 quantity)
-        external payable nonReentrant whenNotPaused
+        external payable nonReentrant whenVotingOpen
     {
         require(!topScorerFinalized,                   "Top scorer already finalized");
         require(quantity > 0,                           "Quantity must be > 0");
@@ -210,7 +220,7 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     // ─────────────────────────────────────────────────────────────
 
     function voteTopScorer(string calldata playerName, uint256 votesToUse)
-        external nonReentrant whenNotPaused
+        external nonReentrant whenVotingOpen
     {
         require(!topScorerFinalized,                                    "Top scorer already finalized");
         require(votesToUse > 0,                                          "Votes must be > 0");
@@ -379,9 +389,11 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
 
         finalTopScorer       = playerName;
         topScorerFinalized   = true;
+        votingClosed         = true;
         finalTopScorerPool   = voterPool;
         topScorerFinalizedAt = block.timestamp;
 
+        emit VotingClosedChanged(true);
         emit TopScorerFinalizedEvent(playerName, voterPool);
     }
 
@@ -426,6 +438,11 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     function setMintClosed(bool _mintClosed) external onlyOwner {
         mintClosed = _mintClosed;
         emit MintClosedChanged(_mintClosed);
+    }
+
+    function setVotingClosed(bool _votingClosed) external onlyOwner {
+        votingClosed = _votingClosed;
+        emit VotingClosedChanged(_votingClosed);
     }
 
     function setPaused(bool _paused) external onlyOwner {
