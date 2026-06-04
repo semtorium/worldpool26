@@ -34,6 +34,9 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     address public devWallet;
     string  public baseURI;
 
+    /// @notice Stops NFT minting only. Ticket purchases and votes remain open.
+    bool public mintClosed;
+    /// @notice Emergency stop — blocks mint, ticket purchases and votes.
     bool public paused;
     /// @notice Frontend-only flag: site UI reads this to show a maintenance overlay.
     ///         Does NOT block any on-chain interaction — users can still mint/claim directly.
@@ -102,6 +105,7 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     event UnclaimedTopScorerWithdrawn(uint256 amount, uint256 timestamp);
     event DevWalletUpdated(address indexed oldWallet, address indexed newWallet);
     event BaseURIUpdated(string oldURI, string newURI);
+    event MintClosedChanged(bool mintClosed);
     event PausedStateChanged(bool paused);
     event MaintenanceModeChanged(bool maintenance);
     event CountryEliminatedEvent(uint256 indexed countryId);
@@ -111,6 +115,12 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     // ─────────────────────────────────────────────────────────────
     // Modifier
     // ─────────────────────────────────────────────────────────────
+
+    modifier whenMintOpen() {
+        require(!mintClosed, "Mint is closed");
+        require(!paused, "Contract is paused");
+        _;
+    }
 
     modifier whenNotPaused() {
         require(!paused, "Contract is paused");
@@ -144,7 +154,7 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     // ─────────────────────────────────────────────────────────────
 
     function mintCountryNFT(uint256 countryId, uint256 amount)
-        external payable nonReentrant whenNotPaused
+        external payable nonReentrant whenMintOpen
     {
         require(!tournamentFinalized,                              "Tournament already finalized");
         require(countryId >= 1 && countryId <= MAX_COUNTRIES,     "Invalid country ID");
@@ -412,6 +422,11 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     // ─────────────────────────────────────────────────────────────
     // Admin: Config
     // ─────────────────────────────────────────────────────────────
+
+    function setMintClosed(bool _mintClosed) external onlyOwner {
+        mintClosed = _mintClosed;
+        emit MintClosedChanged(_mintClosed);
+    }
 
     function setPaused(bool _paused) external onlyOwner {
         paused = _paused;
