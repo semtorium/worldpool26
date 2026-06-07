@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useConnect, useChainId, useSwitchChain } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useConnect, useSwitchChain } from "wagmi";
 import { baseSepolia } from "viem/chains";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Ticket, Trophy, Zap, Search } from "lucide-react";
@@ -16,12 +16,11 @@ import { TicketSuccessModal } from "@/components/TicketSuccessModal";
 import { useEthUsd } from "@/lib/useEthUsd";
 
 export function TopScorerPage() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chainId: walletChainId } = useAccount();
   const { connect, connectors }  = useConnect();
   const login = () => connect({ connector: connectors[0] });
-  const chainId = useChainId();
   const { switchChain } = useSwitchChain();
-  const isWrongChain = isConnected && chainId !== baseSepolia.id;
+  const isWrongChain = isConnected && walletChainId !== baseSepolia.id;
   const { t } = useLang();
   const ethUsd = useEthUsd();
   const queryClient = useQueryClient();
