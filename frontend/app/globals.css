@@ -25,21 +25,26 @@
     background-color: var(--bg);
     color: var(--text);
     -webkit-font-smoothing: antialiased;
-    /* Clean dark navy with subtle Base-blue grid lines */
     background-image:
-      radial-gradient(ellipse 70% 55% at 12% -8%,  rgba(0,82,255,0.16) 0%, transparent 65%),
-      radial-gradient(ellipse 55% 45% at 88% 110%, rgba(0,82,255,0.10) 0%, transparent 55%),
-      radial-gradient(ellipse 40% 30% at 50% 50%,  rgba(0,41,153,0.04) 0%, transparent 70%),
-      linear-gradient(rgba(0,82,255,0.020) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,82,255,0.020) 1px, transparent 1px);
-    background-size: auto, auto, auto, 56px 56px, 56px 56px;
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(0,41,153,0.55) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(0,82,255,0.30) 0%, transparent 50%),
+      url("/bg.jpg");
+    background-size: cover;
+    background-position: center top;
     background-attachment: fixed;
+    background-repeat: no-repeat;
     min-height: 100vh;
   }
 
   @media (max-width: 768px) {
     body {
       background-attachment: scroll;
+      background-image:
+        linear-gradient(180deg, rgba(6,9,20,0.60) 0%, rgba(6,9,20,0.20) 30%, rgba(6,9,20,0.75) 100%),
+        radial-gradient(ellipse 150% 50% at 50% 0%, rgba(0,82,255,0.18) 0%, transparent 60%),
+        url("/bg.jpg");
+      background-size: cover;
+      background-position: 60% center;
     }
   }
 
