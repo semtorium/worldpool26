@@ -19,11 +19,11 @@ import { ABI }                           from "@/lib/abi";
 import { CONTRACT_ADDRESS }              from "@/lib/config";
 
 // Namespace all localStorage keys by contract address so redeployments reset them automatically
-const ELIM_SNAPSHOT_KEY = `abs_elim_snapshot_${CONTRACT_ADDRESS}`;
+const ELIM_SNAPSHOT_KEY = `wp26_elim_snapshot_${CONTRACT_ADDRESS}`;
 const NC_CLAIMED_KEY    = (addr: string) => `nc_claimed_${CONTRACT_ADDRESS}_${addr}`;
 const TS_CLAIMED_KEY    = (addr: string) => `ts_claimed_${CONTRACT_ADDRESS}_${addr}`;
 
-const STORAGE_KEY = "abs_active_tab";
+const STORAGE_KEY = "wp26_active_tab";
 
 export default function Home() {
   const [activeTab, setActiveTab]       = useState<Tab>("nations");

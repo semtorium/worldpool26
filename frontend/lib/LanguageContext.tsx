@@ -23,7 +23,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // 1. Manual override: user already chose a language → always respect it
-    const saved = localStorage.getItem("abs_lang") as Lang | null;
+    const saved = localStorage.getItem("wp26_lang") as Lang | null;
     if (saved && LANGUAGES.find(l => l.code === saved)) {
       setLangState(saved);
       document.documentElement.dir = LANGUAGES.find(x => x.code === saved)?.dir ?? "ltr";
@@ -54,7 +54,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLang = (l: Lang) => {
     setLangState(l);
-    localStorage.setItem("abs_lang", l);
+    localStorage.setItem("wp26_lang", l);
     // RTL support
     document.documentElement.dir = LANGUAGES.find(x => x.code === l)?.dir ?? "ltr";
   };

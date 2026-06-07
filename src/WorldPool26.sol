@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 ///         Two parallel games: Nations Cup (ERC-1155 mint) + Top Scorer (ticket voting).
 ///         v6: Single main Nations Cup prize pool — eliminations no longer move funds.
 ///             Final champion's NFT holders split the entire accumulated pool.
-contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
+contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     using Strings for uint256;
 
     // ─────────────────────────────────────────────────────────────

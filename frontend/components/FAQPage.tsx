@@ -163,7 +163,7 @@ const FAQ_SECTIONS: FAQSection[] = [
       },
       {
         q: "Is the contract open source?",
-        a: "The frontend is fully open source on GitHub (github.com/semtorium/absworldpool). The smart contract will be verified on Basescan after mainnet deployment, making all logic publicly readable and auditable.",
+        a: "The frontend is fully open source on GitHub (github.com/semtorium/worldpool26). The smart contract is verified on Basescan, making all logic publicly readable and auditable.",
       },
     ],
   },
@@ -285,7 +285,7 @@ export function FAQPage() {
         <p className="text-xs" style={{ color: "#6b7a9a" }}>
           Join the community or reach out via{" "}
           <a
-            href="https://x.com/absworldpool"
+            href="https://x.com/worldpool26"
             target="_blank"
             rel="noopener noreferrer"
             className="font-bold"

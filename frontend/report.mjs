@@ -1,5 +1,5 @@
 /**
- * ABS WorldPool — Community Test Report Generator
+ * WorldPool26 — Community Test Report Generator
  *
  * Run: node report.mjs > test_raporu.txt
  * Requires: run from frontend/ folder (viem is there)

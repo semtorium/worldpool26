@@ -2,7 +2,7 @@
 pragma solidity 0.8.24;
 
 import {Script, console} from "forge-std/Script.sol";
-import {ABSWorldPool} from "../src/ABSWorldPool.sol";
+import {WorldPool26} from "../src/WorldPool26.sol";
 
 contract Deploy is Script {
     function run() external {
@@ -11,7 +11,7 @@ contract Deploy is Script {
         uint256 privateKey = vm.envUint("PRIVATE_KEY");
 
         vm.startBroadcast(privateKey);
-        ABSWorldPool pool = new ABSWorldPool(devWallet, baseURI);
+        WorldPool26 pool = new WorldPool26(devWallet, baseURI);
         vm.stopBroadcast();
 
         console.log("Deployed to:", address(pool));

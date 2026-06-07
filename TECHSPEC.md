@@ -1,8 +1,8 @@
-# ABS WorldPool — Technical Specification
+# WorldPool26 — Technical Specification
 
-> **Version:** v4 (current) · **Last updated:** June 2026  
+> **Version:** v6 (current) · **Last updated:** June 2026  
 > **Status:** Testnet live · Mainnet pending  
-> **Live URL:** https://absworldpool.xyz
+> **Live URL:** https://worldpool26.com
 
 ---
 
@@ -21,7 +21,7 @@
 
 ## 1. Project Overview
 
-ABS WorldPool is a Web3 prediction platform built on **Abstract Chain** (EVM L2) for the 2026 FIFA World Cup. Users participate in two parallel games by spending ETH. All funds flow directly through a single on-chain smart contract — no custody, no backend.
+WorldPool26 is a Web3 prediction platform built on **Base** (Coinbase EVM L2) for the 2026 FIFA World Cup. Users participate in two parallel games by spending ETH. All funds flow directly through a single on-chain smart contract — no custody, no backend.
 
 ### Games
 
@@ -62,16 +62,16 @@ At settlement (claim):
 ┌─────────────────────────────────────────────────┐
 │                  USER BROWSER                   │
 │                                                 │
-│  Next.js 14 App (absworldpool.xyz)              │
+│  Next.js 14 App (worldpool26.com)               │
 │  ├─ Wagmi 2 + Viem 2  (contract reads/writes)  │
-│  └─ @abstract-foundation/agw-react  (wallet)   │
+│  └─ Any EVM wallet (MetaMask, Rabby, Coinbase)  │
 └───────────────────┬─────────────────────────────┘
                     │  JSON-RPC
                     ▼
 ┌─────────────────────────────────────────────────┐
-│           ABSTRACT TESTNET (Chain 11124)        │
+│         BASE SEPOLIA TESTNET (Chain 84532)      │
 │                                                 │
-│  ABSWorldPool.sol  (Solidity 0.8.24)            │
+│  WorldPool26.sol  (Solidity 0.8.24)             │
 │  ├─ ERC1155  (country NFTs, token IDs 1–48)    │
 │  ├─ ERC2981  (5% royalty on secondary sales)   │
 │  ├─ Ownable  (admin functions)                 │
@@ -89,13 +89,13 @@ At settlement (claim):
 
 | Network | Address |
 |---------|---------|
-| Abstract Testnet | `0xee37Ddb34a737AD274671423Feb838C72e7999e4` |
-| Abstract Mainnet | TBD (deploy before June 11) |
+| Base Sepolia (testnet) | `0x57B4722d8b97DE1F254f6d2F65f4c594a850b4c7` |
+| Base Mainnet | TBD (deploy before June 11) |
 
-- **Chain ID:** 11124 (testnet) / 2741 (mainnet)
-- **RPC (testnet):** `https://api.testnet.abs.xyz`
-- **Explorer:** `https://explorer.testnet.abs.xyz`
-- **Foundry project:** `AbsWorldPool/` (separate from frontend repo)
+- **Chain ID:** 84532 (testnet) / 8453 (mainnet)
+- **RPC (testnet):** `https://sepolia.base.org`
+- **Explorer:** `https://sepolia.basescan.org`
+- **Foundry project:** `AbsWorldPool/` (local project root)
 
 ### Constants
 
@@ -240,14 +240,13 @@ Token IDs are non-sequential and assigned by tournament tier/odds rank:
 | TypeScript | 5 | Type safety |
 | Wagmi | 2 | Ethereum hooks |
 | Viem | 2 | Low-level EVM client |
-| @abstract-foundation/agw-react | latest | Abstract Global Wallet |
 | Tailwind CSS | 3 | Styling |
 | Framer Motion | — | Animations |
 | @vercel/analytics | — | Page view tracking |
 
 ### Repository
 
-- **GitHub:** `https://github.com/semtorium/absworldpool` (public — required for Vercel free tier)
+- **GitHub:** `https://github.com/semtorium/worldpool26` (public — required for Vercel free tier)
 - **Local path:** `AbsWorldPool/frontend/`
 - **Branch:** `main` (auto-deploys to Vercel on every push)
 
@@ -309,17 +308,17 @@ Page load
 
 ### Wallet Integration
 
-- **Main site:** `useLoginWithAbstract()` from `@abstract-foundation/agw-react` — Abstract Global Wallet
-- **Admin panel:** viem directly via EIP-6963 wallet discovery (MetaMask, Rabby, etc.) — intentionally bypasses AGW
-- **DO NOT** nest `<WagmiProvider>` inside `<AbstractWalletProvider>` — it overrides the Abstract connector context
+- **Main site:** Wagmi `useConnect()` with EIP-6963 injected connectors — supports MetaMask, Rabby, Coinbase Wallet, etc.
+- **Admin panel:** viem directly via EIP-6963 wallet discovery
+- Chain auto-switch: if wallet is on wrong chain, mint/ticket/vote buttons trigger `useSwitchChain({ chainId: 84532 })`
 
 ### localStorage Keys
 
 | Key | Value | Description |
 |-----|-------|-------------|
 | `tos_accepted` | `"true"` | Terms accepted, never show again |
-| `abs_active_tab` | tab id | Last active tab, restored on load |
-| `abs_lang` | lang code | Manual language override |
+| `wp26_active_tab` | tab id | Last active tab, restored on load |
+| `wp26_lang` | lang code | Manual language override |
 | `nc_claimed_<address>` | `"true"` | NC rewards claimed for this wallet |
 | `ts_claimed_<address>` | `"true"` | TS rewards claimed for this wallet |
 
@@ -371,7 +370,7 @@ Reads all on-chain data via viem: mints, votes, pools, claims, finalization stat
 | Service | Role |
 |---------|------|
 | **Vercel** (Free tier) | Frontend hosting, auto-deploy on push to `main` |
-| **Cloudflare** | Domain registrar + DNS proxy for `absworldpool.xyz` |
+| **Cloudflare** | Domain registrar + DNS proxy for `worldpool26.com` |
 | **GitHub** | Source code (must be **public** for Vercel free auto-deploy) |
 
 ### DNS
@@ -404,7 +403,7 @@ Wrong author email → Vercel "Deployment Blocked" error (must match GitHub OAut
 
 ```powershell
 # From AbsWorldPool/ directory
-& "$env:USERPROFILE\.foundry\bin\forge.exe" script script/Deploy.s.sol --rpc-url abstract_testnet --broadcast
+& "$env:USERPROFILE\.foundry\bin\forge.exe" script script/Deploy.s.sol --rpc-url base_sepolia --broadcast --verify
 ```
 
 Required `.env` variables in `AbsWorldPool/`:
@@ -446,15 +445,15 @@ If `finalizeTopScorer` is called with a player who got 0 votes: no one can claim
 ### Frontend Security
 
 - Admin panel (`/admin`) reads `owner()` from contract on load. Non-owner wallets see access denied — **does NOT reveal the owner address** to prevent targeted attacks.
-- Admin panel bypasses AGW wallet to avoid interference with main app context.
-- `ensureChain()` called before every admin write — forces wallet to Abstract Testnet (chainId `0x2B74`) before sending transactions.
+- Admin panel uses EIP-6963 wallet discovery directly via viem.
+- `ensureChain()` called before every admin write — forces wallet to Base Sepolia (chainId `0x14A34`) before sending transactions.
 
 ### GitHub Token
 
 - Old token (revoked) — do not use.
 - For new sessions needing push: generate a fine-grained PAT (Contents: Read & Write) and set:
   ```bash
-  git remote set-url origin https://<TOKEN>@github.com/semtorium/absworldpool.git
+  git remote set-url origin https://<TOKEN>@github.com/semtorium/worldpool26.git
   ```
 
 ---
@@ -475,7 +474,7 @@ If `finalizeTopScorer` is called with a player who got 0 votes: no one can claim
 
 ```powershell
 # Update .env: PRIVATE_KEY, DEV_WALLET, BASE_URI
-& "$env:USERPROFILE\.foundry\bin\forge.exe" script script/Deploy.s.sol --rpc-url abstract_mainnet --broadcast
+& "$env:USERPROFILE\.foundry\bin\forge.exe" script script/Deploy.s.sol --rpc-url base_mainnet --broadcast --verify
 ```
 
 ### After Deploy
@@ -486,7 +485,7 @@ If `finalizeTopScorer` is called with a player who got 0 votes: no one can claim
 - [ ] Push frontend → verify Vercel deploy
 - [ ] Verify contract on explorer (`--verify` flag or manual)
 - [ ] Test one mint on mainnet before announcing
-- [ ] Confirm NFTs appear on OpenSea (Abstract Chain supported)
+- [ ] Confirm NFTs appear on OpenSea (Base supported)
 
 ---
 

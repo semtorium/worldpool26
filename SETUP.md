@@ -1,4 +1,4 @@
-# ABS WorldPool — Geliştirme Ortamı Kurulum
+# WorldPool26 — Geliştirme Ortamı Kurulum
 
 ## 1. WSL2'de Foundry Kur
 
@@ -79,8 +79,9 @@ Doldurulacaklar:
 source .env
 
 forge script script/Deploy.s.sol \
-  --rpc-url https://api.testnet.abs.xyz \
+  --rpc-url base_sepolia \
   --broadcast \
+  --verify \
   -vvvv
 ```
 
@@ -90,7 +91,7 @@ Deploy sonrası ownership'i Gnosis Safe'e devret:
 cast send <DEPLOY_ADRESI> \
   "transferOwnership(address)" <GNOSIS_SAFE_ADRESI> \
   --private-key $PRIVATE_KEY \
-  --rpc-url https://api.testnet.abs.xyz
+  --rpc-url https://sepolia.base.org
 ```
 
 ---
@@ -100,9 +101,9 @@ cast send <DEPLOY_ADRESI> \
 ```
 AbsWorldPool/
 ├── src/
-│   └── ABSWorldPool.sol      ← Ana sözleşme
+│   └── WorldPool26.sol       ← Ana sözleşme
 ├── test/
-│   └── ABSWorldPool.t.sol    ← Test suite (30+ test)
+│   └── WorldPool26.t.sol     ← Test suite (30+ test)
 ├── script/
 │   └── Deploy.s.sol          ← Deploy scripti
 ├── lib/                      ← forge install sonrası oluşur

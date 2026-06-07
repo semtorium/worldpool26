@@ -13,19 +13,6 @@ interface HolderEntry {
 
 const RANK_EMOJIS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
-async function resolveAbstractUsername(address: string): Promise<string | null> {
-  try {
-    const res = await fetch(
-      `https://api.abs.xyz/v1/usernames/reverse/${address.toLowerCase()}`,
-      { signal: AbortSignal.timeout(2000) }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    return (data?.username as string) || null;
-  } catch {
-    return null;
-  }
-}
 
 // Defined outside to avoid recreation on every render
 function TickerItems({ holders }: { holders: HolderEntry[] }) {
@@ -64,7 +51,7 @@ export function HoldersTicker() {
           event: parseAbiItem(
             "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"
           ),
-          fromBlock: 0n,
+          fromBlock: 43073285n,
           toBlock: "latest",
         });
 
@@ -81,16 +68,11 @@ export function HoldersTicker() {
 
         if (sorted.length === 0) return;
 
-        const entries = await Promise.all(
-          sorted.map(async ([address, total]) => {
-            const username = await resolveAbstractUsername(address);
-            return {
-              address,
-              displayName: username ?? shortenAddress(address),
-              totalNfts: Number(total),
-            };
-          })
-        );
+        const entries = sorted.map(([address, total]) => ({
+          address,
+          displayName: shortenAddress(address),
+          totalNfts: Number(total),
+        }));
 
         // Only update state if data actually changed — prevents animation restart
         setHolders(prev => {

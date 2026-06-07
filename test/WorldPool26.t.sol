@@ -2,11 +2,11 @@
 pragma solidity 0.8.24;
 
 import "forge-std/Test.sol";
-import "../src/ABSWorldPool.sol";
+import "../src/WorldPool26.sol";
 
-contract ABSWorldPoolTest is Test {
+contract WorldPool26Test is Test {
 
-    ABSWorldPool public pool;
+    WorldPool26 public pool;
 
     address public owner    = makeAddr("owner");
     address public dev      = makeAddr("dev");
@@ -28,7 +28,7 @@ contract ABSWorldPoolTest is Test {
 
     function setUp() public {
         vm.startPrank(owner);
-        pool = new ABSWorldPool(dev, BASE_URI);
+        pool = new WorldPool26(dev, BASE_URI);
         vm.stopPrank();
 
         vm.deal(alice, 10 ether);
@@ -76,7 +76,7 @@ contract ABSWorldPoolTest is Test {
 
     function test_constructor_revertsZeroDevWallet() public {
         vm.expectRevert("Invalid dev wallet");
-        new ABSWorldPool(address(0), BASE_URI);
+        new WorldPool26(address(0), BASE_URI);
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ contract ABSWorldPoolTest is Test {
         uint256 price = pool.MINT_PRICE();
 
         vm.expectEmit(true, true, false, true);
-        emit ABSWorldPool.CountryMinted(alice, BRAZIL, 1, block.timestamp);
+        emit WorldPool26.CountryMinted(alice, BRAZIL, 1, block.timestamp);
 
         vm.prank(alice);
         pool.mintCountryNFT{value: price}(BRAZIL, 1);
@@ -228,7 +228,7 @@ contract ABSWorldPoolTest is Test {
         _buyTickets(alice, 5);
 
         vm.expectEmit(true, false, false, true);
-        emit ABSWorldPool.VoteCast(alice, MBAPPE, 3, block.timestamp);
+        emit WorldPool26.VoteCast(alice, MBAPPE, 3, block.timestamp);
 
         vm.prank(alice);
         pool.voteTopScorer(MBAPPE, 3);
@@ -687,7 +687,7 @@ contract ABSWorldPoolTest is Test {
         uint256 aliceBefore = alice.balance;
 
         vm.expectEmit(true, false, false, true);
-        emit ABSWorldPool.UnusedTicketsRefunded(alice, 3, expectedRefund, block.timestamp);
+        emit WorldPool26.UnusedTicketsRefunded(alice, 3, expectedRefund, block.timestamp);
 
         vm.prank(alice);
         pool.refundUnusedTickets();
