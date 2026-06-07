@@ -37,14 +37,14 @@ export function LeaderboardPage() {
             event: parseAbiItem(
               "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"
             ),
-            fromBlock: 0n, toBlock: "latest",
+            fromBlock: 43073285n, toBlock: "latest",
           }),
           (client as NonNullable<typeof client>).getLogs({
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"
             ),
-            fromBlock: 0n, toBlock: "latest",
+            fromBlock: 43073285n, toBlock: "latest",
           }),
         ]);
 
