@@ -1,0 +1,20 @@
+# Foundry
+out/
+cache/
+broadcast/
+.env
+
+# Dependencies
+lib/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node (frontend)
+node_modules/
+.next/

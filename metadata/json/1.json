@@ -1,0 +1,28 @@
+{
+  "name": "United States — 2026 World Cup",
+  "description": "ABS WorldPool Nations Cup entry NFT. Hold this token to earn a share of the prize pool if your country wins the 2026 FIFA World Cup.",
+  "image": "https://flagcdn.com/w640/us.png",
+  "external_url": "https://absworldpool.xyz",
+  "attributes": [
+    {
+      "trait_type": "Country",
+      "value": "United States"
+    },
+    {
+      "trait_type": "Continent",
+      "value": "CONCACAF"
+    },
+    {
+      "trait_type": "Group",
+      "value": "Group A"
+    },
+    {
+      "trait_type": "Token ID",
+      "value": "1"
+    },
+    {
+      "trait_type": "Tournament",
+      "value": "2026 FIFA World Cup"
+    }
+  ]
+}

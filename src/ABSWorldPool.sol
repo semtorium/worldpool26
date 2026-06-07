@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-/// @title ABSWorldPool v6
-/// @notice 2026 World Cup Web3 prediction platform on Abstract Chain.
+/// @title WorldPool26 v6
+/// @notice 2026 World Cup Web3 prediction platform on Base Chain.
 ///         Two parallel games: Nations Cup (ERC-1155 mint) + Top Scorer (ticket voting).
 ///         v6: Single main Nations Cup prize pool — eliminations no longer move funds.
 ///             Final champion's NFT holders split the entire accumulated pool.
@@ -91,6 +91,16 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     mapping(bytes32 => uint256) public playerVoteCounts;
     mapping(address => mapping(bytes32 => uint256)) public userPlayerVotes;
     mapping(address => uint256) public userUnusedTickets;
+    /// @notice True after a user has successfully claimed their Top Scorer reward.
+    ///         Used as on-chain ground truth for cross-device "Already Claimed" display.
+    mapping(address => bool) public topScorerHasClaimed;
+    /// @notice True after a user has successfully claimed their Nations Cup reward.
+    ///         Prevents double-claiming via secondary market token purchases.
+    mapping(address => bool) public nationsCupHasClaimed;
+    /// @notice Accumulated dev fees that failed to transfer instantly.
+    ///         Owner can withdraw via withdrawPendingDev(). Prevents mint/claim DOS
+    ///         if devWallet is temporarily unreachable (e.g. a contract wallet mid-upgrade).
+    uint256 public pendingDevBalance;
 
     // ─────────────────────────────────────────────────────────────
     // Events
@@ -106,6 +116,7 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     event UnusedTicketsRefunded(address indexed user, uint256 ticketCount, uint256 refundAmount, uint256 timestamp);
     event UnclaimedNationsCupWithdrawn(uint256 amount, uint256 timestamp);
     event UnclaimedTopScorerWithdrawn(uint256 amount, uint256 timestamp);
+    event PendingDevWithdrawn(uint256 amount, uint256 timestamp);
     event DevWalletUpdated(address indexed oldWallet, address indexed newWallet);
     event BaseURIUpdated(string oldURI, string newURI);
     event MintClosedChanged(bool mintClosed);
@@ -183,8 +194,10 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
 
         _mint(msg.sender, countryId, amount, "");
 
+        // Non-blocking: if devWallet is temporarily unreachable, fee is queued in pendingDevBalance.
+        // This prevents a broken devWallet from locking the entire mint function.
         (bool ok, ) = payable(devWallet).call{value: devShare}("");
-        require(ok, "Dev payout failed");
+        if (!ok) { pendingDevBalance += devShare; }
 
         emit CountryMinted(msg.sender, countryId, amount, block.timestamp);
     }
@@ -210,7 +223,7 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
         totalLockedPrizePool          += poolShare;
 
         (bool ok, ) = payable(devWallet).call{value: devShare}("");
-        require(ok, "Dev payout failed");
+        if (!ok) { pendingDevBalance += devShare; }
 
         emit TicketPurchased(msg.sender, quantity, block.timestamp);
     }
@@ -222,11 +235,11 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     function voteTopScorer(string calldata playerName, uint256 votesToUse)
         external nonReentrant whenVotingOpen
     {
-        require(!topScorerFinalized,                                    "Top scorer already finalized");
-        require(votesToUse > 0,                                          "Votes must be > 0");
-        require(bytes(playerName).length > 0,                            "Empty player name");
-        require(bytes(playerName).length <= 64,                          "Player name too long");
-        require(userUnusedTickets[msg.sender] >= votesToUse,             "Insufficient tickets");
+        require(!topScorerFinalized,                                                        "Top scorer already finalized");
+        require(votesToUse > 0,                                                              "Votes must be > 0");
+        require(bytes(playerName).length > 0,                                                "Empty player name");
+        require(bytes(playerName).length <= 64,                                              "Player name too long");
+        require(userUnusedTickets[msg.sender] >= votesToUse,                                 "Insufficient tickets");
 
         bytes32 playerKey = keccak256(abi.encodePacked(playerName));
 
@@ -244,24 +257,33 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
 
     function claimNationsCupRewards() external nonReentrant {
         require(tournamentFinalized, "Tournament not finalized yet");
+        // Double-claim guard: prevents re-claiming via secondary-market token purchases
+        require(!nationsCupHasClaimed[msg.sender], "Already claimed");
 
         uint256 userTokens = balanceOf(msg.sender, winningCountryId);
         require(userTokens > 0, "No winning tokens");
-
         require(nationsCupPoolBalance > 0, "Pool already drained");
 
         uint256 userEntitlement = (userTokens * finalNationsCupPool) / countryTotalSupply[winningCountryId];
         require(userEntitlement > 0, "Entitlement rounds to zero");
+        // Dust guard: last claimer gets at most the remaining pool (rounding may leave 1-2 wei)
+        if (userEntitlement > nationsCupPoolBalance) {
+            userEntitlement = nationsCupPoolBalance;
+        }
 
         uint256 feeCut     = (userEntitlement * POOL_FEE_BPS) / 10000;
         uint256 userReward = userEntitlement - feeCut;
 
+        // ── Effects (CEI pattern) ──────────────────────────────────
+        nationsCupHasClaimed[msg.sender] = true;
         nationsCupPoolBalance  -= userEntitlement;
         totalLockedPrizePool   -= userEntitlement;
         _burn(msg.sender, winningCountryId, userTokens);
 
+        // ── Interactions ───────────────────────────────────────────
+        // Fee: non-blocking — a broken devWallet cannot block user claims
         (bool feeOk, ) = payable(devWallet).call{value: feeCut}("");
-        require(feeOk, "Fee transfer failed");
+        if (!feeOk) { pendingDevBalance += feeCut; }
 
         (bool rewardOk, ) = payable(msg.sender).call{value: userReward}("");
         require(rewardOk, "Reward transfer failed");
@@ -285,16 +307,22 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
 
         uint256 userEntitlement = (userVotes * finalTopScorerPool) / totalWinnerVotes;
         require(userEntitlement > 0, "Entitlement rounds to zero");
+        // Dust guard: last claimer gets at most the remaining pool (rounding may leave 1-2 wei)
+        if (userEntitlement > topScorerPoolBalance) {
+            userEntitlement = topScorerPoolBalance;
+        }
 
         uint256 feeCut     = (userEntitlement * POOL_FEE_BPS) / 10000;
         uint256 userReward = userEntitlement - feeCut;
 
         userPlayerVotes[msg.sender][playerKey] = 0;
+        topScorerHasClaimed[msg.sender]        = true;
         topScorerPoolBalance                   -= userEntitlement;
         totalLockedPrizePool                   -= userEntitlement;
 
+        // Fee: non-blocking — a broken devWallet cannot block user claims
         (bool feeOk, ) = payable(devWallet).call{value: feeCut}("");
-        require(feeOk, "Fee transfer failed");
+        if (!feeOk) { pendingDevBalance += feeCut; }
 
         (bool rewardOk, ) = payable(msg.sender).call{value: userReward}("");
         require(rewardOk, "Reward transfer failed");
@@ -364,6 +392,7 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
 
     function finalizeNationsCup(uint256 _winningCountryId) external onlyOwner {
         require(!tournamentFinalized,                                          "Already finalized");
+        require(mintClosed,                                                    "Close mint before finalizing");
         require(_winningCountryId >= 1 && _winningCountryId <= MAX_COUNTRIES, "Invalid country ID");
         require(countryTotalSupply[_winningCountryId] > 0,                    "Winner has no supply");
 
@@ -461,6 +490,21 @@ contract ABSWorldPool is ERC1155, ERC2981, Ownable, ReentrancyGuard {
         emit BaseURIUpdated(baseURI, _newBaseURI);
         baseURI = _newBaseURI;
         emit BatchMetadataUpdate(1, MAX_COUNTRIES);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Admin: Withdraw Pending Dev Fees
+    // ─────────────────────────────────────────────────────────────
+
+    /// @notice Withdraw any dev fees that failed to transfer instantly during mint/claim.
+    ///         Accumulates in pendingDevBalance when devWallet is temporarily unreachable.
+    function withdrawPendingDev() external onlyOwner {
+        uint256 amount = pendingDevBalance;
+        require(amount > 0, "Nothing pending");
+        pendingDevBalance = 0;
+        (bool ok, ) = payable(devWallet).call{value: amount}("");
+        require(ok, "Transfer failed");
+        emit PendingDevWithdrawn(amount, block.timestamp);
     }
 
     // ─────────────────────────────────────────────────────────────

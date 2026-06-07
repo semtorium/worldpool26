@@ -1,0 +1,236 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg:        #050810;
+    --surface:   #0d1117;
+    --card:      rgba(255,255,255,0.03);
+    --border:    rgba(255,255,255,0.08);
+    --text:      #f0f4ff;
+    --muted:     #6b7a9a;
+    --accent:    #00ff88;
+    --accent2:   #7c3aed;
+    --gold:      #fbbf24;
+    --glow:      rgba(0,255,136,0.15);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: "Inter", system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 20% -10%, rgba(124,58,237,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 110%, rgba(0,255,136,0.08) 0%, transparent 50%),
+      url("/bg.jpg");
+    background-size: cover;
+    background-position: center top;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+  }
+
+  /* Mobile: background-attachment:fixed bozuluyor iOS/Android'de.
+     Stadyum görseli landscape, portrait ekranda cover çok zoom yapar.
+     Çözüm: scroll, cover koru ama konumu merkeze al + güçlü gradient overlay */
+  @media (max-width: 768px) {
+    body {
+      background-attachment: scroll;
+      background-image:
+        linear-gradient(180deg, rgba(5,8,16,0.55) 0%, rgba(5,8,16,0.15) 30%, rgba(5,8,16,0.70) 100%),
+        radial-gradient(ellipse 150% 50% at 50% 0%, rgba(124,58,237,0.10) 0%, transparent 60%),
+        url("/bg.jpg");
+      background-size: cover;
+      background-position: 60% center;
+    }
+  }
+
+  ::selection { background: rgba(0,255,136,0.25); }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 99px; }
+}
+
+@layer components {
+  /* Glass card */
+  .glass-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .glass-card:hover {
+    border-color: rgba(0,255,136,0.25);
+    box-shadow: 0 0 30px rgba(0,255,136,0.06);
+  }
+
+  /* Neon button */
+  .btn-neon {
+    background: linear-gradient(135deg, #00ff88, #00cc6a);
+    color: #050810;
+    font-weight: 700;
+    border-radius: 12px;
+    padding: 10px 20px;
+    transition: all 0.15s;
+    box-shadow: 0 0 20px rgba(0,255,136,0.3);
+    border: none;
+    cursor: pointer;
+  }
+  .btn-neon:hover  { box-shadow: 0 0 35px rgba(0,255,136,0.5); transform: translateY(-1px); }
+  .btn-neon:active { transform: translateY(0) scale(0.98); }
+  .btn-neon:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* Ghost button */
+  .btn-ghost {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--text);
+    font-weight: 600;
+    border-radius: 12px;
+    padding: 10px 20px;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .btn-ghost:hover  { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.2); }
+  .btn-ghost:active { transform: scale(0.98); }
+  .btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, #00ff88, #7c3aed);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Tab (legacy — kept for reference) */
+  .tab-pill-active   { background: rgba(0,255,136,0.12); color: #00ff88; border: 1px solid rgba(0,255,136,0.3); border-radius: 99px; }
+  .tab-pill-inactive { color: var(--muted); border: 1px solid transparent; border-radius: 99px; }
+  .tab-pill-inactive:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+
+  /* Nav dock buttons — new floating dock design */
+  .nav-dock-btn {
+    touch-action: manipulation;        /* removes iOS 300ms tap delay */
+    -webkit-tap-highlight-color: transparent; /* removes gray flash on tap */
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .nav-dock-btn[data-active="false"]:hover {
+    color: rgba(255,255,255,0.82) !important;
+    background: rgba(255,255,255,0.07) !important;
+    border-color: rgba(255,255,255,0.1) !important;
+  }
+  .nav-dock-btn {
+    position: relative;
+    overflow: hidden;
+  }
+  .nav-dock-btn[data-active="true"]::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 11px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* Glow pulse for live indicator */
+  .live-dot {
+    width: 8px; height: 8px;
+    background: #00ff88;
+    border-radius: 50%;
+    animation: livePulse 2s ease-in-out infinite;
+  }
+  @keyframes livePulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(0,255,136,0.6); }
+    50%      { box-shadow: 0 0 0 6px rgba(0,255,136,0); }
+  }
+
+  /* Counter digit animation */
+  @keyframes digitFlip {
+    0%   { transform: translateY(6px); opacity: 0; }
+    100% { transform: translateY(0);   opacity: 1; }
+  }
+  .digit-flip { animation: digitFlip 0.2s ease-out; }
+
+  /* Holders ticker */
+  @keyframes tickerScroll {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+  }
+  .ticker-track {
+    animation: tickerScroll var(--ticker-duration, 50s) linear infinite;
+  }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Unused ticket alert border pulse */
+  @keyframes ticketAlertPulse {
+    0%, 100% { border-color: rgba(251,191,36,0.3); box-shadow: none; }
+    50%       { border-color: rgba(251,191,36,0.65); box-shadow: 0 0 16px rgba(251,191,36,0.18); }
+  }
+
+  /* Prize hero ring pulse */
+  @keyframes prizeRingPulse {
+    0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+    50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.04); }
+  }
+
+  /* Confetti fall */
+  @keyframes confettiFall {
+    0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translateY(105vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Mint success modal pop-in */
+  @keyframes modalPop {
+    0%   { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1);    opacity: 1; }
+  }
+
+  /* NFT image skeleton shimmer */
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Country card flag fill */
+  .flag-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 16px;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.06);
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    aspect-ratio: 3/4;
+  }
+  .flag-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    border-color: rgba(0,255,136,0.4);
+    box-shadow: 0 8px 40px rgba(0,255,136,0.12), 0 0 0 1px rgba(0,255,136,0.2);
+  }
+  .flag-card .overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(5,8,16,0.96) 0%, rgba(5,8,16,0.5) 45%, transparent 100%);
+  }
+}
