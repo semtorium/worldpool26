@@ -13,6 +13,8 @@ const TS_CLAIMED_KEY = (addr: string) => `ts_claimed_${CONTRACT_ADDRESS}_${addr}
 import { getFlagUrl } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 import { TicketSuccessModal } from "@/components/TicketSuccessModal";
+import { TxErrorModal } from "@/components/TxErrorModal";
+import { parseWriteError } from "@/lib/parseError";
 import { useEthUsd } from "@/lib/useEthUsd";
 
 export function TopScorerPage() {
@@ -78,12 +80,16 @@ export function TopScorerPage() {
     })
   );
 
-  const { writeContract: buyTickets, data: buyHash, isPending: isBuying } = useWriteContract();
-  const { isLoading: isBuyConfirming, isSuccess: isBuySuccess } = useWaitForTransactionReceipt({ hash: buyHash });
-  const { writeContract: vote, data: voteHash, isPending: isVoting }             = useWriteContract();
-  const { isLoading: isVoteConfirming, isSuccess: isVoteSuccess } = useWaitForTransactionReceipt({ hash: voteHash });
-  const { writeContract: claim, data: claimHash, isPending: isClaiming } = useWriteContract();
-  const { isLoading: isClaimConfirming, isSuccess: isClaimTxSuccess } = useWaitForTransactionReceipt({ hash: claimHash });
+  const { writeContract: buyTickets, data: buyHash, isPending: isBuying, error: buyError, reset: resetBuy } = useWriteContract();
+  const { isLoading: isBuyConfirming, isSuccess: isBuySuccess, error: buyReceiptError } = useWaitForTransactionReceipt({ hash: buyHash });
+  const { writeContract: vote, data: voteHash, isPending: isVoting, error: voteError, reset: resetVote } = useWriteContract();
+  const { isLoading: isVoteConfirming, isSuccess: isVoteSuccess, error: voteReceiptError } = useWaitForTransactionReceipt({ hash: voteHash });
+  const { writeContract: claim, data: claimHash, isPending: isClaiming, error: claimError, reset: resetClaim } = useWriteContract();
+  const { isLoading: isClaimConfirming, isSuccess: isClaimTxSuccess, error: claimReceiptError } = useWaitForTransactionReceipt({ hash: claimHash });
+
+  // Aktif hata — hangisi varsa göster (öncelik sırası: claim > buy > vote)
+  const activeTxError = claimError ?? claimReceiptError ?? buyError ?? buyReceiptError ?? voteError ?? voteReceiptError ?? null;
+  const resetActiveTxError = () => { resetClaim(); resetBuy(); resetVote(); };
 
   // Persist claimed state to localStorage so "✓ Claimed" survives navigation
   useEffect(() => {
@@ -496,6 +502,14 @@ export function TopScorerPage() {
           })}
         </div>
       </div>
+
+      {/* Transaction Error Modal */}
+      {activeTxError && (
+        <TxErrorModal
+          info={parseWriteError(activeTxError)}
+          onClose={resetActiveTxError}
+        />
+      )}
 
       {/* Ticket Success Modal */}
       {modalData && (

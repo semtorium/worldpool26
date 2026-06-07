@@ -10,6 +10,8 @@ import { CONTRACT_ADDRESS, MINT_PRICE, formatEth } from "@/lib/config";
 import { type Country } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 import { MintSuccessModal } from "./MintSuccessModal";
+import { TxErrorModal } from "./TxErrorModal";
+import { parseWriteError } from "@/lib/parseError";
 import { useEthUsd } from "@/lib/useEthUsd";
 
 interface CountryMintModalProps {
@@ -72,8 +74,11 @@ export function CountryMintModal({
   const totalCost    = MINT_PRICE * BigInt(amount);
   const hasEnoughEth = !ethBalance || ethBalance.value >= totalCost;
 
-  const { writeContract, data: txHash, isPending } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash });
+  const { writeContract, data: txHash, isPending, error: writeError, reset: resetWrite } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess, error: receiptError } = useWaitForTransactionReceipt({ hash: txHash });
+
+  // Aktif hata: cüzdan reddi VEYA on-chain revert
+  const txError = writeError ?? receiptError ?? null;
   const isLoading = isPending || isConfirming;
 
   useEffect(() => {
@@ -120,6 +125,13 @@ export function CountryMintModal({
           amount={mintedAmt}
           txHash={txHash}
           onClose={handleSuccessClose}
+        />
+      )}
+
+      {txError && !showSuccess && (
+        <TxErrorModal
+          info={parseWriteError(txError)}
+          onClose={resetWrite}
         />
       )}
 

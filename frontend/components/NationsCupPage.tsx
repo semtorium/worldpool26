@@ -9,6 +9,8 @@ import { CountryCard } from "./CountryCard";
 import { MintBarChart } from "./MintBarChart";
 import { Loader2, Trophy } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
+import { TxErrorModal } from "./TxErrorModal";
+import { parseWriteError } from "@/lib/parseError";
 
 // June 11 2026 16:00 UTC — opening match kick-off
 const TOURNAMENT_START = new Date("2026-06-11T16:00:00Z").getTime();
@@ -97,8 +99,9 @@ export function NationsCupPage() {
     query: { enabled: !!address, refetchInterval: 30_000 },
   });
 
-  const { writeContract: claim, data: claimHash, isPending: isClaiming } = useWriteContract();
-  const { isLoading: isClaimConfirming, isSuccess: isClaimSuccess } = useWaitForTransactionReceipt({ hash: claimHash });
+  const { writeContract: claim, data: claimHash, isPending: isClaiming, error: claimError, reset: resetClaim } = useWriteContract();
+  const { isLoading: isClaimConfirming, isSuccess: isClaimSuccess, error: claimReceiptError } = useWaitForTransactionReceipt({ hash: claimHash });
+  const claimTxError = claimError ?? claimReceiptError ?? null;
 
   // Build a Set of owned country ids for fast lookup
   const ownedIds = new Set<number>(
@@ -195,6 +198,11 @@ export function NationsCupPage() {
           )}
         </div>
       </div>
+
+      {/* Claim TX Error */}
+      {claimTxError && (
+        <TxErrorModal info={parseWriteError(claimTxError)} onClose={resetClaim} />
+      )}
 
       {/* Claim */}
       {canClaim && (
