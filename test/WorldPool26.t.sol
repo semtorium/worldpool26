@@ -62,6 +62,15 @@ contract WorldPool26Test is Test {
         pool.eliminateCountries(loserIds);
     }
 
+    /// @dev Close mint then finalize Nations Cup — required because contract
+    ///      enforces `require(mintClosed)` before finalizeNationsCup.
+    function _closeMintAndFinalize(uint256 countryId) internal {
+        vm.startPrank(owner);
+        pool.setMintClosed(true);
+        pool.finalizeNationsCup(countryId);
+        vm.stopPrank();
+    }
+
     // ─────────────────────────────────────────────────────────────
     // Constructor
     // ─────────────────────────────────────────────────────────────
@@ -169,12 +178,11 @@ contract WorldPool26Test is Test {
 
     function test_mint_revertsAfterTournamentFinalized() public {
         _mintForAlice(BRAZIL, 1);
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         uint256 price = pool.MINT_PRICE();
         vm.prank(bob);
-        vm.expectRevert("Tournament already finalized");
+        vm.expectRevert("Mint is closed");
         pool.mintCountryNFT{value: price}(BRAZIL, 1);
     }
 
@@ -214,9 +222,10 @@ contract WorldPool26Test is Test {
         vm.prank(owner);
         pool.finalizeTopScorer(MBAPPE);
 
+        // finalizeTopScorer sets votingClosed=true; whenVotingOpen modifier fires first
         uint256 price = pool.TICKET_PRICE();
         vm.prank(bob);
-        vm.expectRevert("Top scorer already finalized");
+        vm.expectRevert("Voting is closed");
         pool.buyScorerTickets{value: price}(1);
     }
 
@@ -272,8 +281,9 @@ contract WorldPool26Test is Test {
         vm.prank(owner);
         pool.finalizeTopScorer(MBAPPE);
 
+        // finalizeTopScorer sets votingClosed=true; whenVotingOpen modifier fires first
         vm.prank(alice);
-        vm.expectRevert("Top scorer already finalized");
+        vm.expectRevert("Voting is closed");
         pool.voteTopScorer(MBAPPE, 1);
     }
 
@@ -334,8 +344,7 @@ contract WorldPool26Test is Test {
 
     function test_eliminate_revertsAfterFinalized() public {
         _mintForAlice(BRAZIL, 1);
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         uint256[] memory losers = new uint256[](1);
         losers[0] = FRANCE;
@@ -352,8 +361,7 @@ contract WorldPool26Test is Test {
     function test_finalizeNationsCup_happy() public {
         _mintForAlice(BRAZIL, 2);
 
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         assertTrue(pool.tournamentFinalized());
         assertEq(pool.winningCountryId(), BRAZIL);
@@ -374,16 +382,14 @@ contract WorldPool26Test is Test {
 
         uint256 expectedFinal = pool.nationsCupPoolBalance();
 
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         assertEq(pool.finalNationsCupPool(), expectedFinal);
     }
 
     function test_finalizeNationsCup_revertsDoubleFinalize() public {
         _mintForAlice(BRAZIL, 1);
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         vm.prank(owner);
         vm.expectRevert("Already finalized");
@@ -391,8 +397,19 @@ contract WorldPool26Test is Test {
     }
 
     function test_finalizeNationsCup_revertsZeroSupply() public {
+        // Must close mint first (satisfies mintClosed guard), then supply=0 triggers the real check
+        vm.prank(owner);
+        pool.setMintClosed(true);
         vm.prank(owner);
         vm.expectRevert("Winner has no supply");
+        pool.finalizeNationsCup(BRAZIL);
+    }
+
+    function test_finalizeNationsCup_revertsMintStillOpen() public {
+        _mintForAlice(BRAZIL, 1);
+        // mintClosed is still false — contract must reject
+        vm.prank(owner);
+        vm.expectRevert("Close mint before finalizing");
         pool.finalizeNationsCup(BRAZIL);
     }
 
@@ -403,8 +420,7 @@ contract WorldPool26Test is Test {
     function test_claim_nationsCup_singleHolder() public {
         _mintForAlice(BRAZIL, 4);
 
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         uint256 totalPool  = pool.nationsCupPoolBalance();
         uint256 userBefore = alice.balance;
@@ -440,8 +456,7 @@ contract WorldPool26Test is Test {
         losers[0] = FRANCE;
         _eliminate(losers);
 
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         uint256 snapshot    = pool.finalNationsCupPool();
         uint256 totalSupply = pool.countryTotalSupply(BRAZIL); // 4
@@ -477,8 +492,7 @@ contract WorldPool26Test is Test {
         losers[0] = FRANCE;
         _eliminate(losers);
 
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         // Bob has no Brazil tokens — cannot claim
         vm.prank(bob);
@@ -496,14 +510,15 @@ contract WorldPool26Test is Test {
 
     function test_claim_nationsCup_noDoubleClaim() public {
         _mintForAlice(BRAZIL, 2);
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         vm.prank(alice);
         pool.claimNationsCupRewards();
 
+        // nationsCupHasClaimed[alice] = true after first claim;
+        // second attempt hits the hasClaimed guard before the token balance check.
         vm.prank(alice);
-        vm.expectRevert("No winning tokens");
+        vm.expectRevert("Already claimed");
         pool.claimNationsCupRewards();
     }
 
@@ -606,6 +621,7 @@ contract WorldPool26Test is Test {
         vm.prank(alice);
         pool.claimTopScorerRewards();
 
+        // userPlayerVotes zeroed out on first claim — second attempt hits "No winning votes"
         vm.prank(alice);
         vm.expectRevert("No winning votes");
         pool.claimTopScorerRewards();
@@ -637,8 +653,7 @@ contract WorldPool26Test is Test {
         assertEq(pool.nationsCupPoolBalance(), mainPoolAfterMints); // unchanged
 
         // Brazil wins — entire main pool goes to Brazil NFT holders
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         // Alice (5 tokens, 100% of Brazil supply) claims the entire main pool
         uint256 expectedReward = mainPoolAfterMints * 9500 / 10000;
@@ -736,8 +751,7 @@ contract WorldPool26Test is Test {
 
     function test_withdrawUnclaimedNationsCup_happy() public {
         _mintForAlice(BRAZIL, 2);
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         // Warp past 15 days
         vm.warp(block.timestamp + pool.UNCLAIMED_TIMEOUT() + 1);
@@ -754,8 +768,7 @@ contract WorldPool26Test is Test {
 
     function test_withdrawUnclaimedNationsCup_revertsTooEarly() public {
         _mintForAlice(BRAZIL, 1);
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         // Only 7 days passed, not 15
         vm.warp(block.timestamp + 7 days);
@@ -823,8 +836,7 @@ contract WorldPool26Test is Test {
     function test_pause_allows_claim() public {
         // Setup & finalize
         _mintForAlice(BRAZIL, 2);
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         // Pause after finalization
         vm.prank(owner);
@@ -846,8 +858,7 @@ contract WorldPool26Test is Test {
         vm.prank(alice);
         pool.safeTransferFrom(alice, bob, BRAZIL, 1, "");
 
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         uint256 snapshot = pool.finalNationsCupPool();
         uint256 supply   = pool.countryTotalSupply(BRAZIL); // still 4 (burn not tracked)
@@ -952,8 +963,7 @@ contract WorldPool26Test is Test {
         vm.prank(bob);
         pool.mintCountryNFT{value: bobCost}(BRAZIL, bobTokens);
 
-        vm.prank(owner);
-        pool.finalizeNationsCup(BRAZIL);
+        _closeMintAndFinalize(BRAZIL);
 
         uint256 contractBalanceBefore = address(pool).balance;
 

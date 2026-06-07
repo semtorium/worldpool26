@@ -97,16 +97,19 @@ const title  = (s) => `\n${line("═")}\n  ${s}\n${line("═")}`;
 const sec    = (s) => `\n${line()}\n  ${s}\n${line()}`;
 
 async function getLogs(eventName) {
+  // fromBlock = deployment block (Base Sepolia). Using 0n causes RPC to reject (43M+ block range).
+  const DEPLOY_BLOCK = 43073285n;
   try {
     return await client.getLogs({
       address: CONTRACT,
       event: ABI.find(x => x.type === "event" && x.name === eventName),
-      fromBlock: 0n,
+      fromBlock: DEPLOY_BLOCK,
       toBlock: "latest",
     });
   } catch {
+    // Fallback: last 50 000 blocks (~27 h) — only used if primary call fails
     const latest = await client.getBlockNumber();
-    const from   = latest > 50000n ? latest - 50000n : 0n;
+    const from   = latest > 50000n ? latest - 50000n : DEPLOY_BLOCK;
     try {
       return await client.getLogs({
         address: CONTRACT,
