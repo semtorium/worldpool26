@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useConnect } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useConnect, useChainId, useSwitchChain } from "wagmi";
+import { baseSepolia } from "viem/chains";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Ticket, Trophy, Zap, Search } from "lucide-react";
 import { ABI } from "@/lib/abi";
@@ -18,6 +19,9 @@ export function TopScorerPage() {
   const { address, isConnected } = useAccount();
   const { connect, connectors }  = useConnect();
   const login = () => connect({ connector: connectors[0] });
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const isWrongChain = isConnected && chainId !== baseSepolia.id;
   const { t } = useLang();
   const ethUsd = useEthUsd();
   const queryClient = useQueryClient();
@@ -270,10 +274,11 @@ export function TopScorerPage() {
             {isConnected ? (
               <button
                 onClick={() => {
+                  if (isWrongChain) { switchChain({ chainId: baseSepolia.id }); return; }
                   purchasedQtyRef.current = ticketQty;
                   buyTickets({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "buyScorerTickets", args: [BigInt(ticketQty)], value: totalCost });
                 }}
-                disabled={isBuying || isBuyConfirming || !hasEnoughEth}
+                disabled={isBuying || isBuyConfirming || (!isWrongChain && !hasEnoughEth)}
                 title={!hasEnoughEth ? "Insufficient ETH balance" : undefined}
                 className="btn-neon flex items-center justify-center gap-2 w-full sm:w-auto"
                 style={!hasEnoughEth ? { opacity: 0.45, cursor: "not-allowed", background: "rgba(255,60,60,0.15)", border: "1px solid rgba(255,60,60,0.3)", color: "#ff6060" } : undefined}>
@@ -479,7 +484,7 @@ export function TopScorerPage() {
                       style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
                     />
                     <button
-                      onClick={() => vote({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "voteTopScorer", args: [player.name, BigInt(myVote)] })}
+                      onClick={() => { if (isWrongChain) { switchChain({ chainId: baseSepolia.id }); return; } vote({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "voteTopScorer", args: [player.name, BigInt(myVote)] }); }}
                       disabled={isVoting || isVoteConfirming}
                       className="btn-neon text-xs py-1.5 px-4 flex items-center gap-1">
                       {(isVoting || isVoteConfirming) && <Loader2 size={11} className="animate-spin" />}
