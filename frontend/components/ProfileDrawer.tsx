@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useAccount, useDisconnect, useReadContract, useBalance } from "wagmi";
 import { X, LogOut, Ticket, Trophy, ExternalLink } from "lucide-react";
 import { ABI } from "@/lib/abi";
-import { CONTRACT_ADDRESS, formatEth, shortenAddress, TOP_SCORER_PLAYERS } from "@/lib/config";
+import { CONTRACT_ADDRESS, formatEth, shortenAddress, TOP_SCORER_PLAYERS, MINT_PRICE, TICKET_PRICE } from "@/lib/config";
 import { COUNTRIES, getFlagUrl } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 
@@ -88,6 +88,12 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
     .map((p, i) => ({ ...p, votes: Number(playerVoteQueries[i].data ?? 0n) }))
     .filter(p => p.votes > 0);
 
+  // Total ETH invested (based on current holdings × mint/ticket price)
+  const totalNfts       = nftBalances ? ownedCountries.reduce((s, c) => s + Number(nftBalances[c.id - 1]), 0) : 0;
+  const totalTickets    = Number(unusedTickets ?? 0n) + votedPlayers.reduce((s, p) => s + p.votes, 0);
+  const totalSpentWei   = BigInt(totalNfts) * MINT_PRICE + BigInt(totalTickets) * TICKET_PRICE;
+  const totalSpentEth   = formatEth(totalSpentWei);
+
   if (!address) return null;
 
   return (
@@ -124,9 +130,17 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
             <AddressAvatar address={address} />
             <div>
               <p className="font-mono text-sm font-bold text-white">{shortenAddress(address)}</p>
-              <p className="text-xs mt-0.5" style={{ color: "#6b7a9a" }}>
-                {ethBalance ? `${parseFloat(ethBalance.formatted).toFixed(4)} ETH` : "—"}
-              </p>
+              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                <p className="text-xs" style={{ color: "#6b7a9a" }}>
+                  {ethBalance ? `${parseFloat(ethBalance.formatted).toFixed(4)} ETH` : "—"}
+                </p>
+                {totalSpentWei > 0n && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
+                    style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
+                    {totalSpentEth} ETH yatırıldı
+                  </span>
+                )}
+              </div>
             </div>
           </div>
           <button onClick={onClose}

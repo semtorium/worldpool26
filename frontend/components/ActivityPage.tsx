@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePublicClient, useAccount, useConnect } from "wagmi";
 import { parseAbiItem } from "viem";
-import { CONTRACT_ADDRESS, shortenAddress } from "@/lib/config";
+import { CONTRACT_ADDRESS, shortenAddress, MINT_PRICE, TICKET_PRICE, formatEth } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
 import { Loader2, ExternalLink } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
@@ -55,15 +55,19 @@ function ActivityRow({ item, latestBlock }: { item: ActivityItem; latestBlock: b
   const label = item.kind === "mint" ? t.act_kind_mint : item.kind === "ticket" ? t.act_kind_ticket : t.act_kind_vote;
 
   let description: string;
+  let ethValue: string | null = null;
+
   if (item.kind === "mint") {
     const country = COUNTRY_MAP[item.countryId!] ?? `#${item.countryId}`;
     description = t.act_desc_mint
       .replace("{amount}", String(item.amount))
       .replace("{country}", country);
+    ethValue = formatEth((item.amount ?? 0n) * MINT_PRICE);
   } else if (item.kind === "ticket") {
     const qty = Number(item.quantity);
     const tmpl = qty === 1 ? t.act_desc_ticket_one : t.act_desc_ticket_many;
     description = tmpl.replace("{qty}", String(qty));
+    ethValue = formatEth((item.quantity ?? 0n) * TICKET_PRICE);
   } else {
     description = t.act_desc_vote
       .replace("{votes}", String(item.votes))
@@ -98,6 +102,14 @@ function ActivityRow({ item, latestBlock }: { item: ActivityItem; latestBlock: b
             {shortenAddress(item.address)}
           </a>
           <span className="text-xs" style={{ color: "#f0f4ff" }}>{description}</span>
+          {ethValue && (
+            <span
+              className="text-[10px] font-black font-mono px-1.5 py-0.5 rounded-full"
+              style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}
+            >
+              {ethValue} ETH
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           <span
