@@ -36,8 +36,8 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
   const [int, dec] = eth.split(".");
   const usd      = ethUsd !== null ? ethValue * ethUsd : null;
 
-  const accent    = isScorer ? "#8b5cf6" : "#fbbf24";
-  const accentRgb = isScorer ? "139,92,246" : "251,191,36";
+  const accent    = isScorer ? "#60A5FA" : "#F59E0B";
+  const accentRgb = isScorer ? "96,165,250" : "245,158,11";
   const label     = isScorer ? t.ts_pool : t.prize_label;
   const subtitle  = isScorer
     ? "Grows with every ticket"
@@ -50,7 +50,7 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
     >
       {/* Background glows */}
       <div style={{ position: "absolute", inset: 0, background: `radial-gradient(ellipse 80% 120% at 50% 0%, rgba(${accentRgb},0.10) 0%, transparent 65%)`, pointerEvents: "none" }} />
-      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 50% 80% at 50% 100%, rgba(0,255,136,0.05) 0%, transparent 60%)", pointerEvents: "none" }} />
+      <div style={{ position: "absolute", inset: 0, background: "radial-gradient(ellipse 50% 80% at 50% 100%, rgba(0,82,255,0.05) 0%, transparent 60%)", pointerEvents: "none" }} />
 
       {/* Animated ring */}
       <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "min(480px,90vw)", height: "min(480px,90vw)", borderRadius: "50%", border: `1px solid rgba(${accentRgb},0.06)`, animation: "prizeRingPulse 4s ease-in-out infinite", pointerEvents: "none" }} />

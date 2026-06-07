@@ -22,7 +22,7 @@ interface Props {
 }
 
 const CONFETTI_COLORS = [
-  "#8b5cf6", "#7c3aed", "#fbbf24", "#00ff88",
+  "#A78BFA", "#60A5FA", "#fbbf24", "#0052FF",
   "#3b82f6", "#f97316", "#ec4899", "#06b6d4",
 ];
 
@@ -54,7 +54,7 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(5,8,16,0.85)", backdropFilter: "blur(8px)" }}
+      style={{ background: "rgba(6,9,20,0.85)", backdropFilter: "blur(8px)" }}
       onClick={onClose}
     >
       {/* Confetti */}
@@ -81,8 +81,8 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
         className="glass-card relative w-full max-w-sm overflow-hidden"
         style={{
           padding: "32px 28px 28px",
-          borderColor: "rgba(139,92,246,0.4)",
-          boxShadow: "0 0 60px rgba(139,92,246,0.2), 0 0 120px rgba(139,92,246,0.08)",
+          borderColor: "rgba(37,99,235,0.4)",
+          boxShadow: "0 0 60px rgba(37,99,235,0.2), 0 0 120px rgba(37,99,235,0.08)",
           animation: "modalPop 0.35s cubic-bezier(0.34,1.56,0.64,1) both",
         }}
         onClick={e => e.stopPropagation()}
@@ -106,17 +106,17 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
         <div className="grid grid-cols-2 gap-3 mb-5">
           <div
             className="rounded-xl p-3 text-center"
-            style={{ background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)" }}
+            style={{ background: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.2)" }}
           >
             <p className="text-2xl font-black text-white">+{ticketsBought}</p>
-            <p className="text-xs mt-0.5 font-semibold" style={{ color: "#8b5cf6" }}>{t.tsm_tickets_bought}</p>
+            <p className="text-xs mt-0.5 font-semibold" style={{ color: "#2563EB" }}>{t.tsm_tickets_bought}</p>
           </div>
           <div
             className="rounded-xl p-3 text-center"
-            style={{ background: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.2)" }}
+            style={{ background: "rgba(0,82,255,0.06)", border: "1px solid rgba(0,82,255,0.2)" }}
           >
             <p className="text-2xl font-black text-white">{unusedTotal}</p>
-            <p className="text-xs mt-0.5 font-semibold" style={{ color: "#00ff88" }}>{t.tsm_votes_ready}</p>
+            <p className="text-xs mt-0.5 font-semibold" style={{ color: "#0052FF" }}>{t.tsm_votes_ready}</p>
           </div>
         </div>
 
@@ -156,7 +156,7 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
                   <span className="text-xs font-bold text-white flex-1 truncate">{p.name}</span>
                   <span
                     className="text-xs font-mono font-bold shrink-0"
-                    style={{ color: "#8b5cf6" }}
+                    style={{ color: "#2563EB" }}
                   >
                     {p.votes.toLocaleString()}v
                   </span>
@@ -170,7 +170,7 @@ export function TicketSuccessModal({ ticketsBought, unusedTotal, top5, onClose, 
         <button
           onClick={() => { onClose(); onVoteNow(); }}
           className="btn-neon w-full text-sm py-3 flex items-center justify-center gap-2"
-          style={{ background: "linear-gradient(135deg,#7c3aed,#8b5cf6)" }}
+          style={{ background: "linear-gradient(135deg,#2563EB,#2563EB)" }}
         >
           <Zap size={16} />
           {t.tsm_vote_now}

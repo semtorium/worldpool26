@@ -107,7 +107,7 @@ export function LeaderboardPage() {
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="live-dot" />
-          <span className="text-xs font-bold" style={{ color: "#00ff88" }}>LIVE</span>
+          <span className="text-xs font-bold" style={{ color: "#0052FF" }}>LIVE</span>
         </div>
       </div>
 
@@ -115,9 +115,9 @@ export function LeaderboardPage() {
       {isConnected ? (
         <div
           className="glass-card p-4 flex flex-wrap items-center gap-3"
-          style={{ borderColor: "rgba(0,255,136,0.18)", background: "rgba(0,255,136,0.03)" }}
+          style={{ borderColor: "rgba(0,82,255,0.18)", background: "rgba(0,82,255,0.03)" }}
         >
-          <Medal size={20} style={{ color: "#00ff88", flexShrink: 0 }} />
+          <Medal size={20} style={{ color: "#0052FF", flexShrink: 0 }} />
           <div className="flex-1 min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-widest" style={{ color: "#6b7a9a" }}>
               {t.lb_your_pos}
@@ -129,11 +129,11 @@ export function LeaderboardPage() {
           {userEntry && (
             <div className="flex items-center gap-4 shrink-0">
               <div className="text-center">
-                <p className="text-[10px] font-bold mb-0.5" style={{ color: "#00ff88" }}>🌍 {t.lb_mints}</p>
+                <p className="text-[10px] font-bold mb-0.5" style={{ color: "#0052FF" }}>🌍 {t.lb_mints}</p>
                 <p className="font-black text-white text-base">{userEntry.nfts}</p>
               </div>
               <div className="text-center">
-                <p className="text-[10px] font-bold mb-0.5" style={{ color: "#8b5cf6" }}>⚽ {t.lb_votes}</p>
+                <p className="text-[10px] font-bold mb-0.5" style={{ color: "#2563EB" }}>⚽ {t.lb_votes}</p>
                 <p className="font-black text-white text-base">{userEntry.votes}</p>
               </div>
               <div
@@ -177,8 +177,8 @@ export function LeaderboardPage() {
             {t.lb_rank}
           </span>
           <span className="ml-auto flex items-center gap-4 text-[10px] font-bold tracking-widest uppercase">
-            <span style={{ color: "#00ff88" }}>🌍 {t.lb_mints}</span>
-            <span style={{ color: "#8b5cf6" }}>⚽ {t.lb_votes}</span>
+            <span style={{ color: "#0052FF" }}>🌍 {t.lb_mints}</span>
+            <span style={{ color: "#2563EB" }}>⚽ {t.lb_votes}</span>
             <span style={{ color: "#fbbf24" }}>{t.lb_score}</span>
           </span>
         </div>
@@ -204,10 +204,10 @@ export function LeaderboardPage() {
                 className="flex items-center gap-3 px-4 py-3 transition-colors"
                 style={{
                   borderBottom: "1px solid rgba(255,255,255,0.04)",
-                  background: isUser ? "rgba(0,255,136,0.04)" : undefined,
+                  background: isUser ? "rgba(0,82,255,0.04)" : undefined,
                 }}
                 onMouseEnter={ev => { if (!isUser) ev.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-                onMouseLeave={ev => { ev.currentTarget.style.background = isUser ? "rgba(0,255,136,0.04)" : "transparent"; }}
+                onMouseLeave={ev => { ev.currentTarget.style.background = isUser ? "rgba(0,82,255,0.04)" : "transparent"; }}
               >
                 {/* Rank */}
                 <div className="w-8 shrink-0 text-center">
@@ -221,14 +221,14 @@ export function LeaderboardPage() {
                 <div className="flex-1 min-w-0 flex items-center gap-2">
                   <span
                     className="font-mono text-sm font-bold truncate"
-                    style={{ color: isUser ? "#00ff88" : "#f0f4ff" }}
+                    style={{ color: isUser ? "#0052FF" : "#f0f4ff" }}
                   >
                     {shortenAddress(e.address)}
                   </span>
                   {isUser && (
                     <span
                       className="text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0"
-                      style={{ background: "rgba(0,255,136,0.12)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.25)" }}
+                      style={{ background: "rgba(0,82,255,0.12)", color: "#0052FF", border: "1px solid rgba(0,82,255,0.25)" }}
                     >
                       YOU
                     </span>
@@ -241,12 +241,12 @@ export function LeaderboardPage() {
 
                 {/* NFTs — desktop only */}
                 <div className="hidden sm:block w-14 text-right">
-                  <span className="font-semibold text-sm" style={{ color: "#00ff88" }}>{e.nfts}</span>
+                  <span className="font-semibold text-sm" style={{ color: "#0052FF" }}>{e.nfts}</span>
                 </div>
 
                 {/* Votes — desktop only */}
                 <div className="hidden sm:block w-14 text-right">
-                  <span className="font-semibold text-sm" style={{ color: "#8b5cf6" }}>{e.votes}</span>
+                  <span className="font-semibold text-sm" style={{ color: "#2563EB" }}>{e.votes}</span>
                 </div>
 
                 {/* Total score */}

@@ -193,7 +193,7 @@ export function TopScorerPage() {
             {/* Claimed already */}
             {isClaimSuccess ? (
               <span className="text-xs font-semibold shrink-0 px-3 py-1.5 rounded-xl flex items-center gap-1.5"
-                style={{ background: "rgba(0,255,136,0.1)", border: "1px solid rgba(0,255,136,0.3)", color: "#00ff88" }}>
+                style={{ background: "rgba(0,82,255,0.1)", border: "1px solid rgba(0,82,255,0.3)", color: "#0052FF" }}>
                 ✓ Claimed
               </span>
             ) : userWinnerVoteCount > 0 ? (
@@ -234,8 +234,8 @@ export function TopScorerPage() {
         <div className="glass-card p-6 space-y-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-              style={{ background: "linear-gradient(135deg,rgba(139,92,246,0.25),rgba(0,255,136,0.15))", border: "1px solid rgba(139,92,246,0.25)" }}>
-              <Ticket size={20} style={{ color: "#8b5cf6" }} />
+              style={{ background: "linear-gradient(135deg,rgba(37,99,235,0.25),rgba(0,82,255,0.15))", border: "1px solid rgba(37,99,235,0.25)" }}>
+              <Ticket size={20} style={{ color: "#2563EB" }} />
             </div>
             <div>
               <h2 className="font-black text-white text-lg">{t.ts_buy_title}</h2>
@@ -244,7 +244,7 @@ export function TopScorerPage() {
             {/* Unused tickets counter — right side */}
             {isConnected && unusedTickets > 0 && (
               <div className="ml-auto shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl"
-                style={{ background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)" }}>
+                style={{ background: "rgba(37,99,235,0.1)", border: "1px solid rgba(37,99,235,0.2)" }}>
                 <span className="text-xs font-semibold" style={{ color: "#6b7a9a" }}>{t.ts_unused_label}</span>
                 <span className="font-black text-lg text-white">{unusedTickets}</span>
               </div>
@@ -331,15 +331,15 @@ export function TopScorerPage() {
         ref={playerListRef}
         className="glass-card p-5 space-y-3 transition-all duration-300"
         style={flashList ? {
-          borderColor: "rgba(0,255,136,0.55)",
-          boxShadow: "0 0 32px rgba(0,255,136,0.25), 0 0 8px rgba(139,92,246,0.2)",
+          borderColor: "rgba(0,82,255,0.55)",
+          boxShadow: "0 0 32px rgba(0,82,255,0.25), 0 0 8px rgba(37,99,235,0.2)",
           animation: "listFlash 0.55s ease-in-out 4",
         } : undefined}
       >
         {/* Header with search */}
         <div className="flex items-center gap-3 flex-wrap">
           <h2 className="font-black text-white text-lg flex items-center gap-2 shrink-0">
-            <Zap size={20} style={{ color: "#8b5cf6" }} /> {t.ts_vote_title}
+            <Zap size={20} style={{ color: "#2563EB" }} /> {t.ts_vote_title}
           </h2>
           {/* Search input with dropdown */}
           <div ref={searchContainerRef} className="relative ml-auto">
@@ -347,7 +347,7 @@ export function TopScorerPage() {
               className="flex items-center gap-2 px-3 py-1.5 rounded-xl"
               style={{
                 background: "rgba(255,255,255,0.04)",
-                border: `1px solid ${showDropdown && searchMatches.length > 0 ? "rgba(139,92,246,0.4)" : "rgba(255,255,255,0.09)"}`,
+                border: `1px solid ${showDropdown && searchMatches.length > 0 ? "rgba(37,99,235,0.4)" : "rgba(255,255,255,0.09)"}`,
                 width: "180px",
               }}
             >
@@ -376,7 +376,7 @@ export function TopScorerPage() {
                 style={{
                   width: "220px",
                   background: "#0d1120",
-                  border: "1px solid rgba(139,92,246,0.35)",
+                  border: "1px solid rgba(37,99,235,0.35)",
                   boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
                 }}
               >
@@ -388,7 +388,7 @@ export function TopScorerPage() {
                     style={{
                       borderBottom: i < searchMatches.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(139,92,246,0.12)")}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(37,99,235,0.12)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                   >
                     <Image
@@ -425,18 +425,18 @@ export function TopScorerPage() {
                 className="p-3 rounded-xl space-y-2 transition-all duration-300"
                 style={{
                   background: isHighlighted
-                    ? "rgba(139,92,246,0.1)"
+                    ? "rgba(37,99,235,0.1)"
                     : isWinner
                       ? "rgba(251,191,36,0.06)"
                       : "rgba(255,255,255,0.02)",
                   border: `1px solid ${
                     isHighlighted
-                      ? "rgba(139,92,246,0.55)"
+                      ? "rgba(37,99,235,0.55)"
                       : isWinner
                         ? "rgba(251,191,36,0.3)"
                         : "rgba(255,255,255,0.05)"
                   }`,
-                  boxShadow: isHighlighted ? "0 0 16px rgba(139,92,246,0.25)" : undefined,
+                  boxShadow: isHighlighted ? "0 0 16px rgba(37,99,235,0.25)" : undefined,
                 }}>
 
                 <div className="flex items-center gap-3">
@@ -453,7 +453,7 @@ export function TopScorerPage() {
                     <p className="text-xs" style={{ color: "#6b7a9a" }}>{player.country}</p>
                   </div>
                   <span className="font-mono text-sm font-bold shrink-0"
-                    style={{ color: isWinner ? "#fbbf24" : "#8b5cf6" }}>
+                    style={{ color: isWinner ? "#fbbf24" : "#2563EB" }}>
                     {player.votes.toLocaleString()}
                   </span>
                 </div>
@@ -465,7 +465,7 @@ export function TopScorerPage() {
                       width: `${pct}%`,
                       background: isWinner
                         ? "linear-gradient(90deg,#fbbf24,#f59e0b)"
-                        : "linear-gradient(90deg,#8b5cf6,#00ff88)",
+                        : "linear-gradient(90deg,#2563EB,#0052FF)",
                     }} />
                 </div>
 
@@ -511,8 +511,8 @@ export function TopScorerPage() {
       <style>{`
         @keyframes listFlash {
           0%,100% { border-color: rgba(255,255,255,0.07); box-shadow: none; }
-          25%      { border-color: rgba(0,255,136,0.55);  box-shadow: 0 0 28px rgba(0,255,136,0.22); }
-          75%      { border-color: rgba(139,92,246,0.55); box-shadow: 0 0 28px rgba(139,92,246,0.22); }
+          25%      { border-color: rgba(0,82,255,0.55);  box-shadow: 0 0 28px rgba(0,82,255,0.22); }
+          75%      { border-color: rgba(37,99,235,0.55); box-shadow: 0 0 28px rgba(37,99,235,0.22); }
         }
       `}</style>
     </div>

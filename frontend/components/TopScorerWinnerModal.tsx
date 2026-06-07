@@ -12,7 +12,7 @@ import { getFlagUrl } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 
 const CONFETTI_COLORS = [
-  "#00ff88", "#7c3aed", "#fbbf24", "#ef4444",
+  "#0052FF", "#60A5FA", "#fbbf24", "#ef4444",
   "#3b82f6", "#f97316", "#ec4899", "#06b6d4",
 ];
 
@@ -90,7 +90,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(5,8,16,0.93)", backdropFilter: "blur(10px)" }}
+      style={{ background: "rgba(6,9,20,0.93)", backdropFilter: "blur(10px)" }}
     >
       {/* Confetti */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -110,8 +110,8 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
         style={{
           maxHeight: "92vh",
           padding: "32px 24px 28px",
-          borderColor: "rgba(124,58,237,0.45)",
-          boxShadow: "0 0 80px rgba(124,58,237,0.18), 0 0 160px rgba(124,58,237,0.05)",
+          borderColor: "rgba(0,82,255,0.45)",
+          boxShadow: "0 0 80px rgba(0,82,255,0.18), 0 0 160px rgba(0,82,255,0.05)",
           animation: "modalPop 0.35s cubic-bezier(0.34,1.56,0.64,1) both",
         }}
       >
@@ -126,9 +126,9 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
         <div
           className="flex items-center gap-4 p-5 rounded-2xl mb-5"
           style={{
-            background: "rgba(124,58,237,0.08)",
-            border: "2px solid rgba(124,58,237,0.5)",
-            boxShadow: "0 0 30px rgba(124,58,237,0.15)",
+            background: "rgba(0,82,255,0.08)",
+            border: "2px solid rgba(0,82,255,0.5)",
+            boxShadow: "0 0 30px rgba(0,82,255,0.15)",
           }}
         >
           {winner && (
@@ -148,7 +148,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
         {/* User claim info */}
         {canClaim && (
           <div className="p-4 rounded-2xl mb-5"
-            style={{ background: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.3)" }}>
+            style={{ background: "rgba(0,82,255,0.06)", border: "1px solid rgba(0,82,255,0.3)" }}>
             <p className="font-bold text-white mb-3">{t.tsw_you_win}</p>
             <div className="space-y-1.5 text-sm mb-4">
               <div className="flex justify-between">
@@ -161,7 +161,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
               </div>
               <div className="flex justify-between">
                 <span style={{ color: "#6b7a9a" }}>{t.tsw_your_reward}</span>
-                <span className="font-black font-mono" style={{ color: "#00ff88" }}>~{claimable.toFixed(5)} ETH</span>
+                <span className="font-black font-mono" style={{ color: "#0052FF" }}>~{claimable.toFixed(5)} ETH</span>
               </div>
             </div>
             <button
@@ -172,9 +172,9 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
               disabled={isPending || isConfirming || alreadyClaimed}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm"
               style={{
-                background: alreadyClaimed ? "rgba(124,58,237,0.15)" : "linear-gradient(135deg,#7c3aed,#6d28d9)",
+                background: alreadyClaimed ? "rgba(0,82,255,0.15)" : "linear-gradient(135deg,#2563EB,#6d28d9)",
                 color: alreadyClaimed ? "#a78bfa" : "#fff",
-                border: alreadyClaimed ? "1px solid rgba(124,58,237,0.3)" : "none",
+                border: alreadyClaimed ? "1px solid rgba(0,82,255,0.3)" : "none",
                 cursor: isPending || isConfirming || alreadyClaimed ? "not-allowed" : "pointer",
               }}
             >
@@ -211,8 +211,8 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
                   key={p.name}
                   className="flex items-center gap-3 px-3 py-2 rounded-xl"
                   style={{
-                    background: isWin ? "rgba(124,58,237,0.1)" : "rgba(255,255,255,0.015)",
-                    border: isWin ? "1px solid rgba(124,58,237,0.4)" : "1px solid transparent",
+                    background: isWin ? "rgba(0,82,255,0.1)" : "rgba(255,255,255,0.015)",
+                    border: isWin ? "1px solid rgba(0,82,255,0.4)" : "1px solid transparent",
                     opacity: isWin ? 1 : 0.3,
                     filter: isWin ? "none" : "grayscale(80%)",
                   }}

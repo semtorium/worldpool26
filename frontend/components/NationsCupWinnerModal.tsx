@@ -12,7 +12,7 @@ import { COUNTRIES, getFlagUrl } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 
 const CONFETTI_COLORS = [
-  "#00ff88", "#7c3aed", "#fbbf24", "#ef4444",
+  "#0052FF", "#60A5FA", "#fbbf24", "#ef4444",
   "#3b82f6", "#f97316", "#ec4899", "#06b6d4",
 ];
 
@@ -84,7 +84,7 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(5,8,16,0.93)", backdropFilter: "blur(10px)" }}
+      style={{ background: "rgba(6,9,20,0.93)", backdropFilter: "blur(10px)" }}
     >
       {/* Confetti */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
@@ -140,7 +140,7 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
         {/* User claim info */}
         {canClaim && (
           <div className="p-4 rounded-2xl mb-5"
-            style={{ background: "rgba(0,255,136,0.06)", border: "1px solid rgba(0,255,136,0.3)" }}>
+            style={{ background: "rgba(0,82,255,0.06)", border: "1px solid rgba(0,82,255,0.3)" }}>
             <p className="font-bold text-white mb-3">{t.ncw_you_win}</p>
             <div className="space-y-1.5 text-sm mb-4">
               <div className="flex justify-between">
@@ -149,7 +149,7 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
               </div>
               <div className="flex justify-between">
                 <span style={{ color: "#6b7a9a" }}>{t.ncw_your_reward}</span>
-                <span className="font-black font-mono" style={{ color: "#00ff88" }}>~{claimable.toFixed(5)} ETH</span>
+                <span className="font-black font-mono" style={{ color: "#0052FF" }}>~{claimable.toFixed(5)} ETH</span>
               </div>
             </div>
             <button
@@ -160,9 +160,9 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
               disabled={isPending || isConfirming || isSuccess}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-black text-sm"
               style={{
-                background: isSuccess ? "rgba(0,255,136,0.15)" : "linear-gradient(135deg,#00ff88,#00cc6a)",
-                color: isSuccess ? "#00ff88" : "#050810",
-                border: isSuccess ? "1px solid rgba(0,255,136,0.3)" : "none",
+                background: isSuccess ? "rgba(0,82,255,0.15)" : "linear-gradient(135deg,#0052FF,#00cc6a)",
+                color: isSuccess ? "#0052FF" : "#060914",
+                border: isSuccess ? "1px solid rgba(0,82,255,0.3)" : "none",
                 cursor: isPending || isConfirming || isSuccess ? "not-allowed" : "pointer",
               }}
             >

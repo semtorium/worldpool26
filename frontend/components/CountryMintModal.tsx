@@ -110,7 +110,7 @@ export function CountryMintModal({
   const nftImageSrc = getNFTImage(country.id);
   const [imgLoaded, setImgLoaded] = useState(false);
 
-  const accentColor = isWinner ? "#fbbf24" : isEliminated ? "#ef4444" : "#00ff88";
+  const accentColor = isWinner ? "#fbbf24" : isEliminated ? "#ef4444" : "#0052FF";
 
   return (
     <>
@@ -178,7 +178,7 @@ export function CountryMintModal({
               width: "42%",
               minWidth: "200px",
               flexShrink: 0,
-              background: "#050810",
+              background: "#060914",
             }}
           >
             {/* Skeleton shimmer — visible until image loads */}
@@ -275,13 +275,13 @@ export function CountryMintModal({
               </div>
               <div style={{
                 padding: "12px 14px", borderRadius: 12,
-                background: address ? `rgba(0,255,136,0.04)` : "rgba(255,255,255,0.03)",
-                border: `1px solid ${address ? "rgba(0,255,136,0.12)" : "rgba(255,255,255,0.06)"}`,
+                background: address ? `rgba(0,82,255,0.04)` : "rgba(255,255,255,0.03)",
+                border: `1px solid ${address ? "rgba(0,82,255,0.12)" : "rgba(255,255,255,0.06)"}`,
               }}>
                 <p style={{ fontSize: 10, color: "#6b7a9a", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 4 }}>
                   {t.cmt_you_hold}
                 </p>
-                <p className="font-black font-mono" style={{ fontSize: 22, color: address ? "#00ff88" : "rgba(255,255,255,0.3)" }}>
+                <p className="font-black font-mono" style={{ fontSize: 22, color: address ? "#0052FF" : "rgba(255,255,255,0.3)" }}>
                   {address ? (userBalance !== undefined ? userBalance.toString() : "—") : "—"}
                 </p>
               </div>

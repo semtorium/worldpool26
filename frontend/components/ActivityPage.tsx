@@ -44,8 +44,8 @@ function relativeTime(blockNumber: bigint, latestBlock: bigint): string {
 }
 
 function kindMeta(kind: EventKind) {
-  if (kind === "mint")   return { emoji: "🏳️", color: "#00ff88" };
-  if (kind === "ticket") return { emoji: "🎫", color: "#7c3aed" };
+  if (kind === "mint")   return { emoji: "🏳️", color: "#0052FF" };
+  if (kind === "ticket") return { emoji: "🎫", color: "#2563EB" };
   return                        { emoji: "⚽", color: "#fbbf24" };
 }
 
@@ -218,8 +218,8 @@ export function ActivityPage() {
       <div className="flex flex-col items-center justify-center py-28 gap-6">
         <div style={{
           width: 80, height: 80, borderRadius: "50%",
-          background: "rgba(0,255,136,0.07)",
-          border: "1px solid rgba(0,255,136,0.2)",
+          background: "rgba(0,82,255,0.07)",
+          border: "1px solid rgba(0,82,255,0.2)",
           display: "flex", alignItems: "center", justifyContent: "center",
           fontSize: 36,
         }}>📡</div>
@@ -248,7 +248,7 @@ export function ActivityPage() {
         </div>
         <div className="flex items-center gap-1.5">
           <div className="live-dot" />
-          <span className="text-xs font-bold" style={{ color: "#00ff88" }}>LIVE</span>
+          <span className="text-xs font-bold" style={{ color: "#0052FF" }}>LIVE</span>
         </div>
       </div>
 
@@ -275,7 +275,7 @@ export function ActivityPage() {
       <div className="glass-card overflow-hidden" style={{ padding: 0 }}>
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3">
-            <Loader2 size={28} className="animate-spin" style={{ color: "#00ff88" }} />
+            <Loader2 size={28} className="animate-spin" style={{ color: "#0052FF" }} />
             <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.act_loading}</p>
           </div>
         ) : items.length === 0 ? (

@@ -26,7 +26,7 @@ export function EliminationSummaryModal({ newlyEliminatedIds, onClose }: Props) 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(5,8,16,0.93)", backdropFilter: "blur(10px)" }}
+      style={{ background: "rgba(6,9,20,0.93)", backdropFilter: "blur(10px)" }}
     >
       {/* Card */}
       <div

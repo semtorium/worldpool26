@@ -26,7 +26,7 @@ function TickerItems({ holders }: { holders: HolderEntry[] }) {
         >
           <span style={{ fontSize: "13px" }}>{RANK_EMOJIS[i]}</span>
           <span className="font-bold" style={{ color: "#f0f4ff" }}>{h.displayName}</span>
-          <span className="font-black font-mono" style={{ color: "#00ff88" }}>
+          <span className="font-black font-mono" style={{ color: "#0052FF" }}>
             {h.totalNfts} NFT
           </span>
           <span style={{ color: "rgba(255,255,255,0.1)", margin: "0 4px" }}>·</span>
@@ -101,9 +101,9 @@ export function HoldersTicker() {
   return (
     <div
       style={{
-        background: "linear-gradient(90deg, rgba(5,8,16,0.92) 0%, rgba(10,18,30,0.88) 40%, rgba(5,8,16,0.92) 100%)",
-        borderTop: "1px solid rgba(0,255,136,0.14)",
-        borderBottom: "1px solid rgba(0,255,136,0.14)",
+        background: "linear-gradient(90deg, rgba(6,9,20,0.92) 0%, rgba(6,9,22,0.88) 40%, rgba(6,9,20,0.92) 100%)",
+        borderTop: "1px solid rgba(0,82,255,0.14)",
+        borderBottom: "1px solid rgba(0,82,255,0.14)",
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
         overflow: "hidden",
@@ -112,20 +112,20 @@ export function HoldersTicker() {
         alignItems: "center",
         position: "relative",
         zIndex: 50,
-        boxShadow: "0 0 24px rgba(0,255,136,0.06) inset, 0 2px 12px rgba(0,0,0,0.35)",
+        boxShadow: "0 0 24px rgba(0,82,255,0.06) inset, 0 2px 12px rgba(0,0,0,0.35)",
       }}
     >
       {/* Left label — sticky, sits on top */}
       <div
         className="shrink-0 flex items-center gap-1.5 px-3 text-[10px] font-black tracking-widest uppercase"
         style={{
-          color: "#00ff88",
-          background: "linear-gradient(90deg, rgba(0,255,136,0.1) 0%, rgba(0,255,136,0.04) 100%)",
+          color: "#0052FF",
+          background: "linear-gradient(90deg, rgba(0,82,255,0.1) 0%, rgba(0,82,255,0.04) 100%)",
           height: "100%",
-          borderRight: "1px solid rgba(0,255,136,0.18)",
+          borderRight: "1px solid rgba(0,82,255,0.18)",
           zIndex: 2,
           whiteSpace: "nowrap",
-          textShadow: "0 0 10px rgba(0,255,136,0.5)",
+          textShadow: "0 0 10px rgba(0,82,255,0.5)",
         }}
       >
         <span className="live-dot" style={{ width: 6, height: 6 }} />

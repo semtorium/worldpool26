@@ -16,9 +16,9 @@ interface ProfileDrawerProps {
 
 function AddressAvatar({ address }: { address: string }) {
   const colors = [
-    ["#00ff88", "#7c3aed"],
+    ["#0052FF", "#2563EB"],
     ["#f59e0b", "#ef4444"],
-    ["#3b82f6", "#8b5cf6"],
+    ["#3b82f6", "#2563EB"],
     ["#10b981", "#06b6d4"],
   ];
   const idx    = parseInt(address.slice(2, 4), 16) % colors.length;
@@ -148,7 +148,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
               <h3 className="font-bold text-white text-sm uppercase tracking-wide">{t.pd_my_nfts}</h3>
               {ownedCountries.length > 0 && (
                 <span className="text-xs px-2 py-0.5 rounded-full font-bold ml-auto"
-                  style={{ background: "rgba(0,255,136,0.1)", color: "#00ff88" }}>
+                  style={{ background: "rgba(0,82,255,0.1)", color: "#0052FF" }}>
                   {ownedCountries.length}
                 </span>
               )}
@@ -171,16 +171,16 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   return (
                     <div key={country.id}
                       className="rounded-xl overflow-hidden flex flex-col"
-                      style={{ border: "1px solid rgba(0,255,136,0.2)" }}>
+                      style={{ border: "1px solid rgba(0,82,255,0.2)" }}>
                       {/* Flag image */}
                       <div className="relative" style={{ aspectRatio: "3/2" }}>
                         <Image src={getFlagUrl(country.flagCode, 160)} alt={country.name}
                           fill className="object-cover" unoptimized />
                         <div className="absolute inset-0"
-                          style={{ background: "linear-gradient(to top, rgba(5,8,16,0.85) 0%, transparent 50%)" }} />
+                          style={{ background: "linear-gradient(to top, rgba(6,9,20,0.85) 0%, transparent 50%)" }} />
                         <div className="absolute bottom-0 left-0 right-0 p-1.5">
                           <p className="text-white text-[10px] font-bold truncate leading-tight">{country.name}</p>
-                          <p className="font-mono text-[11px] font-black" style={{ color: "#00ff88" }}>×{balance}</p>
+                          <p className="font-mono text-[11px] font-black" style={{ color: "#0052FF" }}>×{balance}</p>
                         </div>
                       </div>
                       {/* Trade button */}
@@ -189,7 +189,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-1 py-1.5 text-[10px] font-bold transition-colors"
-                        style={{ background: "rgba(32,129,226,0.12)", color: "#60a5fa", borderTop: "1px solid rgba(0,255,136,0.1)" }}
+                        style={{ background: "rgba(32,129,226,0.12)", color: "#60a5fa", borderTop: "1px solid rgba(0,82,255,0.1)" }}
                         onMouseEnter={e => (e.currentTarget.style.background = "rgba(32,129,226,0.22)")}
                         onMouseLeave={e => (e.currentTarget.style.background = "rgba(32,129,226,0.12)")}>
                         <ExternalLink size={10} />
@@ -205,12 +205,12 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
           {/* Top Scorer Tickets */}
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <Ticket size={16} style={{ color: "#00ff88" }} />
+              <Ticket size={16} style={{ color: "#0052FF" }} />
               <h3 className="font-bold text-white text-sm uppercase tracking-wide">{t.ts_tickets}</h3>
             </div>
 
             <div className="p-4 rounded-2xl flex items-center justify-between"
-              style={{ background: "rgba(0,255,136,0.05)", border: "1px solid rgba(0,255,136,0.12)" }}>
+              style={{ background: "rgba(0,82,255,0.05)", border: "1px solid rgba(0,82,255,0.12)" }}>
               <div>
                 <p className="text-3xl font-black text-white">{Number(unusedTickets ?? 0n)}</p>
                 <p className="text-xs mt-0.5" style={{ color: "#6b7a9a" }}>{t.pd_unused_tickets}</p>
@@ -237,7 +237,7 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                       <p className="font-semibold text-white text-sm">{player.name}</p>
                       <p className="text-xs" style={{ color: "#6b7a9a" }}>{player.country}</p>
                     </div>
-                    <span className="font-mono text-sm font-bold" style={{ color: "#00ff88" }}>
+                    <span className="font-mono text-sm font-bold" style={{ color: "#0052FF" }}>
                       {player.votes} {t.pd_votes}
                     </span>
                     {topScorerFinalized && finalTopScorer === player.name && (

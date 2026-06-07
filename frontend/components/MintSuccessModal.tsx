@@ -14,8 +14,8 @@ interface Props {
 }
 
 const CONFETTI_COLORS = [
-  "#00ff88", "#7c3aed", "#fbbf24", "#ef4444",
-  "#3b82f6", "#f97316", "#ec4899", "#06b6d4",
+  "#0052FF", "#60A5FA", "#fbbf24", "#ef4444",
+  "#34D399", "#f97316", "#ec4899", "#06b6d4",
 ];
 
 const EXPLORER = "https://sepolia.basescan.org/tx/";
@@ -47,7 +47,7 @@ export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-      style={{ background: "rgba(5,8,16,0.85)", backdropFilter: "blur(8px)" }}
+      style={{ background: "rgba(6,9,20,0.85)", backdropFilter: "blur(8px)" }}
       onClick={onClose}
     >
       {/* Confetti */}
@@ -74,8 +74,8 @@ export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
         className="glass-card relative w-full max-w-sm overflow-hidden"
         style={{
           padding: "32px 28px 28px",
-          borderColor: "rgba(0,255,136,0.3)",
-          boxShadow: "0 0 60px rgba(0,255,136,0.15), 0 0 120px rgba(0,255,136,0.05)",
+          borderColor: "rgba(0,82,255,0.3)",
+          boxShadow: "0 0 60px rgba(0,82,255,0.15), 0 0 120px rgba(0,82,255,0.05)",
           animation: "modalPop 0.35s cubic-bezier(0.34,1.56,0.64,1) both",
         }}
         onClick={e => e.stopPropagation()}
@@ -105,7 +105,7 @@ export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
           </div>
           <div className="min-w-0 flex-1">
             <p className="font-black text-white text-lg leading-tight">{country.name}</p>
-            <p className="text-sm mt-0.5 font-semibold" style={{ color: "#00ff88" }}>
+            <p className="text-sm mt-0.5 font-semibold" style={{ color: "#0052FF" }}>
               {amount} {t.modal_nft_count}
             </p>
           </div>
@@ -139,7 +139,7 @@ export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold mb-3 transition-colors"
-          style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.25)", color: "#00ff88" }}
+          style={{ background: "rgba(0,82,255,0.08)", border: "1px solid rgba(0,82,255,0.25)", color: "#0052FF" }}
         >
           <ExternalLink size={15} />
           {t.modal_explorer_btn}

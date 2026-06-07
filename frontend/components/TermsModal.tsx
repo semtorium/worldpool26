@@ -18,7 +18,7 @@ export function TermsModal({ onAccept }: Props) {
   return (
     <div style={{
       position: "fixed", inset: 0, zIndex: 9998,
-      background: "rgba(5,8,16,0.88)",
+      background: "rgba(6,9,20,0.88)",
       backdropFilter: "blur(12px)",
       display: "flex", alignItems: "center", justifyContent: "center",
       padding: "16px",
@@ -30,7 +30,7 @@ export function TermsModal({ onAccept }: Props) {
         borderRadius: 24,
         width: "100%",
         maxWidth: 480,
-        boxShadow: "0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,255,136,0.08)",
+        boxShadow: "0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,82,255,0.08)",
         animation: "tosModalIn 0.35s cubic-bezier(0.34,1.56,0.64,1)",
         overflow: "hidden",
       }}>
@@ -38,7 +38,7 @@ export function TermsModal({ onAccept }: Props) {
         {/* Top accent bar */}
         <div style={{
           height: 3,
-          background: "linear-gradient(90deg, #00ff88, #7c3aed)",
+          background: "linear-gradient(90deg, #0052FF, #2563EB)",
         }} />
 
         <div style={{ padding: "28px 28px 24px" }}>
@@ -95,7 +95,7 @@ export function TermsModal({ onAccept }: Props) {
               href="/terms"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: "#00ff88", fontWeight: 700, textDecoration: "none" }}
+              style={{ color: "#0052FF", fontWeight: 700, textDecoration: "none" }}
             >
               View Terms of Use →
             </a>
@@ -107,8 +107,8 @@ export function TermsModal({ onAccept }: Props) {
             cursor: "pointer", marginBottom: 20,
             padding: "12px 14px",
             borderRadius: 12,
-            background: checked ? "rgba(0,255,136,0.05)" : "rgba(255,255,255,0.02)",
-            border: `1px solid ${checked ? "rgba(0,255,136,0.25)" : "rgba(255,255,255,0.07)"}`,
+            background: checked ? "rgba(0,82,255,0.05)" : "rgba(255,255,255,0.02)",
+            border: `1px solid ${checked ? "rgba(0,82,255,0.25)" : "rgba(255,255,255,0.07)"}`,
             transition: "all 0.2s",
           }}>
             {/* Custom checkbox */}
@@ -116,8 +116,8 @@ export function TermsModal({ onAccept }: Props) {
               onClick={() => setChecked(!checked)}
               style={{
                 width: 20, height: 20, borderRadius: 6, flexShrink: 0, marginTop: 1,
-                background: checked ? "#00ff88" : "transparent",
-                border: `2px solid ${checked ? "#00ff88" : "rgba(255,255,255,0.2)"}`,
+                background: checked ? "#0052FF" : "transparent",
+                border: `2px solid ${checked ? "#0052FF" : "rgba(255,255,255,0.2)"}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 transition: "all 0.15s",
                 cursor: "pointer",
@@ -125,7 +125,7 @@ export function TermsModal({ onAccept }: Props) {
             >
               {checked && (
                 <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                  <path d="M1 4L4 7.5L10 1" stroke="#050810" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M1 4L4 7.5L10 1" stroke="#060914" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               )}
             </div>
@@ -139,7 +139,7 @@ export function TermsModal({ onAccept }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={e => e.stopPropagation()}
-                style={{ color: "#00ff88", fontWeight: 700, textDecoration: "none" }}
+                style={{ color: "#0052FF", fontWeight: 700, textDecoration: "none" }}
               >
                 Terms of Use
               </a>.
@@ -160,10 +160,10 @@ export function TermsModal({ onAccept }: Props) {
               fontWeight: 800,
               transition: "all 0.2s",
               background: checked
-                ? "linear-gradient(135deg, #00ff88, #00cc6a)"
+                ? "linear-gradient(135deg, #0052FF, #00cc6a)"
                 : "rgba(255,255,255,0.05)",
-              color: checked ? "#050810" : "#4a5568",
-              boxShadow: checked ? "0 0 24px rgba(0,255,136,0.3)" : "none",
+              color: checked ? "#060914" : "#4a5568",
+              boxShadow: checked ? "0 0 24px rgba(0,82,255,0.3)" : "none",
               transform: checked ? "translateY(0)" : "none",
             }}
           >

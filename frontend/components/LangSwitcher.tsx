@@ -43,8 +43,8 @@ export function LangSwitcher() {
               translate="no"
               className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors text-left"
               style={{
-                color: lang === l.code ? "#00ff88" : "#f0f4ff",
-                background: lang === l.code ? "rgba(0,255,136,0.08)" : "transparent",
+                color: lang === l.code ? "#0052FF" : "#f0f4ff",
+                background: lang === l.code ? "rgba(0,82,255,0.08)" : "transparent",
               }}
               onMouseEnter={e => { if (lang !== l.code) e.currentTarget.style.background = "rgba(255,255,255,0.04)"; }}
               onMouseLeave={e => { if (lang !== l.code) e.currentTarget.style.background = "transparent"; }}>

@@ -19,7 +19,7 @@ const FAQ_SECTIONS: FAQSection[] = [
   {
     title: "About WorldPool26",
     emoji: "🌍",
-    color: "#00ff88",
+    color: "#0052FF",
     items: [
       {
         q: "What is WorldPool26?",
@@ -84,7 +84,7 @@ const FAQ_SECTIONS: FAQSection[] = [
   {
     title: "Top Scorer",
     emoji: "⚽",
-    color: "#8b5cf6",
+    color: "#2563EB",
     items: [
       {
         q: "How does the Top Scorer pool work?",
@@ -116,7 +116,7 @@ const FAQ_SECTIONS: FAQSection[] = [
   {
     title: "Pricing & Fees",
     emoji: "💰",
-    color: "#00ff88",
+    color: "#0052FF",
     items: [
       {
         q: "How much does it cost?",
@@ -147,7 +147,7 @@ const FAQ_SECTIONS: FAQSection[] = [
   {
     title: "Wallet & Technical",
     emoji: "🔗",
-    color: "#8b5cf6",
+    color: "#2563EB",
     items: [
       {
         q: "Which wallet do I need?",
@@ -179,7 +179,7 @@ function AccordionItem({ item, isOpen, onToggle, accentColor }: {
     <div
       className="rounded-xl overflow-hidden transition-all duration-200"
       style={{
-        background: isOpen ? `rgba(${accentColor === "#00ff88" ? "0,255,136" : accentColor === "#fbbf24" ? "251,191,36" : "139,92,246"},0.04)` : "rgba(255,255,255,0.015)",
+        background: isOpen ? `rgba(${accentColor === "#0052FF" ? "0,255,136" : accentColor === "#fbbf24" ? "251,191,36" : "139,92,246"},0.04)` : "rgba(255,255,255,0.015)",
         border: `1px solid ${isOpen ? accentColor + "33" : "rgba(255,255,255,0.06)"}`,
       }}
     >
@@ -228,9 +228,9 @@ export function FAQPage() {
       <div className="text-center pt-2 pb-4">
         <div
           className="inline-flex items-center gap-2 mb-4 px-4 py-1.5 rounded-full"
-          style={{ background: "rgba(0,255,136,0.07)", border: "1px solid rgba(0,255,136,0.18)" }}
+          style={{ background: "rgba(0,82,255,0.07)", border: "1px solid rgba(0,82,255,0.18)" }}
         >
-          <span className="text-xs font-black tracking-widest uppercase" style={{ color: "#00ff88" }}>
+          <span className="text-xs font-black tracking-widest uppercase" style={{ color: "#0052FF" }}>
             Help Center
           </span>
         </div>
@@ -277,8 +277,8 @@ export function FAQPage() {
       <div
         className="rounded-2xl p-6 text-center"
         style={{
-          background: "rgba(0,255,136,0.04)",
-          border: "1px solid rgba(0,255,136,0.15)",
+          background: "rgba(0,82,255,0.04)",
+          border: "1px solid rgba(0,82,255,0.15)",
         }}
       >
         <p className="text-sm font-semibold text-white mb-1">Still have questions?</p>
@@ -289,7 +289,7 @@ export function FAQPage() {
             target="_blank"
             rel="noopener noreferrer"
             className="font-bold"
-            style={{ color: "#00ff88" }}
+            style={{ color: "#0052FF" }}
           >
             X (Twitter)
           </a>{" "}

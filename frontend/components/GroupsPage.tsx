@@ -174,11 +174,11 @@ function QuadrantCard({ q, sfLabel }: { q: Quadrant; sfLabel: string }) {
     <div className="glass-card p-4 space-y-3">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <span className="text-xs font-black uppercase tracking-widest" style={{ color: "#00ff88" }}>
+        <span className="text-xs font-black uppercase tracking-widest" style={{ color: "#0052FF" }}>
           {q.qfLabel}
         </span>
         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-          style={{ background: "rgba(0,255,136,0.07)", color: "#6b7a9a", border: "1px solid rgba(0,255,136,0.12)" }}>
+          style={{ background: "rgba(0,82,255,0.07)", color: "#6b7a9a", border: "1px solid rgba(0,82,255,0.12)" }}>
           → {sfLabel}
         </span>
       </div>
@@ -191,10 +191,10 @@ function QuadrantCard({ q, sfLabel }: { q: Quadrant; sfLabel: string }) {
           </div>
           {/* R16 arrow */}
           <div className="flex items-center gap-2 pl-2">
-            <div className="text-[9px]" style={{ color: "#7c3aed" }}>↓ winner</div>
-            <div className="flex-1 h-px" style={{ background: "rgba(124,58,237,0.2)" }} />
+            <div className="text-[9px]" style={{ color: "#2563EB" }}>↓ winner</div>
+            <div className="flex-1 h-px" style={{ background: "rgba(0,82,255,0.2)" }} />
             <div className="text-[9px] font-bold px-2 py-0.5 rounded"
-              style={{ background: "rgba(124,58,237,0.1)", color: "#8b5cf6" }}>
+              style={{ background: "rgba(0,82,255,0.1)", color: "#2563EB" }}>
               Round of 16
             </div>
           </div>
@@ -238,7 +238,7 @@ function GroupsGrid() {
               {/* Group header */}
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm shrink-0"
-                  style={{ background: "linear-gradient(135deg,rgba(0,255,136,0.2),rgba(124,58,237,0.2))", border: "1px solid rgba(0,255,136,0.2)", color: "#00ff88" }}>
+                  style={{ background: "linear-gradient(135deg,rgba(0,82,255,0.2),rgba(0,82,255,0.2))", border: "1px solid rgba(0,82,255,0.2)", color: "#0052FF" }}>
                   {group}
                 </div>
                 <span className="font-black text-white">Group {group}</span>
@@ -249,7 +249,7 @@ function GroupsGrid() {
                 {teams.map((team, idx) => (
                   <div key={team.id} className="flex items-center gap-2.5">
                     <span className="text-[10px] font-bold w-4 text-right shrink-0"
-                      style={{ color: idx < 2 ? "#00ff88" : "#6b7a9a" }}>
+                      style={{ color: idx < 2 ? "#0052FF" : "#6b7a9a" }}>
                       {idx + 1}
                     </span>
                     <Image src={getFlagUrl(team.flagCode, 80)} alt={team.name}
@@ -280,7 +280,7 @@ function BracketView() {
       <div className="flex flex-wrap items-center gap-3 justify-center text-[11px]"
         style={{ color: "#6b7a9a" }}>
         <span className="flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 rounded-full" style={{ background: "#00ff88" }} />
+          <span className="inline-block w-2 h-2 rounded-full" style={{ background: "#0052FF" }} />
           Team = most likely finalist of that group by pre-tournament odds
         </span>
         <span>·</span>
@@ -306,12 +306,12 @@ function BracketView() {
       {/* SF 2 path — QF3 + QF4 */}
       <div>
         <div className="flex items-center gap-3 mb-3">
-          <div className="h-px flex-1" style={{ background: "rgba(139,92,246,0.2)" }} />
+          <div className="h-px flex-1" style={{ background: "rgba(37,99,235,0.2)" }} />
           <span className="text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full"
-            style={{ background: "rgba(139,92,246,0.08)", color: "#8b5cf6", border: "1px solid rgba(139,92,246,0.2)" }}>
+            style={{ background: "rgba(37,99,235,0.08)", color: "#2563EB", border: "1px solid rgba(37,99,235,0.2)" }}>
             Semi-Final 2 Path
           </span>
-          <div className="h-px flex-1" style={{ background: "rgba(139,92,246,0.2)" }} />
+          <div className="h-px flex-1" style={{ background: "rgba(37,99,235,0.2)" }} />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <QuadrantCard q={QUADRANTS[2]} sfLabel="SF 2" />
@@ -358,7 +358,7 @@ export function GroupsPage() {
               onClick={() => setInnerTab(tab)}
               className="px-5 py-2 rounded-lg text-sm font-bold transition-all"
               style={innerTab === tab
-                ? { background: "rgba(0,255,136,0.12)", color: "#00ff88", border: "1px solid rgba(0,255,136,0.25)" }
+                ? { background: "rgba(0,82,255,0.12)", color: "#0052FF", border: "1px solid rgba(0,82,255,0.25)" }
                 : { color: "#6b7a9a", border: "1px solid transparent" }
               }
             >

@@ -8,14 +8,14 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <div style={{ background: "#050810", minHeight: "100vh", color: "#f0f4ff" }}>
+    <div style={{ background: "#060914", minHeight: "100vh", color: "#f0f4ff" }}>
       <div style={{ maxWidth: 760, margin: "0 auto", padding: "48px 24px 80px" }}>
 
         {/* Header */}
         <div style={{ marginBottom: 40 }}>
           <Link href="/" style={{
             display: "inline-flex", alignItems: "center", gap: 8,
-            color: "#00ff88", fontSize: 13, fontWeight: 700,
+            color: "#0052FF", fontSize: 13, fontWeight: 700,
             textDecoration: "none", marginBottom: 32,
           }}>
             ← Back to WorldPool26

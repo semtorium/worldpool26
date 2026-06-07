@@ -18,9 +18,9 @@ interface NavbarProps {
 
 function AddressAvatar({ address }: { address: string }) {
   const colors = [
-    ["#00ff88", "#7c3aed"],
+    ["#0052FF", "#2563EB"],
     ["#f59e0b", "#ef4444"],
-    ["#3b82f6", "#8b5cf6"],
+    ["#3b82f6", "#2563EB"],
     ["#10b981", "#06b6d4"],
   ];
   const idx    = parseInt(address.slice(2, 4), 16) % colors.length;
@@ -49,7 +49,7 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
   return (
     <>
       <header className="sticky top-0 z-40 w-full"
-        style={{ background: "rgba(0,20,10,0.20)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(0,255,136,0.15)", touchAction: "manipulation" }}>
+        style={{ background: "rgba(6,9,20,0.75)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(0,82,255,0.18)", touchAction: "manipulation" }}>
         <div className="max-w-7xl mx-auto px-4">
 
           {/* Top Row */}
@@ -60,8 +60,8 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
               style={{ textDecoration: "none" }}>
               <span className="font-black text-white tracking-tight"
                 style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "clamp(0.9rem,3vw,1.05rem)" }}>
-                <span style={{ color: "#00ff88" }}>World</span>Pool
-                <span style={{ color: "rgba(255,255,255,0.45)", fontWeight: 700 }}> 26</span>
+                <span style={{ color: "#60A5FA" }}>World</span>Pool
+                <span style={{ color: "rgba(255,255,255,0.42)", fontWeight: 700 }}> 26</span>
               </span>
             </Link>
 
@@ -74,9 +74,9 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
                 <button
                   onClick={() => setDrawerOpen(true)}
                   className="flex items-center gap-2 px-3 py-2 rounded-xl transition-all"
-                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(0,255,136,0.3)")}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)")}>
+                  style={{ background: "rgba(0,82,255,0.07)", border: "1px solid rgba(0,82,255,0.18)" }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(0,82,255,0.40)")}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(0,82,255,0.18)")}>
                   <AddressAvatar address={address} />
                   <span className="font-mono text-sm font-semibold text-white hidden sm:block">
                     {shortenAddress(address)}
@@ -100,8 +100,8 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
             <nav
               className="flex items-center p-1 gap-0.5 rounded-2xl"
               style={{
-                background: "rgba(10,18,30,0.6)",
-                border: "1px solid rgba(255,255,255,0.07)",
+                background: "rgba(6,9,25,0.70)",
+                border: "1px solid rgba(0,82,255,0.14)",
                 backdropFilter: "blur(14px)",
                 boxShadow: "0 4px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
               }}
@@ -115,11 +115,11 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
                     className="nav-dock-btn relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200"
                     data-active={isActive ? "true" : "false"}
                     style={isActive ? {
-                      background: "linear-gradient(135deg, rgba(124,58,237,0.85) 0%, rgba(0,180,90,0.7) 100%)",
+                      background: "linear-gradient(135deg, #0052FF 0%, #2563EB 100%)",
                       color: "#fff",
-                      boxShadow: "0 0 18px rgba(0,255,136,0.18), 0 2px 10px rgba(0,0,0,0.4)",
-                      border: "1px solid rgba(0,255,136,0.22)",
-                      textShadow: "0 0 12px rgba(0,255,136,0.4)",
+                      boxShadow: "0 0 20px rgba(0,82,255,0.35), 0 2px 10px rgba(0,0,0,0.45)",
+                      border: "1px solid rgba(0,82,255,0.50)",
+                      textShadow: "0 0 12px rgba(96,165,250,0.5)",
                       cursor: "pointer",
                       touchAction: "manipulation",
                       WebkitTapHighlightColor: "transparent",
@@ -137,8 +137,8 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
                       <span
                         className="absolute inset-0 rounded-xl pointer-events-none"
                         style={{
-                          background: "linear-gradient(135deg, rgba(124,58,237,0.12), rgba(0,255,136,0.06))",
-                          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
+                          background: "linear-gradient(135deg, rgba(0,82,255,0.18), rgba(37,99,235,0.10))",
+                          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.14)",
                         }}
                       />
                     )}

@@ -144,7 +144,7 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
           }}
         >
           <div style={{
-            background: "rgba(10,18,30,0.97)",
+            background: "rgba(6,9,22,0.97)",
             border: "1px solid rgba(255,255,255,0.12)",
             borderRadius: 14,
             padding: "12px 14px",
@@ -159,7 +159,7 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
               width: 12, height: 6, overflow: "hidden",
             }}>
               <div style={{
-                width: 12, height: 12, background: "rgba(10,18,30,0.97)",
+                width: 12, height: 12, background: "rgba(6,9,22,0.97)",
                 border: "1px solid rgba(255,255,255,0.12)",
                 transform: "rotate(45deg) translate(-3px, -3px)",
               }} />
@@ -196,7 +196,7 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
                         {shortenAddress(h.address)}
                       </span>
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 900, color: "#00ff88", fontFamily: "monospace", flexShrink: 0 }}>
+                    <span style={{ fontSize: 11, fontWeight: 900, color: "#0052FF", fontFamily: "monospace", flexShrink: 0 }}>
                       {h.count} {t.chart_nft}
                     </span>
                   </div>
@@ -216,7 +216,7 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
       }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 20, flexWrap: "wrap" }}>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#00ff88", flexShrink: 0, boxShadow: "0 0 8px #00ff88", animation: "livePulse 2s ease-in-out infinite" }} />
+          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#0052FF", flexShrink: 0, boxShadow: "0 0 8px #0052FF", animation: "livePulse 2s ease-in-out infinite" }} />
           <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.12em" }}>
             {t.chart_title}
           </span>
@@ -243,13 +243,13 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
                 ? "linear-gradient(180deg, #fbbf24 0%, rgba(251,191,36,0.5) 100%)"
                 : isElim
                   ? "linear-gradient(180deg, rgba(239,68,68,0.5) 0%, rgba(239,68,68,0.15) 100%)"
-                  : "linear-gradient(180deg, #00ff88 0%, rgba(0,255,136,0.3) 100%)";
+                  : "linear-gradient(180deg, #0052FF 0%, rgba(0,82,255,0.3) 100%)";
 
               const glow = isHovered
-                ? isWinner ? "0 0 20px rgba(251,191,36,0.6)" : isElim ? "0 0 16px rgba(239,68,68,0.3)" : "0 0 20px rgba(0,255,136,0.45)"
-                : isWinner ? "0 0 14px rgba(251,191,36,0.35)" : isElim ? "none" : "0 0 10px rgba(0,255,136,0.2)";
+                ? isWinner ? "0 0 20px rgba(251,191,36,0.6)" : isElim ? "0 0 16px rgba(239,68,68,0.3)" : "0 0 20px rgba(0,82,255,0.45)"
+                : isWinner ? "0 0 14px rgba(251,191,36,0.35)" : isElim ? "none" : "0 0 10px rgba(0,82,255,0.2)";
 
-              const countCol = isWinner ? "#fbbf24" : isElim ? "rgba(255,255,255,0.25)" : "#00ff88";
+              const countCol = isWinner ? "#fbbf24" : isElim ? "rgba(255,255,255,0.25)" : "#0052FF";
               const nameCol  = isElim ? "rgba(255,255,255,0.2)" : isHovered ? "#fff" : "rgba(255,255,255,0.5)";
 
               return (
@@ -266,7 +266,7 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
                     opacity: isElim ? 0.6 : 1,
                     transition: "transform 0.15s",
                     transform: isHovered ? "scale(1.15)" : "scale(1)",
-                    textShadow: isWinner ? "0 0 10px rgba(251,191,36,0.6)" : isElim ? "none" : isHovered ? "0 0 10px rgba(0,255,136,0.7)" : "0 0 8px rgba(0,255,136,0.4)",
+                    textShadow: isWinner ? "0 0 10px rgba(251,191,36,0.6)" : isElim ? "none" : isHovered ? "0 0 10px rgba(0,82,255,0.7)" : "0 0 8px rgba(0,82,255,0.4)",
                   }}>
                     {c.supply}
                   </span>
@@ -296,9 +296,9 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
                   {/* Flag */}
                   <div style={{
                     width: 30, height: 21, marginTop: 8, borderRadius: 4, overflow: "hidden",
-                    border: isWinner ? "1.5px solid rgba(251,191,36,0.55)" : isElim ? "1px solid rgba(255,255,255,0.07)" : isHovered ? "1px solid rgba(0,255,136,0.45)" : "1px solid rgba(255,255,255,0.14)",
+                    border: isWinner ? "1.5px solid rgba(251,191,36,0.55)" : isElim ? "1px solid rgba(255,255,255,0.07)" : isHovered ? "1px solid rgba(0,82,255,0.45)" : "1px solid rgba(255,255,255,0.14)",
                     opacity: isElim ? 0.3 : 1,
-                    boxShadow: isWinner ? "0 0 10px rgba(251,191,36,0.45)" : isHovered ? "0 0 8px rgba(0,255,136,0.3)" : "none",
+                    boxShadow: isWinner ? "0 0 10px rgba(251,191,36,0.45)" : isHovered ? "0 0 8px rgba(0,82,255,0.3)" : "none",
                     transition: "border-color 0.15s, box-shadow 0.15s",
                     flexShrink: 0,
                   }}>
@@ -332,7 +332,7 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
         {/* Legend */}
         <div style={{ display: "flex", gap: 16, marginTop: 14, flexWrap: "wrap" }}>
           {[
-            { grad: "linear-gradient(180deg,#00ff88,rgba(0,255,136,0.4))", label: t.chart_active },
+            { grad: "linear-gradient(180deg,#0052FF,rgba(0,82,255,0.4))", label: t.chart_active },
             { grad: "linear-gradient(180deg,rgba(239,68,68,0.5),rgba(239,68,68,0.15))", label: t.chart_eliminated },
             { grad: "linear-gradient(180deg,#fbbf24,rgba(251,191,36,0.5))", label: t.chart_champion },
           ].map(({ grad, label }) => (

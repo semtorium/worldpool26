@@ -47,7 +47,7 @@ function useWalletDiscovery() {
 }
 
 // ── Stat card ─────────────────────────────────────────────────
-function Stat({ label, value, sub, color = "#00ff88" }: { label: string; value: string; sub?: string; color?: string }) {
+function Stat({ label, value, sub, color = "#0052FF" }: { label: string; value: string; sub?: string; color?: string }) {
   return (
     <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "16px 20px" }}>
       <p style={{ color: "#6b7a9a", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 6 }}>{label}</p>
@@ -284,7 +284,7 @@ export default function AdminPage() {
 
   // ── Wallet Picker ──
   const WalletPicker = () => (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(5,8,16,0.88)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(6,9,20,0.88)", backdropFilter: "blur(12px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ background: "#0d1117", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "28px", width: "100%", maxWidth: 360, display: "flex", flexDirection: "column", gap: 10 }}>
         <p style={{ color: "#fff", fontSize: 16, fontWeight: 900, marginBottom: 6 }}>Select Wallet</p>
 
@@ -315,14 +315,14 @@ export default function AdminPage() {
 
   // ── Not connected ──
   if (!address) return (
-    <div style={{ background: "#050810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ background: "#060914", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       {showPicker && <WalletPicker />}
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
         <span style={{ fontSize: 48 }}>🔒</span>
         <p style={{ color: "#fff", fontSize: 18, fontWeight: 900 }}>Admin Panel</p>
         <p style={{ color: "#6b7a9a", fontSize: 14 }}>Connect your owner wallet</p>
         <button onClick={() => setShowPicker(true)}
-          style={{ background: "linear-gradient(135deg,#00ff88,#00cc6a)", color: "#050810", border: "none", borderRadius: 12, padding: "12px 28px", fontWeight: 800, cursor: "pointer", fontSize: 14 }}>
+          style={{ background: "linear-gradient(135deg,#0052FF,#00cc6a)", color: "#060914", border: "none", borderRadius: 12, padding: "12px 28px", fontWeight: 800, cursor: "pointer", fontSize: 14 }}>
           Connect Wallet
         </button>
       </div>
@@ -331,21 +331,21 @@ export default function AdminPage() {
 
   // ── Not authorized — show generic 404, don't reveal admin panel exists ──
   if (address && ownerAddress && !isAuthorized) return (
-    <div style={{ background: "#050810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ background: "#060914", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
         <p style={{ color: "rgba(255,255,255,0.08)", fontSize: 120, fontWeight: 900, lineHeight: 1, margin: 0 }}>404</p>
         <p style={{ color: "#6b7a9a", fontSize: 16 }}>Page not found</p>
-        <Link href="/" style={{ color: "#00ff88", fontWeight: 700, textDecoration: "none", fontSize: 13, marginTop: 8 }}>← Back to site</Link>
+        <Link href="/" style={{ color: "#0052FF", fontWeight: 700, textDecoration: "none", fontSize: 13, marginTop: 8 }}>← Back to site</Link>
       </div>
     </div>
   );
 
   // ── Authorized but not verified — require wallet signature ──
   if (address && isAuthorized && !isAdminVerified) return (
-    <div style={{ background: "#050810", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ background: "#060914", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: 16, maxWidth: 360, padding: "0 24px" }}>
-        <div style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <ShieldCheck size={36} style={{ color: "#00ff88" }} />
+        <div style={{ width: 72, height: 72, borderRadius: 20, background: "rgba(0,82,255,0.08)", border: "1px solid rgba(0,82,255,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <ShieldCheck size={36} style={{ color: "#0052FF" }} />
         </div>
         <p style={{ color: "#fff", fontSize: 20, fontWeight: 900, margin: 0 }}>Verify Ownership</p>
         <p style={{ color: "#6b7a9a", fontSize: 13, lineHeight: 1.6, margin: 0 }}>
@@ -357,7 +357,7 @@ export default function AdminPage() {
         <button
           onClick={handleVerifySignature}
           disabled={isVerifying}
-          style={{ background: "linear-gradient(135deg,#00ff88,#00cc6a)", color: "#050810", border: "none", borderRadius: 14, padding: "14px 32px", fontWeight: 900, fontSize: 14, cursor: isVerifying ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8, opacity: isVerifying ? 0.7 : 1 }}>
+          style={{ background: "linear-gradient(135deg,#0052FF,#00cc6a)", color: "#060914", border: "none", borderRadius: 14, padding: "14px 32px", fontWeight: 900, fontSize: 14, cursor: isVerifying ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8, opacity: isVerifying ? 0.7 : 1 }}>
           {isVerifying && <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} />}
           {isVerifying ? "Waiting for signature…" : "🔑 Sign to Continue"}
         </button>
@@ -371,7 +371,7 @@ export default function AdminPage() {
 
   // ── Admin Panel ──
   return (
-    <div style={{ background: "#050810", minHeight: "100vh", color: "#f0f4ff" }}>
+    <div style={{ background: "#060914", minHeight: "100vh", color: "#f0f4ff" }}>
       {showPicker && <WalletPicker />}
       <div style={{ maxWidth: 900, margin: "0 auto", padding: "32px 20px 80px" }}>
 
@@ -390,7 +390,7 @@ export default function AdminPage() {
               Switch Wallet
             </button>
             <button onClick={fetchData} disabled={loading}
-              style={{ background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.2)", borderRadius: 10, padding: "8px 16px", color: "#00ff88", fontWeight: 700, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+              style={{ background: "rgba(0,82,255,0.08)", border: "1px solid rgba(0,82,255,0.2)", borderRadius: 10, padding: "8px 16px", color: "#0052FF", fontWeight: 700, fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
               {loading ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : "↻"} Refresh
             </button>
           </div>
@@ -421,7 +421,7 @@ export default function AdminPage() {
 
         {/* Tx feedback */}
         {txSuccess && (
-          <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(0,255,136,0.08)", border: "1px solid rgba(0,255,136,0.25)", borderRadius: 12, color: "#00ff88", fontWeight: 700, fontSize: 13 }}>
+          <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(0,82,255,0.08)", border: "1px solid rgba(0,82,255,0.25)", borderRadius: 12, color: "#0052FF", fontWeight: 700, fontSize: 13 }}>
             ✓ {txSuccess} — transaction confirmed!
           </div>
         )}
@@ -434,21 +434,21 @@ export default function AdminPage() {
         {/* Live Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 28 }}>
           <Stat label="Total Prize Pool"  value={`${fmt(totalPool)} ETH`}  color="#fbbf24" />
-          <Stat label="Nations Cup Pool"  value={`${fmt(ncPool)} ETH`}     color="#00ff88" />
-          <Stat label="Top Scorer Pool"   value={`${fmt(scorerPool)} ETH`} color="#7c3aed" />
-          <Stat label="Total Volume"      value={`${fmt(totalVol)} ETH`}   color="#00ff88" />
-          <Stat label="Nations Cup"       value={ncFinalized ? "✓ Finalized" : "Active"} color={ncFinalized ? "#00ff88" : "#fbbf24"} sub={ncFinalized ? `Winner: #${winningId.toString()}` : undefined} />
-          <Stat label="Top Scorer"        value={tsFinalized ? "✓ Finalized" : "Active"} color={tsFinalized ? "#00ff88" : "#fbbf24"} sub={tsFinalized ? finalScorer : undefined} />
-          <Stat label="Mint Status"        value={isMintClosed ? "🔒 CLOSED" : "🟢 OPEN"} color={isMintClosed ? "#ef4444" : "#00ff88"} />
-          <Stat label="Vote Status"        value={isVotingClosed ? "🔒 CLOSED" : "🟢 OPEN"} color={isVotingClosed ? "#ef4444" : "#00ff88"} />
-          <Stat label="Contract Status"   value={isPaused ? "⏸ PAUSED" : "▶ Running"} color={isPaused ? "#ef4444" : "#00ff88"} />
-          <Stat label="Site Maintenance"  value={isMaintenance ? "🔧 ON" : "✓ OFF"} color={isMaintenance ? "#fbbf24" : "#00ff88"} />
+          <Stat label="Nations Cup Pool"  value={`${fmt(ncPool)} ETH`}     color="#0052FF" />
+          <Stat label="Top Scorer Pool"   value={`${fmt(scorerPool)} ETH`} color="#2563EB" />
+          <Stat label="Total Volume"      value={`${fmt(totalVol)} ETH`}   color="#0052FF" />
+          <Stat label="Nations Cup"       value={ncFinalized ? "✓ Finalized" : "Active"} color={ncFinalized ? "#0052FF" : "#fbbf24"} sub={ncFinalized ? `Winner: #${winningId.toString()}` : undefined} />
+          <Stat label="Top Scorer"        value={tsFinalized ? "✓ Finalized" : "Active"} color={tsFinalized ? "#0052FF" : "#fbbf24"} sub={tsFinalized ? finalScorer : undefined} />
+          <Stat label="Mint Status"        value={isMintClosed ? "🔒 CLOSED" : "🟢 OPEN"} color={isMintClosed ? "#ef4444" : "#0052FF"} />
+          <Stat label="Vote Status"        value={isVotingClosed ? "🔒 CLOSED" : "🟢 OPEN"} color={isVotingClosed ? "#ef4444" : "#0052FF"} />
+          <Stat label="Contract Status"   value={isPaused ? "⏸ PAUSED" : "▶ Running"} color={isPaused ? "#ef4444" : "#0052FF"} />
+          <Stat label="Site Maintenance"  value={isMaintenance ? "🔧 ON" : "✓ OFF"} color={isMaintenance ? "#fbbf24" : "#0052FF"} />
           <Stat label="Eliminated"        value={`${elimStatus.filter(Boolean).length} / 48`} color="#6b7a9a" />
           <Stat label="Pending Dev Fees"  value={`${fmt(pendingDev)} ETH`} color={pendingDev > 0n ? "#ef4444" : "#6b7a9a"} sub={pendingDev > 0n ? "Failed transfers — withdraw below" : "All fees delivered"} />
         </div>
 
         {/* Mint Control */}
-        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: isMintClosed ? "rgba(239,68,68,0.4)" : "rgba(0,255,136,0.3)" }}>
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: isMintClosed ? "rgba(239,68,68,0.4)" : "rgba(0,82,255,0.3)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>🎟️ Mint Control</h2>
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
             Closing mint prevents new NFTs from being minted. Ticket purchases and votes remain open.
@@ -456,14 +456,14 @@ export default function AdminPage() {
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
             padding: "20px 24px", borderRadius: 14,
-            background: isMintClosed ? "rgba(239,68,68,0.07)" : "rgba(0,255,136,0.05)",
-            border: `1px solid ${isMintClosed ? "rgba(239,68,68,0.35)" : "rgba(0,255,136,0.25)"}`,
+            background: isMintClosed ? "rgba(239,68,68,0.07)" : "rgba(0,82,255,0.05)",
+            border: `1px solid ${isMintClosed ? "rgba(239,68,68,0.35)" : "rgba(0,82,255,0.25)"}`,
           }}>
             <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 16 }}>
               <div style={{
                 width: 48, height: 48, borderRadius: 14, flexShrink: 0,
                 display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
-                background: isMintClosed ? "rgba(239,68,68,0.12)" : "rgba(0,255,136,0.1)",
+                background: isMintClosed ? "rgba(239,68,68,0.12)" : "rgba(0,82,255,0.1)",
               }}>
                 {isMintClosed ? "🔒" : "🟢"}
               </div>
@@ -483,9 +483,9 @@ export default function AdminPage() {
               onClick={() => sendTx("setMintClosed", [!isMintClosed], "mintToggle")}
               style={{
                 background: isMintClosed
-                  ? "linear-gradient(135deg,#00ff88,#00cc6a)"
+                  ? "linear-gradient(135deg,#0052FF,#00cc6a)"
                   : "linear-gradient(135deg,#ef4444,#dc2626)",
-                color: isMintClosed ? "#050810" : "#fff",
+                color: isMintClosed ? "#060914" : "#fff",
                 border: "none", borderRadius: 12, padding: "12px 24px",
                 fontWeight: 900, fontSize: 14, cursor: "pointer",
                 display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
@@ -497,7 +497,7 @@ export default function AdminPage() {
         </div>
 
         {/* Vote Control */}
-        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: isVotingClosed ? "rgba(239,68,68,0.4)" : "rgba(139,92,246,0.3)" }}>
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: isVotingClosed ? "rgba(239,68,68,0.4)" : "rgba(37,99,235,0.3)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>⚽ Top Scorer Vote Control</h2>
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
             Closing votes stops ticket purchases and voting. Auto-closes when Top Scorer is finalized. NFT minting remains open.
@@ -505,14 +505,14 @@ export default function AdminPage() {
           <div style={{
             display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
             padding: "20px 24px", borderRadius: 14,
-            background: isVotingClosed ? "rgba(239,68,68,0.07)" : "rgba(139,92,246,0.05)",
-            border: `1px solid ${isVotingClosed ? "rgba(239,68,68,0.35)" : "rgba(139,92,246,0.25)"}`,
+            background: isVotingClosed ? "rgba(239,68,68,0.07)" : "rgba(37,99,235,0.05)",
+            border: `1px solid ${isVotingClosed ? "rgba(239,68,68,0.35)" : "rgba(37,99,235,0.25)"}`,
           }}>
             <div style={{ display: "flex", flex: 1, alignItems: "center", gap: 16 }}>
               <div style={{
                 width: 48, height: 48, borderRadius: 14, flexShrink: 0,
                 display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22,
-                background: isVotingClosed ? "rgba(239,68,68,0.12)" : "rgba(139,92,246,0.1)",
+                background: isVotingClosed ? "rgba(239,68,68,0.12)" : "rgba(37,99,235,0.1)",
               }}>
                 {isVotingClosed ? "🔒" : "🟢"}
               </div>
@@ -534,9 +534,9 @@ export default function AdminPage() {
                 background: tsFinalized
                   ? "rgba(255,255,255,0.05)"
                   : isVotingClosed
-                    ? "linear-gradient(135deg,#00ff88,#00cc6a)"
+                    ? "linear-gradient(135deg,#0052FF,#00cc6a)"
                     : "linear-gradient(135deg,#ef4444,#dc2626)",
-                color: tsFinalized ? "#4a5568" : isVotingClosed ? "#050810" : "#fff",
+                color: tsFinalized ? "#4a5568" : isVotingClosed ? "#060914" : "#fff",
                 border: "none", borderRadius: 12, padding: "12px 24px",
                 fontWeight: 900, fontSize: 14,
                 cursor: tsFinalized ? "not-allowed" : "pointer",
@@ -572,7 +572,7 @@ export default function AdminPage() {
                     <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
                       <td style={{ padding: "8px 12px", color: "#6b7a9a" }}>#{c.id}</td>
                       <td style={{ padding: "8px 12px", color: "#fff", fontWeight: 700 }}>{c.name}</td>
-                      <td style={{ padding: "8px 12px", color: "#00ff88", fontWeight: 700 }}>{c.supply.toString()}</td>
+                      <td style={{ padding: "8px 12px", color: "#0052FF", fontWeight: 700 }}>{c.supply.toString()}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -582,7 +582,7 @@ export default function AdminPage() {
         </div>
 
         {/* Finalize Nations Cup */}
-        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: ncFinalized ? "rgba(0,255,136,0.15)" : "rgba(251,191,36,0.15)" }}>
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: ncFinalized ? "rgba(0,82,255,0.15)" : "rgba(251,191,36,0.15)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>🏆 Finalize Nations Cup</h2>
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: !ncFinalized && !isMintClosed ? 10 : 16 }}>Declare the winning country — irreversible.</p>
           {/* Front-run guard: warn if mint is still open */}
@@ -593,8 +593,8 @@ export default function AdminPage() {
             </div>
           )}
           {ncFinalized ? (
-            <div style={{ padding: "12px 16px", background: "rgba(0,255,136,0.06)", borderRadius: 12, border: "1px solid rgba(0,255,136,0.2)" }}>
-              <p style={{ color: "#00ff88", fontWeight: 700 }}>✓ Finalized — Winner: Country #{winningId.toString()}</p>
+            <div style={{ padding: "12px 16px", background: "rgba(0,82,255,0.06)", borderRadius: 12, border: "1px solid rgba(0,82,255,0.2)" }}>
+              <p style={{ color: "#0052FF", fontWeight: 700 }}>✓ Finalized — Winner: Country #{winningId.toString()}</p>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -619,7 +619,7 @@ export default function AdminPage() {
                 <button
                   disabled={!ncWinnerId || txPending === "finalizeNC"}
                   onClick={() => sendTx("finalizeNationsCup", [BigInt(ncWinnerId)], "finalizeNC")}
-                  style={{ background: !ncWinnerId ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg,#00ff88,#00cc6a)", color: !ncWinnerId ? "#4a5568" : "#050810", border: "none", borderRadius: 12, padding: "10px 20px", fontWeight: 800, fontSize: 13, cursor: !ncWinnerId ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                  style={{ background: !ncWinnerId ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg,#0052FF,#00cc6a)", color: !ncWinnerId ? "#4a5568" : "#060914", border: "none", borderRadius: 12, padding: "10px 20px", fontWeight: 800, fontSize: 13, cursor: !ncWinnerId ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
                   {txPending === "finalizeNC" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
                   {txPending === "finalizeNC" ? "Confirming…" : `Finalize → ${previewCountry?.name ?? "..."}`}
                 </button>
@@ -630,7 +630,7 @@ export default function AdminPage() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
                     <div><p style={{ color: "#6b7a9a", fontSize: 11, marginBottom: 2 }}>MAIN NC POOL</p><p style={{ color: "#fff", fontWeight: 700, fontFamily: "monospace" }}>{(Number(ncPool)/1e18).toFixed(4)} ETH</p></div>
                     <div><p style={{ color: "#6b7a9a", fontSize: 11, marginBottom: 2 }}>WINNER NFTs</p><p style={{ color: "#fff", fontWeight: 700 }}>{previewSupply.toString()}</p></div>
-                    <div><p style={{ color: "#6b7a9a", fontSize: 11, marginBottom: 2 }}>PAYOUT/NFT (95%)</p><p style={{ color: "#00ff88", fontWeight: 900, fontFamily: "monospace" }}>{previewPayout.toFixed(5)} ETH</p></div>
+                    <div><p style={{ color: "#6b7a9a", fontSize: 11, marginBottom: 2 }}>PAYOUT/NFT (95%)</p><p style={{ color: "#0052FF", fontWeight: 900, fontFamily: "monospace" }}>{previewPayout.toFixed(5)} ETH</p></div>
                   </div>
                   <p style={{ color: "#6b7a9a", fontSize: 11, marginTop: 8 }}>
                     ({(Number(ncPool)/1e18).toFixed(4)} × 0.95) ÷ {previewSupply.toString()} = {previewPayout.toFixed(6)} ETH per NFT
@@ -642,12 +642,12 @@ export default function AdminPage() {
         </div>
 
         {/* Finalize Top Scorer */}
-        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: tsFinalized ? "rgba(0,255,136,0.15)" : "rgba(124,58,237,0.2)" }}>
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: tsFinalized ? "rgba(0,82,255,0.15)" : "rgba(0,82,255,0.2)" }}>
           <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>⚽ Finalize Top Scorer</h2>
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>Player name must exactly match what users voted for.</p>
           {tsFinalized ? (
-            <div style={{ padding: "12px 16px", background: "rgba(0,255,136,0.06)", borderRadius: 12, border: "1px solid rgba(0,255,136,0.2)" }}>
-              <p style={{ color: "#00ff88", fontWeight: 700 }}>✓ Finalized — {finalScorer}</p>
+            <div style={{ padding: "12px 16px", background: "rgba(0,82,255,0.06)", borderRadius: 12, border: "1px solid rgba(0,82,255,0.2)" }}>
+              <p style={{ color: "#0052FF", fontWeight: 700 }}>✓ Finalized — {finalScorer}</p>
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -687,7 +687,7 @@ export default function AdminPage() {
                 return (
                   <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                     {tsPlayer !== "__other__" && (
-                      <div style={{ padding: "12px 16px", background: "rgba(124,58,237,0.06)", borderRadius: 12, border: "1px solid rgba(124,58,237,0.2)", fontSize: 13 }}>
+                      <div style={{ padding: "12px 16px", background: "rgba(0,82,255,0.06)", borderRadius: 12, border: "1px solid rgba(0,82,255,0.2)", fontSize: 13 }}>
                         <p style={{ color: "#a78bfa", fontWeight: 800 }}>
                           ⚽ Selected: <span style={{ color: "#fff" }}>{finalName}</span>
                           <span style={{ color: "#6b7a9a", fontWeight: 400 }}> — {knownPlayer?.country}</span>
@@ -701,7 +701,7 @@ export default function AdminPage() {
                       <button
                         disabled={txPending === "finalizeTS"}
                         onClick={() => sendTx("finalizeTopScorer", [finalName], "finalizeTS")}
-                        style={{ background: "linear-gradient(135deg,#7c3aed,#6d28d9)", color: "#fff", border: "none", borderRadius: 12, padding: "10px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                        style={{ background: "linear-gradient(135deg,#2563EB,#6d28d9)", color: "#fff", border: "none", borderRadius: 12, padding: "10px 20px", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
                         {txPending === "finalizeTS" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
                         {txPending === "finalizeTS" ? "Confirming…" : `Finalize → ${finalName}`}
                       </button>
@@ -866,7 +866,7 @@ export default function AdminPage() {
           };
 
           return (
-            <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(0,255,136,0.15)" }}>
+            <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(0,82,255,0.15)" }}>
               <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>💰 Withdraw Unclaimed Pools</h2>
               <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 20 }}>
                 After 15 days from finalization, any ETH not claimed by winners can be withdrawn to the owner wallet.
@@ -879,8 +879,8 @@ export default function AdminPage() {
                   <div style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
                     padding: "16px 20px", borderRadius: 14,
-                    background: ncUnlocked ? "rgba(0,255,136,0.05)" : "rgba(255,255,255,0.02)",
-                    border: `1px solid ${ncUnlocked ? "rgba(0,255,136,0.25)" : "rgba(255,255,255,0.08)"}`,
+                    background: ncUnlocked ? "rgba(0,82,255,0.05)" : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${ncUnlocked ? "rgba(0,82,255,0.25)" : "rgba(255,255,255,0.08)"}`,
                   }}>
                     <div>
                       <p style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>🏆 Nations Cup Unclaimed</p>
@@ -898,7 +898,7 @@ export default function AdminPage() {
                         </p>
                       )}
                       {ncFinalized && ncUnlocked && (
-                        <p style={{ color: "#00ff88", fontSize: 12, marginTop: 4, fontWeight: 700 }}>
+                        <p style={{ color: "#0052FF", fontSize: 12, marginTop: 4, fontWeight: 700 }}>
                           ✓ Unlock period passed — ready to withdraw
                         </p>
                       )}
@@ -908,9 +908,9 @@ export default function AdminPage() {
                       onClick={() => sendTx("withdrawUnclaimedNationsCup", [], "withdrawNC")}
                       style={{
                         background: ncUnlocked && Number(ncPool) > 0
-                          ? "linear-gradient(135deg,#00ff88,#00cc6a)"
+                          ? "linear-gradient(135deg,#0052FF,#00cc6a)"
                           : "rgba(255,255,255,0.05)",
-                        color: ncUnlocked && Number(ncPool) > 0 ? "#050810" : "#4a5568",
+                        color: ncUnlocked && Number(ncPool) > 0 ? "#060914" : "#4a5568",
                         border: "none", borderRadius: 12, padding: "10px 20px",
                         fontWeight: 800, fontSize: 13,
                         cursor: ncUnlocked && Number(ncPool) > 0 ? "pointer" : "not-allowed",
@@ -928,8 +928,8 @@ export default function AdminPage() {
                   <div style={{
                     display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12,
                     padding: "16px 20px", borderRadius: 14,
-                    background: tsUnlocked ? "rgba(124,58,237,0.06)" : "rgba(255,255,255,0.02)",
-                    border: `1px solid ${tsUnlocked ? "rgba(124,58,237,0.3)" : "rgba(255,255,255,0.08)"}`,
+                    background: tsUnlocked ? "rgba(0,82,255,0.06)" : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${tsUnlocked ? "rgba(0,82,255,0.3)" : "rgba(255,255,255,0.08)"}`,
                   }}>
                     <div>
                       <p style={{ color: "#fff", fontWeight: 800, fontSize: 14 }}>⚽ Top Scorer Unclaimed</p>
@@ -947,7 +947,7 @@ export default function AdminPage() {
                         </p>
                       )}
                       {tsFinalized && tsUnlocked && (
-                        <p style={{ color: "#00ff88", fontSize: 12, marginTop: 4, fontWeight: 700 }}>
+                        <p style={{ color: "#0052FF", fontSize: 12, marginTop: 4, fontWeight: 700 }}>
                           ✓ Unlock period passed — ready to withdraw
                         </p>
                       )}
@@ -957,7 +957,7 @@ export default function AdminPage() {
                       onClick={() => sendTx("withdrawUnclaimedTopScorer", [], "withdrawTS")}
                       style={{
                         background: tsUnlocked && Number(scorerPool) > 0
-                          ? "linear-gradient(135deg,#7c3aed,#6d28d9)"
+                          ? "linear-gradient(135deg,#2563EB,#6d28d9)"
                           : "rgba(255,255,255,0.05)",
                         color: tsUnlocked && Number(scorerPool) > 0 ? "#fff" : "#4a5568",
                         border: "none", borderRadius: 12, padding: "10px 20px",
@@ -1021,8 +1021,8 @@ export default function AdminPage() {
                 disabled={txPending === "maintenance"}
                 onClick={() => sendTx("setMaintenanceMode", [!isMaintenance], "maintenance")}
                 style={{
-                  background: isMaintenance ? "linear-gradient(135deg,#00ff88,#00cc6a)" : "linear-gradient(135deg,#fbbf24,#f59e0b)",
-                  color: "#050810",
+                  background: isMaintenance ? "linear-gradient(135deg,#0052FF,#00cc6a)" : "linear-gradient(135deg,#fbbf24,#f59e0b)",
+                  color: "#060914",
                   border: "none", borderRadius: 12, padding: "10px 20px",
                   fontWeight: 800, fontSize: 13, cursor: "pointer",
                   display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
@@ -1046,8 +1046,8 @@ export default function AdminPage() {
                 disabled={txPending === "pause"}
                 onClick={() => sendTx("setPaused", [!isPaused], "pause")}
                 style={{
-                  background: isPaused ? "linear-gradient(135deg,#00ff88,#00cc6a)" : "linear-gradient(135deg,#ef4444,#dc2626)",
-                  color: isPaused ? "#050810" : "#fff",
+                  background: isPaused ? "linear-gradient(135deg,#0052FF,#00cc6a)" : "linear-gradient(135deg,#ef4444,#dc2626)",
+                  color: isPaused ? "#060914" : "#fff",
                   border: "none", borderRadius: 12, padding: "10px 20px",
                   fontWeight: 800, fontSize: 13, cursor: "pointer",
                   display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",

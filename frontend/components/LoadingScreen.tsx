@@ -45,7 +45,7 @@ export function LoadingScreen({ onDone, isReady }: Props) {
         position: "fixed",
         inset: 0,
         zIndex: 9999,
-        background: "#050810",
+        background: "#060914",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -59,8 +59,8 @@ export function LoadingScreen({ onDone, isReady }: Props) {
       <div style={{
         position: "absolute", inset: 0, pointerEvents: "none",
         background: [
-          "radial-gradient(ellipse 80% 50% at 20% -10%, rgba(124,58,237,0.13) 0%, transparent 60%)",
-          "radial-gradient(ellipse 60% 40% at 80% 110%, rgba(0,255,136,0.07) 0%, transparent 50%)",
+          "radial-gradient(ellipse 80% 50% at 15% -10%, rgba(0,82,255,0.16) 0%, transparent 60%)",
+          "radial-gradient(ellipse 60% 40% at 85% 110%, rgba(0,82,255,0.10) 0%, transparent 50%)",
         ].join(","),
       }} />
 
@@ -69,14 +69,14 @@ export function LoadingScreen({ onDone, isReady }: Props) {
         position: "absolute",
         width: 640, height: 640,
         borderRadius: "50%",
-        border: "1px solid rgba(0,255,136,0.06)",
+        border: "1px solid rgba(0,82,255,0.10)",
         animation: "loadRing1 3s ease-in-out infinite",
       }} />
       <div style={{
         position: "absolute",
         width: 440, height: 440,
         borderRadius: "50%",
-        border: "1px solid rgba(251,191,36,0.07)",
+        border: "1px solid rgba(0,82,255,0.08)",
         animation: "loadRing2 3s ease-in-out infinite 0.4s",
       }} />
 
@@ -104,7 +104,7 @@ export function LoadingScreen({ onDone, isReady }: Props) {
           fontWeight: 900,
           letterSpacing: "0.3em",
           textTransform: "uppercase",
-          color: "#fbbf24",
+          color: "#60A5FA",
           marginBottom: 8,
         }}>
           WorldPool26
@@ -131,10 +131,10 @@ export function LoadingScreen({ onDone, isReady }: Props) {
         }}>
           <div style={{
             height: "100%",
-            background: "linear-gradient(90deg, #00ff88, #7c3aed)",
+            background: "linear-gradient(90deg, #0052FF, #60A5FA)",
             borderRadius: 99,
             animation: `loadBar ${MIN_MS / 1000 + 0.3}s cubic-bezier(0.4,0,0.6,1) forwards`,
-            boxShadow: "0 0 16px rgba(0,255,136,0.6)",
+            boxShadow: "0 0 18px rgba(0,82,255,0.65)",
           }} />
         </div>
       </div>

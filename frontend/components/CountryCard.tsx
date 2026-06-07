@@ -94,7 +94,7 @@ export function CountryCard({ country, isWinner, isEliminated, mintClosed, openS
         <div
           style={{
             position: "absolute", inset: 0,
-            background: "rgba(0,255,136,0.06)",
+            background: "rgba(0,82,255,0.09)",
             opacity: hovered ? 1 : 0,
             transition: "opacity 0.2s",
             borderRadius: "inherit",

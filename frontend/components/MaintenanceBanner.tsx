@@ -15,7 +15,7 @@ export function MaintenanceBanner() {
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center p-6"
-      style={{ background: "rgba(5,8,16,0.97)", backdropFilter: "blur(12px)" }}
+      style={{ background: "rgba(6,9,20,0.97)", backdropFilter: "blur(12px)" }}
     >
       {/* Animated background rings */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">

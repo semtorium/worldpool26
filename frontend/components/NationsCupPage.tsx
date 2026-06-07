@@ -155,11 +155,11 @@ export function NationsCupPage() {
           ) : countdown === null ? (
             <div className="flex items-center justify-center gap-1.5">
               <div className="live-dot" />
-              <span className="text-xl font-black" style={{ color: "#00ff88" }}>LIVE</span>
+              <span className="text-xl font-black" style={{ color: "#0052FF" }}>LIVE</span>
             </div>
           ) : (
             <div className="space-y-0.5">
-              <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#00ff88" }}>
+              <p className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#0052FF" }}>
                 {t.nc_starts_in}
               </p>
               <div className="flex items-baseline justify-center gap-0.5 font-mono font-black text-white">
@@ -315,7 +315,7 @@ export function NationsCupPage() {
           <span>{t.nc_filter_mine}</span>
           {ownedIds.size > 0 && (
             <span style={{
-              background: filter === "YOURS" ? "rgba(0,255,136,0.25)" : "rgba(251,191,36,0.15)",
+              background: filter === "YOURS" ? "rgba(0,82,255,0.25)" : "rgba(251,191,36,0.15)",
               borderRadius: "99px",
               padding: "0 5px",
               fontSize: "10px",
@@ -330,7 +330,7 @@ export function NationsCupPage() {
       {/* Grid */}
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-24 gap-3">
-          <Loader2 size={36} className="animate-spin" style={{ color: "#00ff88" }} />
+          <Loader2 size={36} className="animate-spin" style={{ color: "#0052FF" }} />
           <p style={{ color: "#6b7a9a" }}>{t.nc_loading}</p>
         </div>
       ) : filter === "YOURS" && filtered.length === 0 ? (
