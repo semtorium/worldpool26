@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useConnect } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useConnect, useChainId, useSwitchChain } from "wagmi";
+import { baseSepolia } from "viem/chains";
 import { Loader2, Minus, Plus, X, Zap } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, MINT_PRICE, formatEth } from "@/lib/config";
@@ -30,6 +31,9 @@ export function CountryMintModal({
   const { address, isConnected } = useAccount();
   const { connect, connectors }  = useConnect();
   const login = () => connect({ connector: connectors[0] });
+  const chainId = useChainId();
+  const { switchChain } = useSwitchChain();
+  const isWrongChain = isConnected && chainId !== baseSepolia.id;
   const { t } = useLang();
   const ethUsd = useEthUsd();
   const [amount, setAmount]           = useState(1);
@@ -91,6 +95,10 @@ export function CountryMintModal({
 
   const handleMint = () => {
     if (!isConnected) return;
+    if (isWrongChain) {
+      switchChain({ chainId: baseSepolia.id });
+      return;
+    }
     setMintedAmt(amount);
     writeContract({
       address: CONTRACT_ADDRESS, abi: ABI,
@@ -394,13 +402,17 @@ export function CountryMintModal({
                 {/* Mint button */}
                 <button
                   onClick={!isConnected ? login : handleMint}
-                  disabled={isLoading || (isConnected && !hasEnoughEth)}
+                  disabled={isLoading || (isConnected && !isWrongChain && !hasEnoughEth)}
                   className="btn-neon w-full flex items-center justify-center gap-2"
                   style={{
                     padding: "14px",
                     fontSize: 14,
                     fontWeight: 900,
-                    ...(isConnected && !hasEnoughEth ? {
+                    ...(isWrongChain ? {
+                      background: "rgba(251,191,36,0.12)",
+                      border: "1px solid rgba(251,191,36,0.4)",
+                      color: "#fbbf24",
+                    } : isConnected && !hasEnoughEth ? {
                       opacity: 0.5, cursor: "not-allowed",
                       background: "rgba(255,60,60,0.12)",
                       border: "1px solid rgba(255,60,60,0.3)",
@@ -412,6 +424,7 @@ export function CountryMintModal({
                     ? <><Loader2 size={15} className="animate-spin" />{isConfirming ? t.card_confirming : t.card_minting}</>
                     : mintDone           ? t.card_minted
                     : !isConnected       ? t.card_connect
+                    : isWrongChain       ? "⚠️ Switch to Base Sepolia"
                     : !hasEnoughEth      ? t.cmt_insufficient_eth
                     : (
                       <span className="flex flex-col items-center leading-tight gap-0.5">
