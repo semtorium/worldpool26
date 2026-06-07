@@ -17,7 +17,8 @@ const TOURNAMENT_START = new Date("2026-06-11T16:00:00Z").getTime();
 const MINT_DEADLINE = new Date("2026-06-26T23:59:00Z").getTime();
 
 function useCountdown() {
-  const [timeLeft, setTimeLeft] = useState(() => Math.max(0, TOURNAMENT_START - Date.now()));
+  // null on server / first render to avoid SSR hydration mismatch
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   useEffect(() => {
     const tick = () => setTimeLeft(Math.max(0, TOURNAMENT_START - Date.now()));
@@ -26,19 +27,20 @@ function useCountdown() {
     return () => clearInterval(id);
   }, []);
 
-  if (timeLeft <= 0) return null;
+  if (timeLeft === null || timeLeft <= 0) return null;
 
   const totalSecs = Math.floor(timeLeft / 1000);
   const days  = Math.floor(totalSecs / 86400);
   const hours = Math.floor((totalSecs % 86400) / 3600);
   const mins  = Math.floor((totalSecs % 3600) / 60);
   const secs  = totalSecs % 60;
-  const lastHour = days === 0 && hours === 0; // switch to min+sec when < 1h
+  const lastHour = days === 0 && hours === 0;
   return { days, hours, mins, secs, lastHour };
 }
 
 function useMintDeadlineCountdown() {
-  const [timeLeft, setTimeLeft] = useState(() => Math.max(0, MINT_DEADLINE - Date.now()));
+  // null on server / first render to avoid SSR hydration mismatch
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   useEffect(() => {
     const tick = () => setTimeLeft(Math.max(0, MINT_DEADLINE - Date.now()));
@@ -46,6 +48,9 @@ function useMintDeadlineCountdown() {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
+
+  // Return "not expired, zeros" until mounted so SSR HTML is stable
+  if (timeLeft === null) return { expired: false, days: 0, hours: 0, mins: 0, secs: 0 };
 
   const expired = timeLeft <= 0;
   const totalSecs = Math.floor(timeLeft / 1000);
