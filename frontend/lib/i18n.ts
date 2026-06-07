@@ -236,6 +236,14 @@ const t = {
     chart_nft:          "NFT",
     chart_loading:      "Loading…",
     chart_no_holders:   "No holders yet",
+
+    // TxErrorModal
+    err_rejected:       "Transaction Rejected",
+    err_contract:       "Contract Error",
+    err_insufficient:   "Insufficient Funds",
+    err_failed:         "Transaction Failed",
+    err_unknown:        "Unknown Error",
+    err_close:          "Close",
   },
 
   tr: {
@@ -443,6 +451,14 @@ const t = {
     chart_nft:          "NFT",
     chart_loading:      "Yükleniyor…",
     chart_no_holders:   "Henüz tutucu yok",
+
+    // TxErrorModal
+    err_rejected:       "İşlem Reddedildi",
+    err_contract:       "Sözleşme Hatası",
+    err_insufficient:   "Yetersiz Bakiye",
+    err_failed:         "İşlem Başarısız",
+    err_unknown:        "Bilinmeyen Hata",
+    err_close:          "Kapat",
   },
 
   es: {
@@ -650,6 +666,14 @@ const t = {
     chart_nft:          "NFT",
     chart_loading:      "Cargando…",
     chart_no_holders:   "Sin tenedores aún",
+
+    // TxErrorModal
+    err_rejected:       "Transacción Rechazada",
+    err_contract:       "Error de Contrato",
+    err_insufficient:   "Fondos Insuficientes",
+    err_failed:         "Transacción Fallida",
+    err_unknown:        "Error Desconocido",
+    err_close:          "Cerrar",
   },
 
   zh: {
@@ -857,6 +881,14 @@ const t = {
     chart_nft:          "NFT",
     chart_loading:      "加载中…",
     chart_no_holders:   "暂无持有者",
+
+    // TxErrorModal
+    err_rejected:       "交易已拒绝",
+    err_contract:       "合约错误",
+    err_insufficient:   "余额不足",
+    err_failed:         "交易失败",
+    err_unknown:        "未知错误",
+    err_close:          "关闭",
   },
 
   ar: {
@@ -1064,6 +1096,14 @@ const t = {
     chart_nft:          "NFT",
     chart_loading:      "جارٍ التحميل…",
     chart_no_holders:   "لا يوجد حاملون بعد",
+
+    // TxErrorModal
+    err_rejected:       "تم رفض المعاملة",
+    err_contract:       "خطأ في العقد",
+    err_insufficient:   "رصيد غير كافٍ",
+    err_failed:         "فشلت المعاملة",
+    err_unknown:        "خطأ غير معروف",
+    err_close:          "إغلاق",
   },
 
   ko: {
@@ -1271,6 +1311,14 @@ const t = {
     chart_nft:          "NFT",
     chart_loading:      "불러오는 중…",
     chart_no_holders:   "아직 보유자 없음",
+
+    // TxErrorModal
+    err_rejected:       "트랜잭션 거부됨",
+    err_contract:       "컨트랙트 오류",
+    err_insufficient:   "잔액 부족",
+    err_failed:         "트랜잭션 실패",
+    err_unknown:        "알 수 없는 오류",
+    err_close:          "닫기",
   },
 } as const;
 

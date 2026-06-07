@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { X, AlertTriangle, Copy, Check } from "lucide-react";
 import type { TxErrorInfo } from "@/lib/parseError";
+import { useLang } from "@/lib/LanguageContext";
 
 interface Props {
   info: TxErrorInfo;
@@ -10,9 +11,10 @@ interface Props {
 }
 
 export function TxErrorModal({ info, onClose }: Props) {
+  const { t } = useLang();
   const [copied, setCopied] = useState(false);
 
-  // ESC ile kapat
+  // Close on ESC
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
@@ -21,9 +23,9 @@ export function TxErrorModal({ info, onClose }: Props) {
 
   const handleCopy = () => {
     const text = [
-      `Başlık: ${info.title}`,
-      `Mesaj:  ${info.detail}`,
-      `Kod:    ${info.code}`,
+      `Title:  ${t[info.titleKey]}`,
+      `Detail: ${info.detail}`,
+      `Code:   ${info.code}`,
     ].join("\n");
     navigator.clipboard.writeText(text).catch(() => {});
     setCopied(true);
@@ -55,14 +57,14 @@ export function TxErrorModal({ info, onClose }: Props) {
         }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Üst kırmızı bant */}
+        {/* Top red stripe */}
         <div style={{ height: 3, background: "linear-gradient(90deg, #ef4444, #f97316)" }} />
 
         <div style={{ padding: "24px 24px 22px" }}>
 
           {/* Header */}
           <div style={{ display: "flex", alignItems: "flex-start", gap: 14, marginBottom: 18 }}>
-            {/* İkon */}
+            {/* Icon */}
             <div style={{
               width: 46, height: 46, borderRadius: 14, flexShrink: 0,
               background: "rgba(239,68,68,0.10)",
@@ -72,17 +74,17 @@ export function TxErrorModal({ info, onClose }: Props) {
               <AlertTriangle size={22} style={{ color: "#ef4444" }} />
             </div>
 
-            {/* Metin */}
+            {/* Text */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontSize: 15, fontWeight: 900, color: "#fff", margin: 0 }}>
-                {info.title}
+                {t[info.titleKey]}
               </p>
               <p style={{ fontSize: 13, color: "#ef4444", marginTop: 5, fontWeight: 600, lineHeight: 1.4, wordBreak: "break-word" }}>
                 {info.detail}
               </p>
             </div>
 
-            {/* Kapat */}
+            {/* Close X */}
             <button
               onClick={onClose}
               style={{
@@ -97,7 +99,7 @@ export function TxErrorModal({ info, onClose }: Props) {
             </button>
           </div>
 
-          {/* Hata kodu kutusu */}
+          {/* Error code box */}
           {info.code && (
             <div style={{
               borderRadius: 10,
@@ -117,7 +119,7 @@ export function TxErrorModal({ info, onClose }: Props) {
               </code>
               <button
                 onClick={handleCopy}
-                title="Kopyala"
+                title="Copy error code"
                 style={{
                   background: "transparent", border: "none",
                   color: copied ? "#22c55e" : "#6b7a9a",
@@ -130,7 +132,7 @@ export function TxErrorModal({ info, onClose }: Props) {
             </div>
           )}
 
-          {/* Kapat butonu */}
+          {/* Close button */}
           <button
             onClick={onClose}
             style={{
@@ -148,7 +150,7 @@ export function TxErrorModal({ info, onClose }: Props) {
             onMouseEnter={e => (e.currentTarget.style.background = "rgba(239,68,68,0.14)")}
             onMouseLeave={e => (e.currentTarget.style.background = "rgba(239,68,68,0.08)")}
           >
-            Kapat
+            {t.err_close}
           </button>
         </div>
       </div>
