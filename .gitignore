@@ -4,8 +4,8 @@ cache/
 broadcast/
 .env
 
-# Dependencies
-lib/
+# Dependencies (Foundry only)
+/lib/
 
 # IDE
 .vscode/
