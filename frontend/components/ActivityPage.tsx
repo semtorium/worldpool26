@@ -15,15 +15,16 @@ const DEPLOY_BLOCK = 42544901n;
 const CHUNK_SIZE   = 2000n;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchLogsChunked(client: any, params: any): Promise<any[]> {
-  const toBlock = await client.getBlockNumber();
-  const results: any[] = [];
+async function fetchLogsChunked(client: any, params: any, toBlock: bigint): Promise<any[]> {
+  const ranges: { from: bigint; to: bigint }[] = [];
   for (let from = params.fromBlock; from <= toBlock; from += CHUNK_SIZE) {
     const to = from + CHUNK_SIZE - 1n < toBlock ? from + CHUNK_SIZE - 1n : toBlock;
-    const chunk = await client.getLogs({ ...params, fromBlock: from, toBlock: to });
-    results.push(...chunk);
+    ranges.push({ from, to });
   }
-  return results;
+  const chunks = await Promise.all(
+    ranges.map(r => client.getLogs({ ...params, fromBlock: r.from, toBlock: r.to }))
+  );
+  return chunks.flat();
 }
 
 // Build a quick countryId → name map
@@ -181,21 +182,21 @@ export function ActivityPage() {
               "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"
             ),
             fromBlock: DEPLOY_BLOCK,
-          }),
+          }, blockNum),
           fetchLogsChunked(c, {
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event TicketPurchased(address indexed user, uint256 quantity, uint256 timestamp)"
             ),
             fromBlock: DEPLOY_BLOCK,
-          }),
+          }, blockNum),
           fetchLogsChunked(c, {
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"
             ),
             fromBlock: DEPLOY_BLOCK,
-          }),
+          }, blockNum),
         ]);
 
         setLatestBlock(blockNum as bigint);
