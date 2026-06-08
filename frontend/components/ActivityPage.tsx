@@ -14,12 +14,10 @@ const EXPLORER_ADDR = "https://sepolia.basescan.org/address/";
 const DEPLOY_BLOCK = 42544901n;
 const CHUNK_SIZE   = 2000n;
 
-async function fetchLogsChunked(
-  client: NonNullable<ReturnType<typeof import("wagmi").usePublicClient>>,
-  params: Parameters<typeof client.getLogs>[0] & { fromBlock: bigint }
-) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchLogsChunked(client: any, params: any): Promise<any[]> {
   const toBlock = await client.getBlockNumber();
-  const results: Awaited<ReturnType<typeof client.getLogs>> = [];
+  const results: any[] = [];
   for (let from = params.fromBlock; from <= toBlock; from += CHUNK_SIZE) {
     const to = from + CHUNK_SIZE - 1n < toBlock ? from + CHUNK_SIZE - 1n : toBlock;
     const chunk = await client.getLogs({ ...params, fromBlock: from, toBlock: to });
