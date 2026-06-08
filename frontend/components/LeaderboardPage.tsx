@@ -170,10 +170,10 @@ export function LeaderboardPage() {
           className="flex items-center gap-3 px-4 py-2.5 flex-wrap"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.015)" }}
         >
-          <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: "#6b7a9a" }}>
+          <span className="text-[11px] font-bold tracking-widest uppercase" style={{ color: "#6b7a9a" }}>
             {t.lb_rank}
           </span>
-          <span className="ml-auto flex items-center gap-4 text-[10px] font-bold tracking-widest uppercase">
+          <span className="ml-auto flex items-center gap-4 text-[11px] font-bold tracking-widest uppercase">
             <span style={{ color: "#0052FF" }}>🌍 {t.lb_mints}</span>
             <span style={{ color: "#2563EB" }}>⚽ {t.lb_votes}</span>
             <span style={{ color: "#fbbf24" }}>{t.lb_score}</span>
@@ -223,8 +223,8 @@ export function LeaderboardPage() {
                     </span>
                     {isUser && (
                       <span
-                        className="text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0"
-                        style={{ background: "rgba(0,82,255,0.12)", color: "#0052FF", border: "1px solid rgba(0,82,255,0.25)" }}
+                        className="text-[10px] font-black px-1.5 py-0.5 rounded-full shrink-0"
+                        style={{ background: "rgba(0,82,255,0.15)", color: "#4d88ff", border: "1px solid rgba(0,82,255,0.35)" }}
                       >
                         YOU
                       </span>
@@ -235,13 +235,13 @@ export function LeaderboardPage() {
                   </div>
 
                   <div className="hidden sm:block w-14 text-right">
-                    <span className="font-semibold text-sm" style={{ color: "#0052FF" }}>{e.nfts}</span>
+                    <span className="font-bold text-sm" style={{ color: "#3d7fff" }}>{e.nfts}</span>
                   </div>
                   <div className="hidden sm:block w-14 text-right">
-                    <span className="font-semibold text-sm" style={{ color: "#2563EB" }}>{e.votes}</span>
+                    <span className="font-bold text-sm" style={{ color: "#5b8fff" }}>{e.votes}</span>
                   </div>
                   <div className="w-12 text-right shrink-0">
-                    <span className="font-black text-sm" style={{ color: i < 3 ? "#fbbf24" : "#f0f4ff" }}>
+                    <span className="font-black text-base" style={{ color: i < 3 ? "#fbbf24" : "#e8eeff" }}>
                       {e.total}
                     </span>
                   </div>
@@ -272,8 +272,8 @@ export function LeaderboardPage() {
                       {shortenAddress(userEntry.address)}
                     </span>
                     <span
-                      className="text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0"
-                      style={{ background: "rgba(0,82,255,0.12)", color: "#0052FF", border: "1px solid rgba(0,82,255,0.25)" }}
+                      className="text-[10px] font-black px-1.5 py-0.5 rounded-full shrink-0"
+                      style={{ background: "rgba(0,82,255,0.15)", color: "#4d88ff", border: "1px solid rgba(0,82,255,0.35)" }}
                     >
                       YOU
                     </span>
@@ -282,13 +282,13 @@ export function LeaderboardPage() {
                     </span>
                   </div>
                   <div className="hidden sm:block w-14 text-right">
-                    <span className="font-semibold text-sm" style={{ color: "#0052FF" }}>{userEntry.nfts}</span>
+                    <span className="font-bold text-sm" style={{ color: "#3d7fff" }}>{userEntry.nfts}</span>
                   </div>
                   <div className="hidden sm:block w-14 text-right">
-                    <span className="font-semibold text-sm" style={{ color: "#2563EB" }}>{userEntry.votes}</span>
+                    <span className="font-bold text-sm" style={{ color: "#5b8fff" }}>{userEntry.votes}</span>
                   </div>
                   <div className="w-12 text-right shrink-0">
-                    <span className="font-black text-sm" style={{ color: "#f0f4ff" }}>{userEntry.total}</span>
+                    <span className="font-black text-base" style={{ color: "#e8eeff" }}>{userEntry.total}</span>
                   </div>
                 </div>
               </>
@@ -299,7 +299,7 @@ export function LeaderboardPage() {
 
       {/* Footer note */}
       {!loading && top50.length > 0 && (
-        <p className="text-center text-[11px]" style={{ color: "rgba(107,122,154,0.45)" }}>
+        <p className="text-center text-xs" style={{ color: "rgba(107,122,154,0.55)" }}>
           {t.lb_footer}
         </p>
       )}

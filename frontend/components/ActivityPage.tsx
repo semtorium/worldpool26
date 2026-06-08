@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { usePublicClient, useAccount, useConnect } from "wagmi";
 import { CONTRACT_ADDRESS, shortenAddress, MINT_PRICE, TICKET_PRICE, formatEth } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
@@ -96,15 +96,15 @@ function ActivityRow({ item, latestBlock }: { item: ActivityItem; latestBlock: b
             href={`${EXPLORER_ADDR}${item.address}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-xs font-bold hover:underline"
+            className="font-mono text-sm font-bold hover:underline"
             style={{ color }}
           >
             {shortenAddress(item.address)}
           </a>
-          <span className="text-xs" style={{ color: "#f0f4ff" }}>{description}</span>
+          <span className="text-sm" style={{ color: "#f0f4ff" }}>{description}</span>
           {ethValue && (
             <span
-              className="text-[10px] font-black font-mono px-1.5 py-0.5 rounded-full"
+              className="text-[11px] font-black font-mono px-1.5 py-0.5 rounded-full"
               style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}
             >
               {ethValue} ETH
@@ -113,12 +113,12 @@ function ActivityRow({ item, latestBlock }: { item: ActivityItem; latestBlock: b
         </div>
         <div className="flex items-center gap-2 mt-0.5">
           <span
-            className="text-[9px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded-full"
+            className="text-[10px] font-black tracking-widest uppercase px-1.5 py-0.5 rounded-full"
             style={{ background: `${color}14`, color }}
           >
             {label}
           </span>
-          <span className="text-[10px]" style={{ color: "#6b7a9a" }}>
+          <span className="text-[11px]" style={{ color: "#6b7a9a" }}>
             {relativeTime(item.blockNumber, latestBlock)}
           </span>
         </div>
@@ -150,12 +150,13 @@ export function ActivityPage() {
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [latestBlock, setLatestBlock] = useState(0n);
   const [loading, setLoading] = useState(true);
+  const initialized = useRef(false);
 
   useEffect(() => {
     if (!client) return;
 
     async function fetch() {
-      setLoading(true);
+      if (!initialized.current) setLoading(true);
       try {
         const c = client as NonNullable<typeof client>;
         const [mintLogs, ticketLogs, voteLogs, blockNum] = await Promise.all([
@@ -196,6 +197,7 @@ export function ActivityPage() {
         // Sort newest first, cap at 100
         merged.sort((a, b) => (b.blockNumber > a.blockNumber ? 1 : -1));
         setItems(merged.slice(0, 100));
+        initialized.current = true;
       } catch {
         // silent fail
       } finally {

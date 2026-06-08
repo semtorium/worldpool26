@@ -458,14 +458,14 @@ export function TopScorerPage() {
                     </p>
                     <p className="text-xs" style={{ color: "#6b7a9a" }}>{player.country}</p>
                   </div>
-                  <span className="font-mono text-sm font-bold shrink-0"
-                    style={{ color: isWinner ? "#fbbf24" : "#2563EB" }}>
+                  <span className="font-mono text-base font-black shrink-0"
+                    style={{ color: isWinner ? "#fbbf24" : "#4d88ff" }}>
                     {player.votes.toLocaleString()}
                   </span>
                 </div>
 
                 {/* Vote bar */}
-                <div className="h-1 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
+                <div className="h-2 rounded-full" style={{ background: "rgba(255,255,255,0.07)" }}>
                   <div className="h-full rounded-full transition-all duration-700"
                     style={{
                       width: `${pct}%`,

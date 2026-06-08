@@ -117,7 +117,7 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
   if (minted.length === 0) return null;
 
   const max        = Math.max(...minted.map(c => c.supply));
-  const BAR_MAX_H  = 110;
+  const BAR_MAX_H  = 130;
   const BAR_MIN_H  = 8;
   const total      = minted.reduce((s, c) => s + c.supply, 0);
 
@@ -221,7 +221,7 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
           <span style={{ fontSize: 12, fontWeight: 800, color: "#fff", textTransform: "uppercase", letterSpacing: "0.12em" }}>
             {t.chart_title}
           </span>
-          <span style={{ fontSize: 11, color: "#6b7a9a" }}>— {summaryText}</span>
+          <span style={{ fontSize: 12, color: "#6b7a9a" }}>— {summaryText}</span>
         </div>
 
         {/* Scrollable bars */}
@@ -256,13 +256,13 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
               return (
                 <div
                   key={c.id}
-                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, width: 46, flexShrink: 0, cursor: "pointer" }}
+                  style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, width: 54, flexShrink: 0, cursor: "pointer" }}
                   onMouseEnter={e => handleBarEnter(c.id, e)}
                   onMouseLeave={handleBarLeave}
                 >
                   {/* Count */}
                   <span style={{
-                    fontSize: 11, fontWeight: 900, fontFamily: "monospace",
+                    fontSize: 13, fontWeight: 900, fontFamily: "monospace",
                     color: countCol, marginBottom: 5,
                     opacity: isElim ? 0.6 : 1,
                     transition: "transform 0.15s",
@@ -296,7 +296,7 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
 
                   {/* Flag */}
                   <div style={{
-                    width: 30, height: 21, marginTop: 8, borderRadius: 4, overflow: "hidden",
+                    width: 36, height: 24, marginTop: 8, borderRadius: 4, overflow: "hidden",
                     border: isWinner ? "1.5px solid rgba(251,191,36,0.55)" : isElim ? "1px solid rgba(255,255,255,0.07)" : isHovered ? "1px solid rgba(0,82,255,0.45)" : "1px solid rgba(255,255,255,0.14)",
                     opacity: isElim ? 0.3 : 1,
                     boxShadow: isWinner ? "0 0 10px rgba(251,191,36,0.45)" : isHovered ? "0 0 8px rgba(0,82,255,0.3)" : "none",
@@ -309,8 +309,8 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
 
                   {/* Name */}
                   <span style={{
-                    fontSize: 9, fontWeight: 700, color: nameCol, textAlign: "center",
-                    lineHeight: 1.3, marginTop: 5, maxWidth: 46,
+                    fontSize: 10, fontWeight: 700, color: nameCol, textAlign: "center",
+                    lineHeight: 1.3, marginTop: 5, maxWidth: 54,
                     overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     transition: "color 0.15s",
                   }}>
@@ -319,9 +319,9 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
 
                   {/* Status */}
                   {isWinner
-                    ? <span style={{ fontSize: 11, marginTop: 3 }}>🏆</span>
+                    ? <span style={{ fontSize: 13, marginTop: 3 }}>🏆</span>
                     : isElim
-                      ? <span style={{ fontSize: 9, color: "rgba(239,68,68,0.45)", marginTop: 3 }}>✕</span>
+                      ? <span style={{ fontSize: 10, color: "rgba(239,68,68,0.5)", marginTop: 3 }}>✕</span>
                       : null
                   }
                 </div>
@@ -338,8 +338,8 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
             { grad: "linear-gradient(180deg,#fbbf24,rgba(251,191,36,0.5))", label: t.chart_champion },
           ].map(({ grad, label }) => (
             <div key={label} style={{ display: "flex", alignItems: "center", gap: 5 }}>
-              <div style={{ width: 10, height: 10, borderRadius: 2, background: grad, flexShrink: 0 }} />
-              <span style={{ fontSize: 10, color: "#6b7a9a" }}>{label}</span>
+              <div style={{ width: 11, height: 11, borderRadius: 3, background: grad, flexShrink: 0 }} />
+              <span style={{ fontSize: 11, color: "#6b7a9a" }}>{label}</span>
             </div>
           ))}
         </div>

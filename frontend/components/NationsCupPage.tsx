@@ -135,20 +135,20 @@ export function NationsCupPage() {
       <div className="grid grid-cols-2 gap-3">
         {/* Teams card */}
         <div className="glass-card p-4 text-center">
-          <p className="text-[11px] uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>{t.nc_teams}</p>
+          <p className="text-xs uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>{t.nc_teams}</p>
           {(() => {
             const elimArr = eliminationStatus as boolean[] | undefined;
             // When tournament finalized: only 1 team (champion) still competing
             if (tournamentFinalized) {
-              return <p className="text-xl font-black font-mono" style={{ color: "#fbbf24" }}>1</p>;
+              return <p className="text-2xl font-black font-mono" style={{ color: "#fbbf24" }}>1</p>;
             }
             const elimCount = elimArr ? elimArr.filter(Boolean).length : 0;
             const remaining = 48 - elimCount;
             return (
-              <p className="text-xl font-black font-mono text-white">
+              <p className="text-2xl font-black font-mono text-white">
                 {remaining}
                 {elimCount > 0 && (
-                  <span className="text-xs font-semibold ml-1" style={{ color: "#6b7a9a" }}>/ 48</span>
+                  <span className="text-sm font-semibold ml-1" style={{ color: "#6b7a9a" }}>/ 48</span>
                 )}
               </p>
             );
@@ -157,13 +157,13 @@ export function NationsCupPage() {
 
         {/* Countdown / Live card */}
         <div className="glass-card p-4 text-center">
-          <p className="text-[11px] uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>{t.nc_status}</p>
+          <p className="text-xs uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>{t.nc_status}</p>
           {tournamentFinalized ? (
-            <p className="text-xl font-black text-white">{t.nc_finalized}</p>
+            <p className="text-2xl font-black text-white">{t.nc_finalized}</p>
           ) : countdown === null ? (
             <div className="flex items-center justify-center gap-1.5">
               <div className="live-dot" />
-              <span className="text-xl font-black" style={{ color: "#0052FF" }}>LIVE</span>
+              <span className="text-2xl font-black" style={{ color: "#0052FF" }}>LIVE</span>
             </div>
           ) : (
             <div className="space-y-0.5">
