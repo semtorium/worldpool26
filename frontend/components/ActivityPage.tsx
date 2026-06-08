@@ -5,7 +5,6 @@ import { usePublicClient, useAccount, useConnect } from "wagmi";
 import { parseAbiItem } from "viem";
 import { CONTRACT_ADDRESS, shortenAddress, MINT_PRICE, TICKET_PRICE, formatEth } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
-import { getLogsChunked } from "@/lib/getLogs";
 import { Loader2, ExternalLink } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 
@@ -155,44 +154,35 @@ export function ActivityPage() {
   useEffect(() => {
     if (!client) return;
 
-    // Contract deployment block — never query before this
-    const DEPLOY_BLOCK = 43_073_285n;
-    // Activity feed: cap at last 500 000 blocks (~5-10 days).
-    // This is fine for a live feed and keeps RPC calls fast.
-    const MAX_RANGE = 500_000n;
-
     async function fetch() {
       setLoading(true);
       try {
-        const c = client as NonNullable<typeof client>;
-        const blockNum = await c.getBlockNumber();
-        setLatestBlock(blockNum);
-
-        // Dynamic fromBlock — whichever is more recent: deploy block or MAX_RANGE ago
-        const fromBlock =
-          blockNum - MAX_RANGE > DEPLOY_BLOCK ? blockNum - MAX_RANGE : DEPLOY_BLOCK;
-
-        // Fetch all three event types in parallel, each chunked internally
-        const [mintLogs, ticketLogs, voteLogs] = await Promise.all([
-          getLogsChunked(c, {
+        const [mintLogs, ticketLogs, voteLogs, blockNum] = await Promise.all([
+          (client as NonNullable<typeof client>).getLogs({
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"
             ),
-          }, fromBlock, blockNum),
-          getLogsChunked(c, {
+            fromBlock: 43073285n, toBlock: "latest",
+          }),
+          (client as NonNullable<typeof client>).getLogs({
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event TicketPurchased(address indexed user, uint256 quantity, uint256 timestamp)"
             ),
-          }, fromBlock, blockNum),
-          getLogsChunked(c, {
+            fromBlock: 43073285n, toBlock: "latest",
+          }),
+          (client as NonNullable<typeof client>).getLogs({
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"
             ),
-          }, fromBlock, blockNum),
+            fromBlock: 43073285n, toBlock: "latest",
+          }),
+          (client as NonNullable<typeof client>).getBlockNumber(),
         ]);
+
+        setLatestBlock(blockNum);
 
         const merged: ActivityItem[] = [
           ...mintLogs.map(l => ({
@@ -223,8 +213,8 @@ export function ActivityPage() {
         // Sort newest first, cap at 100
         merged.sort((a, b) => (b.blockNumber > a.blockNumber ? 1 : -1));
         setItems(merged.slice(0, 100));
-      } catch (err) {
-        console.error("[ActivityPage] getLogs error:", err);
+      } catch {
+        // silent fail
       } finally {
         setLoading(false);
       }

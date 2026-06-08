@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { usePublicClient, useAccount, useConnect } from "wagmi";
 import { parseAbiItem } from "viem";
 import { CONTRACT_ADDRESS, shortenAddress } from "@/lib/config";
-import { getLogsChunked } from "@/lib/getLogs";
 import { Loader2, Trophy, Medal } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 
@@ -29,36 +28,24 @@ export function LeaderboardPage() {
   useEffect(() => {
     if (!client) return;
 
-    // Contract deployment block — never query before this
-    const DEPLOY_BLOCK = 43_073_285n;
-    // Leaderboard: cover last 1 000 000 blocks (~11-23 days depending on block time).
-    // Older mints are unlikely on testnet; raise this limit for mainnet if needed.
-    const MAX_RANGE = 1_000_000n;
-
     async function fetchData() {
       setLoading(true);
       try {
-        const c = client as NonNullable<typeof client>;
-        const blockNum = await c.getBlockNumber();
-
-        // Dynamic fromBlock — whichever is more recent: deploy block or MAX_RANGE ago
-        const fromBlock =
-          blockNum - MAX_RANGE > DEPLOY_BLOCK ? blockNum - MAX_RANGE : DEPLOY_BLOCK;
-
-        // Fetch both event types in parallel, each chunked internally
         const [mintLogs, voteLogs] = await Promise.all([
-          getLogsChunked(c, {
+          (client as NonNullable<typeof client>).getLogs({
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"
             ),
-          }, fromBlock, blockNum),
-          getLogsChunked(c, {
+            fromBlock: 43073285n, toBlock: "latest",
+          }),
+          (client as NonNullable<typeof client>).getLogs({
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"
             ),
-          }, fromBlock, blockNum),
+            fromBlock: 43073285n, toBlock: "latest",
+          }),
         ]);
 
         const nftMap: Record<string, number> = {};
@@ -86,8 +73,8 @@ export function LeaderboardPage() {
           .map((e, i) => ({ ...e, rank: i + 1 }));
 
         setEntries(sorted.slice(0, 50));
-      } catch (err) {
-        console.error("[LeaderboardPage] getLogs error:", err);
+      } catch {
+        // silent fail
       } finally {
         setLoading(false);
       }
