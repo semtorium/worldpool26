@@ -11,6 +11,23 @@ import { useLang } from "@/lib/LanguageContext";
 const EXPLORER_TX   = "https://sepolia.basescan.org/tx/";
 const EXPLORER_ADDR = "https://sepolia.basescan.org/address/";
 
+const DEPLOY_BLOCK = 42544901n;
+const CHUNK_SIZE   = 2000n;
+
+async function fetchLogsChunked(
+  client: NonNullable<ReturnType<typeof import("wagmi").usePublicClient>>,
+  params: Parameters<typeof client.getLogs>[0] & { fromBlock: bigint }
+) {
+  const toBlock = await client.getBlockNumber();
+  const results: Awaited<ReturnType<typeof client.getLogs>> = [];
+  for (let from = params.fromBlock; from <= toBlock; from += CHUNK_SIZE) {
+    const to = from + CHUNK_SIZE - 1n < toBlock ? from + CHUNK_SIZE - 1n : toBlock;
+    const chunk = await client.getLogs({ ...params, fromBlock: from, toBlock: to });
+    results.push(...chunk);
+  }
+  return results;
+}
+
 // Build a quick countryId → name map
 const COUNTRY_MAP: Record<number, string> = Object.fromEntries(
   COUNTRIES.map(c => [c.id, c.name])
@@ -157,32 +174,33 @@ export function ActivityPage() {
     async function fetch() {
       setLoading(true);
       try {
-        const [mintLogs, ticketLogs, voteLogs, blockNum] = await Promise.all([
-          (client as NonNullable<typeof client>).getLogs({
+        const c = client as NonNullable<typeof client>;
+        const blockNum = await c.getBlockNumber();
+        const [mintLogs, ticketLogs, voteLogs] = await Promise.all([
+          fetchLogsChunked(c, {
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"
             ),
-            fromBlock: 43073285n, toBlock: "latest",
+            fromBlock: DEPLOY_BLOCK,
           }),
-          (client as NonNullable<typeof client>).getLogs({
+          fetchLogsChunked(c, {
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event TicketPurchased(address indexed user, uint256 quantity, uint256 timestamp)"
             ),
-            fromBlock: 43073285n, toBlock: "latest",
+            fromBlock: DEPLOY_BLOCK,
           }),
-          (client as NonNullable<typeof client>).getLogs({
+          fetchLogsChunked(c, {
             address: CONTRACT_ADDRESS,
             event: parseAbiItem(
               "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"
             ),
-            fromBlock: 43073285n, toBlock: "latest",
+            fromBlock: DEPLOY_BLOCK,
           }),
-          (client as NonNullable<typeof client>).getBlockNumber(),
         ]);
 
-        setLatestBlock(blockNum);
+        setLatestBlock(blockNum as bigint);
 
         const merged: ActivityItem[] = [
           ...mintLogs.map(l => ({

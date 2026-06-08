@@ -18,3 +18,5 @@ Thumbs.db
 # Node (frontend)
 node_modules/
 .next/
+frontend/.env.local
+frontend/.env*.local
