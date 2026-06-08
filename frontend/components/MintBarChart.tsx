@@ -3,12 +3,28 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { createPublicClient, http, parseAbiItem } from "viem";
 import { baseSepolia } from "viem/chains";
-import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, shortenAddress } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 
 const client = createPublicClient({ chain: baseSepolia, transport: http("https://sepolia.base.org") });
+
+const DEPLOY_BLOCK = 42544901n;
+const CHUNK_SIZE   = 2000n;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchLogsChunked(params: any): Promise<any[]> {
+  const toBlock = await client.getBlockNumber();
+  const ranges: { from: bigint; to: bigint }[] = [];
+  for (let from = DEPLOY_BLOCK; from <= toBlock; from += CHUNK_SIZE) {
+    const to = from + CHUNK_SIZE - 1n < toBlock ? from + CHUNK_SIZE - 1n : toBlock;
+    ranges.push({ from, to });
+  }
+  const chunks = await Promise.all(
+    ranges.map(r => client.getLogs({ ...params, fromBlock: r.from, toBlock: r.to }))
+  );
+  return chunks.flat();
+}
 
 const RANK_EMOJIS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
@@ -34,16 +50,21 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
   const holderCache  = useRef<Map<number, HolderEntry[]>>(new Map());
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Fetch total supply for all countries (every 30s)
+  // Fetch total supply for all countries from CountryMinted events (every 30s)
   useEffect(() => {
     async function load() {
       try {
-        const results = await Promise.all(
-          COUNTRIES.map(c =>
-            client.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "countryTotalSupply", args: [BigInt(c.id)] })
-          )
-        );
-        setSupplies(COUNTRIES.map((c, i) => ({ id: c.id, name: c.name, flagCode: c.flagCode, supply: Number(results[i] ?? 0n) })));
+        const logs = await fetchLogsChunked({
+          address: CONTRACT_ADDRESS,
+          event: parseAbiItem("event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"),
+        });
+        const supplyMap: Record<number, number> = {};
+        for (const log of logs) {
+          const id     = Number(log.args.countryId as bigint);
+          const amount = Number(log.args.amount as bigint);
+          supplyMap[id] = (supplyMap[id] ?? 0) + amount;
+        }
+        setSupplies(COUNTRIES.map(c => ({ id: c.id, name: c.name, flagCode: c.flagCode, supply: supplyMap[c.id] ?? 0 })));
       } catch { /* silent */ }
     }
     load();
@@ -67,12 +88,10 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
     }
     setLoadingTip(true);
     try {
-      const logs = await client.getLogs({
+      const logs = await fetchLogsChunked({
         address: CONTRACT_ADDRESS,
         event: parseAbiItem("event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"),
         args: { countryId: BigInt(countryId) },
-        fromBlock: 0n,
-        toBlock: "latest",
       });
       const totals: Record<string, number> = {};
       for (const log of logs) {
