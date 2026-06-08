@@ -91,12 +91,13 @@ export function TopScorerPage() {
   const activeTxError = claimError ?? claimReceiptError ?? buyError ?? buyReceiptError ?? voteError ?? voteReceiptError ?? null;
   const resetActiveTxError = () => { resetClaim(); resetBuy(); resetVote(); };
 
-  // Persist claimed state to localStorage so "✓ Claimed" survives navigation
+  // Persist claimed state + invalidate pool cache so PrizeCounter updates instantly
   useEffect(() => {
     if (isClaimTxSuccess && address) {
       localStorage.setItem(TS_CLAIMED_KEY(address.toLowerCase()), "true");
+      queryClient.invalidateQueries();
     }
-  }, [isClaimTxSuccess, address]);
+  }, [isClaimTxSuccess, address, queryClient]);
 
   // isClaimSuccess: tx just confirmed OR on-chain mapping true (cross-device) OR localStorage flag
   const isClaimSuccess = isClaimTxSuccess ||

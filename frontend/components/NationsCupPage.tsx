@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
+import { useQueryClient } from "@tanstack/react-query";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
@@ -72,6 +73,7 @@ export function NationsCupPage() {
   const mintDeadline = useMintDeadlineCountdown();
   const { address } = useAccount();
   const { t } = useLang();
+  const queryClient = useQueryClient();
 
   const { data: tournamentFinalized, isLoading } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "tournamentFinalized" });
   const { data: winningCountryId }       = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" });
@@ -102,6 +104,13 @@ export function NationsCupPage() {
   const { writeContract: claim, data: claimHash, isPending: isClaiming, error: claimError, reset: resetClaim } = useWriteContract();
   const { isLoading: isClaimConfirming, isSuccess: isClaimSuccess, error: claimReceiptError } = useWaitForTransactionReceipt({ hash: claimHash });
   const claimTxError = claimError ?? claimReceiptError ?? null;
+
+  // Invalidate pool cache after NC claim so PrizeCounter updates instantly
+  useEffect(() => {
+    if (isClaimSuccess) {
+      queryClient.invalidateQueries();
+    }
+  }, [isClaimSuccess, queryClient]);
 
   // Build a Set of owned country ids for fast lookup
   const ownedIds = new Set<number>(
