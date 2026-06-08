@@ -2,30 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { usePublicClient, useAccount, useConnect } from "wagmi";
-import { parseAbiItem } from "viem";
 import { CONTRACT_ADDRESS, shortenAddress, MINT_PRICE, TICKET_PRICE, formatEth } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
 import { Loader2, ExternalLink } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
+import { fetchLogsWithCache } from "@/lib/logCache";
 
 const EXPLORER_TX   = "https://sepolia.basescan.org/tx/";
 const EXPLORER_ADDR = "https://sepolia.basescan.org/address/";
-
-const DEPLOY_BLOCK = 42544901n;
-const CHUNK_SIZE   = 2000n;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchLogsChunked(client: any, params: any, toBlock: bigint): Promise<any[]> {
-  const ranges: { from: bigint; to: bigint }[] = [];
-  for (let from = params.fromBlock; from <= toBlock; from += CHUNK_SIZE) {
-    const to = from + CHUNK_SIZE - 1n < toBlock ? from + CHUNK_SIZE - 1n : toBlock;
-    ranges.push({ from, to });
-  }
-  const chunks = await Promise.all(
-    ranges.map(r => client.getLogs({ ...params, fromBlock: r.from, toBlock: r.to }))
-  );
-  return chunks.flat();
-}
 
 // Build a quick countryId → name map
 const COUNTRY_MAP: Record<number, string> = Object.fromEntries(
@@ -174,29 +158,11 @@ export function ActivityPage() {
       setLoading(true);
       try {
         const c = client as NonNullable<typeof client>;
-        const blockNum = await c.getBlockNumber();
-        const [mintLogs, ticketLogs, voteLogs] = await Promise.all([
-          fetchLogsChunked(c, {
-            address: CONTRACT_ADDRESS,
-            event: parseAbiItem(
-              "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"
-            ),
-            fromBlock: DEPLOY_BLOCK,
-          }, blockNum),
-          fetchLogsChunked(c, {
-            address: CONTRACT_ADDRESS,
-            event: parseAbiItem(
-              "event TicketPurchased(address indexed user, uint256 quantity, uint256 timestamp)"
-            ),
-            fromBlock: DEPLOY_BLOCK,
-          }, blockNum),
-          fetchLogsChunked(c, {
-            address: CONTRACT_ADDRESS,
-            event: parseAbiItem(
-              "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"
-            ),
-            fromBlock: DEPLOY_BLOCK,
-          }, blockNum),
+        const [mintLogs, ticketLogs, voteLogs, blockNum] = await Promise.all([
+          fetchLogsWithCache(c, "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"),
+          fetchLogsWithCache(c, "event TicketPurchased(address indexed user, uint256 quantity, uint256 timestamp)"),
+          fetchLogsWithCache(c, "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"),
+          c.getBlockNumber(),
         ]);
 
         setLatestBlock(blockNum as bigint);

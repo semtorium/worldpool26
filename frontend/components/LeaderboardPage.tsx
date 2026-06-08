@@ -2,24 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { usePublicClient, useAccount, useConnect } from "wagmi";
-import { parseAbiItem } from "viem";
 import { CONTRACT_ADDRESS, shortenAddress } from "@/lib/config";
-
-const DEPLOY_BLOCK = 42544901n;
-const CHUNK_SIZE   = 2000n;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchLogsChunked(client: any, params: any, toBlock: bigint): Promise<any[]> {
-  const ranges: { from: bigint; to: bigint }[] = [];
-  for (let from = params.fromBlock; from <= toBlock; from += CHUNK_SIZE) {
-    const to = from + CHUNK_SIZE - 1n < toBlock ? from + CHUNK_SIZE - 1n : toBlock;
-    ranges.push({ from, to });
-  }
-  const chunks = await Promise.all(
-    ranges.map(r => client.getLogs({ ...params, fromBlock: r.from, toBlock: r.to }))
-  );
-  return chunks.flat();
-}
+import { fetchLogsWithCache } from "@/lib/logCache";
 import { Loader2, Trophy, Medal } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 
@@ -48,22 +32,9 @@ export function LeaderboardPage() {
       setLoading(true);
       try {
         const c = client as NonNullable<typeof client>;
-        const toBlock = await c.getBlockNumber();
         const [mintLogs, voteLogs] = await Promise.all([
-          fetchLogsChunked(c, {
-            address: CONTRACT_ADDRESS,
-            event: parseAbiItem(
-              "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"
-            ),
-            fromBlock: DEPLOY_BLOCK,
-          }, toBlock),
-          fetchLogsChunked(c, {
-            address: CONTRACT_ADDRESS,
-            event: parseAbiItem(
-              "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"
-            ),
-            fromBlock: DEPLOY_BLOCK,
-          }, toBlock),
+          fetchLogsWithCache(c, "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"),
+          fetchLogsWithCache(c, "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"),
         ]);
 
         const nftMap: Record<string, number> = {};
@@ -91,8 +62,8 @@ export function LeaderboardPage() {
           .map((e, i) => ({ ...e, rank: i + 1 }));
 
         setEntries(sorted.slice(0, 50));
-      } catch {
-        // silent fail
+      } catch (e) {
+        console.error("[Leaderboard] fetch error:", e);
       } finally {
         setLoading(false);
       }

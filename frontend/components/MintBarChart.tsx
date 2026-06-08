@@ -1,30 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { createPublicClient, http, parseAbiItem } from "viem";
-import { baseSepolia } from "viem/chains";
+import { usePublicClient } from "wagmi";
 import { CONTRACT_ADDRESS, shortenAddress } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
-
-const client = createPublicClient({ chain: baseSepolia, transport: http("https://sepolia.base.org") });
-
-const DEPLOY_BLOCK = 42544901n;
-const CHUNK_SIZE   = 2000n;
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchLogsChunked(params: any): Promise<any[]> {
-  const toBlock = await client.getBlockNumber();
-  const ranges: { from: bigint; to: bigint }[] = [];
-  for (let from = DEPLOY_BLOCK; from <= toBlock; from += CHUNK_SIZE) {
-    const to = from + CHUNK_SIZE - 1n < toBlock ? from + CHUNK_SIZE - 1n : toBlock;
-    ranges.push({ from, to });
-  }
-  const chunks = await Promise.all(
-    ranges.map(r => client.getLogs({ ...params, fromBlock: r.from, toBlock: r.to }))
-  );
-  return chunks.flat();
-}
+import { fetchLogsWithCache } from "@/lib/logCache";
 
 const RANK_EMOJIS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
 
@@ -39,6 +20,7 @@ interface Props {
 
 export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCountryId }: Props) {
   const { t } = useLang();
+  const client = usePublicClient();
   const [supplies,  setSupplies]  = useState<CountrySupply[]>([]);
   const [animated,  setAnimated]  = useState(false);
 
@@ -52,12 +34,11 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
 
   // Fetch total supply for all countries from CountryMinted events (every 30s)
   useEffect(() => {
+    if (!client) return;
+    const c = client;
     async function load() {
       try {
-        const logs = await fetchLogsChunked({
-          address: CONTRACT_ADDRESS,
-          event: parseAbiItem("event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"),
-        });
+        const logs = await fetchLogsWithCache(c, "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)");
         const supplyMap: Record<number, number> = {};
         for (const log of logs) {
           const id     = Number(log.args.countryId as bigint);
@@ -70,7 +51,8 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
     load();
     const id = setInterval(load, 30_000);
     return () => clearInterval(id);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client]);
 
   // Animate bars after data arrives
   useEffect(() => {
@@ -82,17 +64,16 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
 
   // Fetch top holders for a country from CountryMinted events
   const fetchHolders = useCallback(async (countryId: number) => {
+    if (!client) return;
     if (holderCache.current.has(countryId)) {
       setHolders(holderCache.current.get(countryId)!);
       return;
     }
     setLoadingTip(true);
     try {
-      const logs = await fetchLogsChunked({
-        address: CONTRACT_ADDRESS,
-        event: parseAbiItem("event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"),
-        args: { countryId: BigInt(countryId) },
-      });
+      // Fetch all CountryMinted logs (cached) then filter by countryId
+      const allLogs = await fetchLogsWithCache(client, "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)");
+      const logs = allLogs.filter((l: { args: { countryId: bigint } }) => Number(l.args.countryId) === countryId);
       const totals: Record<string, number> = {};
       for (const log of logs) {
         const addr   = (log.args.user as string).toLowerCase();
@@ -107,7 +88,8 @@ export function MintBarChart({ eliminationStatus, tournamentFinalized, winningCo
       setHolders(sorted);
     } catch { setHolders([]); }
     finally { setLoadingTip(false); }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client]);
 
   const handleBarEnter = (countryId: number, e: React.MouseEvent) => {
     if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
