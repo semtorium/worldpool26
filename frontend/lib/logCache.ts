@@ -3,7 +3,7 @@
 import { parseAbiItem } from "viem";
 import { CONTRACT_ADDRESS } from "./config";
 
-const DEPLOY_BLOCK = 42544901n;
+const DEPLOY_BLOCK = 42593186n;
 const CHUNK_SIZE   = 2000n;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
