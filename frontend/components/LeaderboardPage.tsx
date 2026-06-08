@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { usePublicClient, useAccount, useConnect } from "wagmi";
-import { CONTRACT_ADDRESS, shortenAddress } from "@/lib/config";
+import { shortenAddress } from "@/lib/config";
 import { fetchLogsWithCache } from "@/lib/logCache";
 import { Loader2, Trophy, Medal } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 
 interface LeaderEntry {
   address: string;
-  nfts: number;
-  votes: number;
-  total: number;
-  rank: number;
+  nfts:    number;
+  votes:   number;
+  total:   number;
+  rank:    number;
 }
+
+const MEDAL: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
 export function LeaderboardPage() {
   const client = usePublicClient();
@@ -22,14 +24,17 @@ export function LeaderboardPage() {
   const login = () => connect({ connector: connectors[0] });
   const { t } = useLang();
 
-  const [entries, setEntries] = useState<LeaderEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [top50,     setTop50]     = useState<LeaderEntry[]>([]);
+  const [userEntry, setUserEntry] = useState<LeaderEntry | undefined>();
+  const [loading,   setLoading]   = useState(true);
+  const initialized = useRef(false);
 
   useEffect(() => {
     if (!client) return;
 
     async function fetchData() {
-      setLoading(true);
+      // Only show spinner on very first load
+      if (!initialized.current) setLoading(true);
       try {
         const c = client as NonNullable<typeof client>;
         const [mintLogs, voteLogs] = await Promise.all([
@@ -37,31 +42,38 @@ export function LeaderboardPage() {
           fetchLogsWithCache(c, "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"),
         ]);
 
-        const nftMap: Record<string, number> = {};
+        const nftMap:  Record<string, number> = {};
         const voteMap: Record<string, number> = {};
 
         for (const log of mintLogs) {
-          const user = (log.args.user as string).toLowerCase();
-          nftMap[user] = (nftMap[user] ?? 0) + Number(log.args.amount);
+          const u = (log.args.user as string).toLowerCase();
+          nftMap[u]  = (nftMap[u]  ?? 0) + Number(log.args.amount);
         }
         for (const log of voteLogs) {
-          const user = (log.args.user as string).toLowerCase();
-          voteMap[user] = (voteMap[user] ?? 0) + Number(log.args.votes);
+          const u = (log.args.user as string).toLowerCase();
+          voteMap[u] = (voteMap[u] ?? 0) + Number(log.args.votes);
         }
 
-        const allAddrs = new Set([...Object.keys(nftMap), ...Object.keys(voteMap)]);
-        const sorted = Array.from(allAddrs)
+        const sorted: LeaderEntry[] = Array.from(
+          new Set([...Object.keys(nftMap), ...Object.keys(voteMap)])
+        )
           .map(addr => ({
             address: addr,
-            nfts:  nftMap[addr]  ?? 0,
-            votes: voteMap[addr] ?? 0,
-            total: (nftMap[addr] ?? 0) + (voteMap[addr] ?? 0),
-            rank: 0,
+            nfts:    nftMap[addr]  ?? 0,
+            votes:   voteMap[addr] ?? 0,
+            total:   (nftMap[addr] ?? 0) + (voteMap[addr] ?? 0),
+            rank:    0,
           }))
           .sort((a, b) => b.total - a.total || b.nfts - a.nfts)
           .map((e, i) => ({ ...e, rank: i + 1 }));
 
-        setEntries(sorted.slice(0, 50));
+        setTop50(sorted.slice(0, 50));
+
+        // User rank — always from full list, even if >50
+        const me = address ? sorted.find(e => e.address === address.toLowerCase()) : undefined;
+        setUserEntry(me);
+
+        initialized.current = true;
       } catch (e) {
         console.error("[Leaderboard] fetch error:", e);
       } finally {
@@ -70,15 +82,9 @@ export function LeaderboardPage() {
     }
 
     fetchData();
-    const id = setInterval(fetchData, 30_000);
+    const id = setInterval(fetchData, 60_000);
     return () => clearInterval(id);
-  }, [client]);
-
-  const userEntry = address
-    ? entries.find(e => e.address === address.toLowerCase())
-    : undefined;
-
-  const MEDAL: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+  }, [client, address]);
 
   return (
     <div className="max-w-3xl mx-auto space-y-5">
@@ -115,6 +121,7 @@ export function LeaderboardPage() {
               {loading ? "—" : userEntry ? `#${userEntry.rank}` : t.lb_not_ranked}
             </p>
           </div>
+
           {userEntry && (
             <div className="flex items-center gap-4 shrink-0">
               <div className="text-center">
@@ -134,6 +141,7 @@ export function LeaderboardPage() {
               </div>
             </div>
           )}
+
           {!loading && !userEntry && (
             <p className="text-xs" style={{ color: "#6b7a9a" }}>
               {t.lb_no_activity}
@@ -177,84 +185,120 @@ export function LeaderboardPage() {
             <Loader2 size={28} className="animate-spin" style={{ color: "#fbbf24" }} />
             <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.lb_loading}</p>
           </div>
-        ) : entries.length === 0 ? (
+        ) : top50.length === 0 ? (
           <div className="flex flex-col items-center py-20 gap-3">
             <p className="text-4xl">🏜️</p>
             <p className="font-bold text-white">{t.lb_empty}</p>
             <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.lb_empty_sub}</p>
           </div>
         ) : (
-          entries.map((e, i) => {
-            const isUser = !!address && e.address === address.toLowerCase();
-            const medal  = MEDAL[e.rank];
-            return (
-              <div
-                key={e.address}
-                className="flex items-center gap-3 px-4 py-3 transition-colors"
-                style={{
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                  background: isUser ? "rgba(0,82,255,0.04)" : undefined,
-                }}
-                onMouseEnter={ev => { if (!isUser) ev.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-                onMouseLeave={ev => { ev.currentTarget.style.background = isUser ? "rgba(0,82,255,0.04)" : "transparent"; }}
-              >
-                {/* Rank */}
-                <div className="w-8 shrink-0 text-center">
-                  {medal
-                    ? <span style={{ fontSize: 18 }}>{medal}</span>
-                    : <span className="text-sm font-bold" style={{ color: "#6b7a9a" }}>#{e.rank}</span>
-                  }
-                </div>
+          <>
+            {top50.map((e, i) => {
+              const isUser = !!address && e.address === address.toLowerCase();
+              const medal  = MEDAL[e.rank];
+              return (
+                <div
+                  key={e.address}
+                  className="flex items-center gap-3 px-4 py-3 transition-colors"
+                  style={{
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    background: isUser ? "rgba(0,82,255,0.04)" : undefined,
+                  }}
+                  onMouseEnter={ev => { if (!isUser) ev.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+                  onMouseLeave={ev => { ev.currentTarget.style.background = isUser ? "rgba(0,82,255,0.04)" : "transparent"; }}
+                >
+                  <div className="w-8 shrink-0 text-center">
+                    {medal
+                      ? <span style={{ fontSize: 18 }}>{medal}</span>
+                      : <span className="text-sm font-bold" style={{ color: "#6b7a9a" }}>#{e.rank}</span>
+                    }
+                  </div>
 
-                {/* Address + YOU badge */}
-                <div className="flex-1 min-w-0 flex items-center gap-2">
-                  <span
-                    className="font-mono text-sm font-bold truncate"
-                    style={{ color: isUser ? "#0052FF" : "#f0f4ff" }}
-                  >
-                    {shortenAddress(e.address)}
-                  </span>
-                  {isUser && (
+                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                    <span
+                      className="font-mono text-sm font-bold truncate"
+                      style={{ color: isUser ? "#0052FF" : "#f0f4ff" }}
+                    >
+                      {shortenAddress(e.address)}
+                    </span>
+                    {isUser && (
+                      <span
+                        className="text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0"
+                        style={{ background: "rgba(0,82,255,0.12)", color: "#0052FF", border: "1px solid rgba(0,82,255,0.25)" }}
+                      >
+                        YOU
+                      </span>
+                    )}
+                    <span className="sm:hidden ml-auto text-xs shrink-0" style={{ color: "#6b7a9a" }}>
+                      🌍{e.nfts} ⚽{e.votes}
+                    </span>
+                  </div>
+
+                  <div className="hidden sm:block w-14 text-right">
+                    <span className="font-semibold text-sm" style={{ color: "#0052FF" }}>{e.nfts}</span>
+                  </div>
+                  <div className="hidden sm:block w-14 text-right">
+                    <span className="font-semibold text-sm" style={{ color: "#2563EB" }}>{e.votes}</span>
+                  </div>
+                  <div className="w-12 text-right shrink-0">
+                    <span className="font-black text-sm" style={{ color: i < 3 ? "#fbbf24" : "#f0f4ff" }}>
+                      {e.total}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* User >50: show separator + their row */}
+            {userEntry && userEntry.rank > 50 && (
+              <>
+                <div
+                  className="flex items-center gap-2 px-4 py-1.5"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.04)", background: "rgba(255,255,255,0.01)" }}
+                >
+                  <div className="flex-1 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
+                  <span className="text-[10px] font-bold" style={{ color: "#6b7a9a" }}>···</span>
+                  <div className="flex-1 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }} />
+                </div>
+                <div
+                  className="flex items-center gap-3 px-4 py-3"
+                  style={{ background: "rgba(0,82,255,0.04)" }}
+                >
+                  <div className="w-8 shrink-0 text-center">
+                    <span className="text-sm font-bold" style={{ color: "#6b7a9a" }}>#{userEntry.rank}</span>
+                  </div>
+                  <div className="flex-1 min-w-0 flex items-center gap-2">
+                    <span className="font-mono text-sm font-bold truncate" style={{ color: "#0052FF" }}>
+                      {shortenAddress(userEntry.address)}
+                    </span>
                     <span
                       className="text-[9px] font-black px-1.5 py-0.5 rounded-full shrink-0"
                       style={{ background: "rgba(0,82,255,0.12)", color: "#0052FF", border: "1px solid rgba(0,82,255,0.25)" }}
                     >
                       YOU
                     </span>
-                  )}
-                  {/* Mobile: show nfts+votes inline */}
-                  <span className="sm:hidden ml-auto text-xs shrink-0" style={{ color: "#6b7a9a" }}>
-                    🌍{e.nfts} ⚽{e.votes}
-                  </span>
+                    <span className="sm:hidden ml-auto text-xs shrink-0" style={{ color: "#6b7a9a" }}>
+                      🌍{userEntry.nfts} ⚽{userEntry.votes}
+                    </span>
+                  </div>
+                  <div className="hidden sm:block w-14 text-right">
+                    <span className="font-semibold text-sm" style={{ color: "#0052FF" }}>{userEntry.nfts}</span>
+                  </div>
+                  <div className="hidden sm:block w-14 text-right">
+                    <span className="font-semibold text-sm" style={{ color: "#2563EB" }}>{userEntry.votes}</span>
+                  </div>
+                  <div className="w-12 text-right shrink-0">
+                    <span className="font-black text-sm" style={{ color: "#f0f4ff" }}>{userEntry.total}</span>
+                  </div>
                 </div>
-
-                {/* NFTs — desktop only */}
-                <div className="hidden sm:block w-14 text-right">
-                  <span className="font-semibold text-sm" style={{ color: "#0052FF" }}>{e.nfts}</span>
-                </div>
-
-                {/* Votes — desktop only */}
-                <div className="hidden sm:block w-14 text-right">
-                  <span className="font-semibold text-sm" style={{ color: "#2563EB" }}>{e.votes}</span>
-                </div>
-
-                {/* Total score */}
-                <div className="w-12 text-right shrink-0">
-                  <span
-                    className="font-black text-sm"
-                    style={{ color: i < 3 ? "#fbbf24" : "#f0f4ff" }}
-                  >
-                    {e.total}
-                  </span>
-                </div>
-              </div>
-            );
-          })
+              </>
+            )}
+          </>
         )}
       </div>
 
       {/* Footer note */}
-      {!loading && entries.length > 0 && (
+      {!loading && top50.length > 0 && (
         <p className="text-center text-[11px]" style={{ color: "rgba(107,122,154,0.45)" }}>
           {t.lb_footer}
         </p>
