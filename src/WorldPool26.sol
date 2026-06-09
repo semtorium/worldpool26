@@ -31,7 +31,7 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
 
     // ── Early-Bird Discount (v7) ───────────────────────────────
     /// @notice First EARLY_BIRD_SUPPLY NFTs minted globally get EARLY_BIRD_DISCOUNT_BPS off.
-    uint256 public constant EARLY_BIRD_SUPPLY       = 10;    // total discounted slots (test: 10, mainnet: 200)
+    uint256 public constant EARLY_BIRD_SUPPLY       = 5;        // total discounted slots (test: 10, mainnet: 200)
     uint256 public constant EARLY_BIRD_DISCOUNT_BPS = 2000;  // 20% off
     /// @notice Per-tx limit while the discount window is open — prevents whale sweeping.
     uint256 public constant MAX_MINT_PER_TX_EARLY   = 5;

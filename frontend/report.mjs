@@ -101,7 +101,7 @@ const client       = createPublicClient({ chain: baseSepolia, transport: http(RP
 const BASESCAN_KEY = "NDR3E3B7YAYH6U5ADDE2VVGZIYAX6PV35I";
 // Etherscan V2 API — supports all chains via chainid param, no block-range limit
 const BASESCAN_API = "https://api.etherscan.io/v2/api?chainid=84532";
-const DEPLOY_BLOCK = 42614412;
+const DEPLOY_BLOCK = 42615109;
 const read   = (fn, args = []) => client.readContract({ address: CONTRACT, abi: ABI, functionName: fn, args });
 const ETH    = (wei) => parseFloat(formatEther(BigInt(wei))).toFixed(6);
 const line   = (char = "─", len = 66) => char.repeat(len);
