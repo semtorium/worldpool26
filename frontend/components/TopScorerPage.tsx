@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Ticket, Trophy, Zap, Search } from "lucide-react";
 import { ABI } from "@/lib/abi";
@@ -23,7 +23,7 @@ export function TopScorerPage() {
   const { openConnectModal }     = useConnectModal();
   const login = () => openConnectModal?.();
   const { switchChain } = useSwitchChain();
-  const isWrongChain = isConnected && walletChainId !== baseSepolia.id;
+  const isWrongChain = isConnected && walletChainId !== base.id;
   const { t } = useLang();
   const ethUsd = useEthUsd();
   const queryClient = useQueryClient();
@@ -296,7 +296,7 @@ export function TopScorerPage() {
             {isConnected ? (
               <button
                 onClick={() => {
-                  if (isWrongChain) { switchChain({ chainId: baseSepolia.id }); return; }
+                  if (isWrongChain) { switchChain({ chainId: base.id }); return; }
                   purchasedQtyRef.current = ticketQty;
                   buyTickets({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "buyScorerTickets", args: [BigInt(ticketQty)], value: totalCost });
                 }}
@@ -506,7 +506,7 @@ export function TopScorerPage() {
                       style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)" }}
                     />
                     <button
-                      onClick={() => { if (isWrongChain) { switchChain({ chainId: baseSepolia.id }); return; } vote({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "voteTopScorer", args: [player.name, BigInt(myVote)] }); }}
+                      onClick={() => { if (isWrongChain) { switchChain({ chainId: base.id }); return; } vote({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "voteTopScorer", args: [player.name, BigInt(myVote)] }); }}
                       disabled={isVoting || isVoteConfirming}
                       className="btn-neon text-xs py-1.5 px-4 flex items-center gap-1">
                       {(isVoting || isVoteConfirming) && <Loader2 size={11} className="animate-spin" />}

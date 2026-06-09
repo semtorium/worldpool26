@@ -238,7 +238,7 @@ export function LeaderboardPage() {
                       const name = isUser ? username : (usernameMap[e.address.toLowerCase()] ?? "");
                       return (
                         <a
-                          href={`https://sepolia.basescan.org/address/${e.address}`}
+                          href={`https://basescan.org/address/${e.address}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-sm font-bold truncate hover:underline"
@@ -299,7 +299,7 @@ export function LeaderboardPage() {
                   </div>
                   <div className="flex-1 min-w-0 flex items-center gap-2">
                     <a
-                      href={`https://sepolia.basescan.org/address/${userEntry.address}`}
+                      href={`https://basescan.org/address/${userEntry.address}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm font-bold truncate hover:underline"

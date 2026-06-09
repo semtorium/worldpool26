@@ -9,8 +9,8 @@ import { Loader2, ExternalLink } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 import { fetchLogsWithCache } from "@/lib/logCache";
 
-const EXPLORER_TX   = "https://sepolia.basescan.org/tx/";
-const EXPLORER_ADDR = "https://sepolia.basescan.org/address/";
+const EXPLORER_TX   = "https://basescan.org/tx/";
+const EXPLORER_ADDR = "https://basescan.org/address/";
 
 // Build a quick countryId → name map
 const COUNTRY_MAP: Record<number, string> = Object.fromEntries(

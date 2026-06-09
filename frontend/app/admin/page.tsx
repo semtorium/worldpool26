@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createPublicClient, createWalletClient, custom, http, type Address } from "viem";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
@@ -15,8 +15,8 @@ const ADMIN_VERIFIED_KEY = `abs_admin_verified_${CONTRACT_ADDRESS}`;
 
 // ── Viem clients ──────────────────────────────────────────────
 const publicClient = createPublicClient({
-  chain: baseSepolia,
-  transport: http("https://sepolia.base.org"),
+  chain: base,
+  transport: http("https://mainnet.base.org"),
 });
 
 function fmt(wei: bigint | undefined) {
@@ -223,8 +223,8 @@ export default function AdminPage() {
             chainId: CHAIN_HEX,
             chainName: "Base Sepolia Testnet",
             nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
-            rpcUrls: ["https://sepolia.base.org"],
-            blockExplorerUrls: ["https://sepolia.basescan.org"],
+            rpcUrls: ["https://mainnet.base.org"],
+            blockExplorerUrls: ["https://basescan.org"],
           }],
         });
       } else {
@@ -243,7 +243,7 @@ export default function AdminPage() {
       // 10-minute time window — prevents replay from old signatures
       const timeWindow = Math.floor(Date.now() / (10 * 60 * 1000));
       const message    = `WorldPool26 Admin Panel\nContract: ${CONTRACT_ADDRESS}\nWindow: ${timeWindow}`;
-      const walletClient = createWalletClient({ account: address, chain: baseSepolia, transport: custom(provider) });
+      const walletClient = createWalletClient({ account: address, chain: base, transport: custom(provider) });
       const signature    = await walletClient.signMessage({ account: address, message });
       const valid        = await publicClient.verifyMessage({ address: ownerAddress, message, signature });
       if (valid) {
@@ -265,7 +265,7 @@ export default function AdminPage() {
     setTxPending(label); setTxSuccess(null); setTxError(null);
     try {
       await ensureChain();
-      const walletClient = createWalletClient({ account: address, chain: baseSepolia, transport: custom(provider) });
+      const walletClient = createWalletClient({ account: address, chain: base, transport: custom(provider) });
       const hash = await walletClient.writeContract({ address: CONTRACT_ADDRESS, abi: ABI as any, functionName: fnName, args });
       await publicClient.waitForTransactionReceipt({ hash });
       setTxSuccess(label);

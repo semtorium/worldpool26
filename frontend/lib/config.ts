@@ -1,8 +1,8 @@
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 
 // ── Sözleşme Adresi ───────────────────────────────────────────
-// Mainnet deploy sonrası bu adresi güncelle
-export const CONTRACT_ADDRESS = "0x792d3b9C1b9DE97952F0915374CDd7ff9c7AdE46" as `0x${string}`;
+// TODO: Deploy sonrası mainnet adresini buraya yaz
+export const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000" as `0x${string}`;
 
 // ── Admin Panel Ek Yetkili Cüzdanlar ─────────────────────────
 // Owner dışında admin panele READ-ONLY erişmesini istediğin cüzdanları buraya ekle.
@@ -12,7 +12,7 @@ export const EXTRA_ADMIN_WALLETS: string[] = [
 ];
 
 // ── Ağ ────────────────────────────────────────────────────────
-export const CHAIN = baseSepolia;
+export const CHAIN = base;
 
 // ── Fiyatlar (wei) ────────────────────────────────────────────
 export const MINT_PRICE            = BigInt("2200000000000000"); // 0.0022 ETH

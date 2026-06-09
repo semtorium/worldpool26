@@ -18,7 +18,7 @@ const CONFETTI_COLORS = [
   "#34D399", "#f97316", "#ec4899", "#06b6d4",
 ];
 
-const EXPLORER = "https://sepolia.basescan.org/tx/";
+const EXPLORER = "https://basescan.org/tx/";
 
 export function MintSuccessModal({ country, amount, txHash, onClose }: Props) {
   const { t } = useLang();

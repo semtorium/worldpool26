@@ -371,7 +371,7 @@ export function ProfileDrawer({ open, onClose, onSetUsername }: ProfileDrawerPro
           </div>
 
           {/* Explorer link */}
-          <a href={`https://sepolia.basescan.org/address/${address}`}
+          <a href={`https://basescan.org/address/${address}`}
             target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-semibold transition-colors"
             style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", color: "#6b7a9a" }}

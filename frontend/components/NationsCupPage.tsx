@@ -5,8 +5,7 @@ import Image from "next/image";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
 import { ABI } from "@/lib/abi";
-import { CONTRACT_ADDRESS, EARLY_BIRD_SUPPLY, CHAIN } from "@/lib/config";
-import { baseSepolia } from "viem/chains";
+import { CONTRACT_ADDRESS, EARLY_BIRD_SUPPLY } from "@/lib/config";
 import { COUNTRIES, getFlagUrl } from "@/lib/countries";
 import { CountryCard } from "./CountryCard";
 import { MintBarChart } from "./MintBarChart";
@@ -416,11 +415,7 @@ export function NationsCupPage() {
           </div>
           {/* Right: Trade on OpenSea button */}
           <a
-            href={
-              CHAIN.id === baseSepolia.id
-                ? `https://testnets.opensea.io/assets/base_sepolia/${CONTRACT_ADDRESS}`
-                : `https://opensea.io/assets/base/${CONTRACT_ADDRESS}`
-            }
+            href={`https://opensea.io/assets/base/${CONTRACT_ADDRESS}`}
             target="_blank"
             rel="noopener noreferrer"
             style={{

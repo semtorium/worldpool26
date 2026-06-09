@@ -1,5 +1,5 @@
 import { createConfig, http, fallback } from "wagmi";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { Attribution } from "ox/erc8021";
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import {
@@ -35,13 +35,13 @@ const connectors = connectorsForWallets(
 );
 
 export const wagmiConfig = createConfig({
-  chains: [baseSepolia],
+  chains: [base],
   connectors,
   transports: {
-    [baseSepolia.id]: fallback([
-      http("https://sepolia.base.org"),
-      http("https://base-sepolia-rpc.publicnode.com"),
-      http("https://84532.rpc.thirdweb.com"),
+    [base.id]: fallback([
+      http(`https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY ?? ""}`),
+      http("https://mainnet.base.org"),
+      http("https://base-rpc.publicnode.com"),
     ]),
   },
   ssr: true,

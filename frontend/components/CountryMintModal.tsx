@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { baseSepolia } from "viem/chains";
+import { base } from "viem/chains";
 import { Loader2, Minus, Plus, X, Zap } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import {
@@ -38,7 +38,7 @@ export function CountryMintModal({
   const { openConnectModal }     = useConnectModal();
   const login = () => openConnectModal?.();
   const { switchChain } = useSwitchChain();
-  const isWrongChain = isConnected && walletChainId !== baseSepolia.id;
+  const isWrongChain = isConnected && walletChainId !== base.id;
   const { t } = useLang();
   const ethUsd = useEthUsd();
   const [amount, setAmount]           = useState(1);
@@ -114,7 +114,7 @@ export function CountryMintModal({
   const handleMint = () => {
     if (!isConnected) return;
     if (isWrongChain) {
-      switchChain({ chainId: baseSepolia.id });
+      switchChain({ chainId: base.id });
       return;
     }
     setMintedAmt(amount);
