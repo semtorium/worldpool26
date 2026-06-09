@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, EARLY_BIRD_SUPPLY, CHAIN } from "@/lib/config";
 import { baseSepolia } from "viem/chains";
-import { COUNTRIES } from "@/lib/countries";
+import { COUNTRIES, getFlagUrl } from "@/lib/countries";
 import { CountryCard } from "./CountryCard";
 import { MintBarChart } from "./MintBarChart";
 import { Loader2, Trophy } from "lucide-react";
@@ -200,7 +201,46 @@ export function NationsCupPage() {
         <div className="glass-card p-4 text-center">
           <p className="text-xs uppercase tracking-widest font-semibold mb-2" style={{ color: "#6b7a9a" }}>{t.nc_status}</p>
           {tournamentFinalized ? (
-            <p className="text-2xl font-black text-white">{t.nc_finalized}</p>
+            <div className="flex flex-col items-center gap-1">
+              <p className="text-lg font-black text-white leading-tight">{t.nc_finalized}</p>
+              {winningCountryId && Number(winningCountryId) > 0 && (() => {
+                const winner = COUNTRIES.find(c => c.id === Number(winningCountryId));
+                if (!winner) return null;
+                return (
+                  <div className="flex flex-col items-center gap-1 mt-0.5">
+                    <span className="font-black tracking-[0.22em] uppercase"
+                      style={{ fontSize: "9px", color: "rgba(251,191,36,0.55)", letterSpacing: "0.22em" }}>
+                      Champion
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <Image
+                        src={getFlagUrl(winner.flagCode, 80)}
+                        alt={winner.name}
+                        width={20} height={14}
+                        className="rounded object-cover shrink-0"
+                        unoptimized
+                      />
+                      <div style={{ filter: "drop-shadow(0 0 10px rgba(251,191,36,0.6))" }}>
+                        <span
+                          className="font-black uppercase"
+                          style={{
+                            fontSize: "15px",
+                            background: "linear-gradient(180deg, #fffbe0 0%, #fbbf24 45%, #f59e0b 100%)",
+                            WebkitBackgroundClip: "text",
+                            WebkitTextFillColor: "transparent",
+                            backgroundClip: "text",
+                            letterSpacing: "0.08em",
+                            lineHeight: 1,
+                          }}
+                        >
+                          {winner.name}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           ) : countdown === null ? (
             <div className="flex items-center justify-center gap-1.5">
               <div className="live-dot" />
