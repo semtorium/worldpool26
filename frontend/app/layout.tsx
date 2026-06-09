@@ -20,6 +20,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="base:app_id" content="6a27e4f4109b9af1bf2419ee" />
+      </head>
       <body>
         <Providers>{children}</Providers>
         <Analytics />
