@@ -19,7 +19,7 @@ export const MINT_PRICE            = BigInt("2200000000000000"); // 0.0022 ETH
 export const TICKET_PRICE          = BigInt("1800000000000000"); // 0.0018 ETH
 
 // ── Early-Bird İndirimi (v7) ──────────────────────────────────
-export const EARLY_BIRD_SUPPLY     = 5;                         // indirimli slot sayısı (test: 10, mainnet: 200)
+export const EARLY_BIRD_SUPPLY     = 100;                       // indirimli slot sayısı
 export const EARLY_BIRD_DISC_BPS   = 2000;                       // %20 indirim
 /// Discounted price = MINT_PRICE × (10000 - 2000) / 10000 = 0.00176 ETH
 export const DISC_MINT_PRICE       = BigInt("1760000000000000"); // 0.00176 ETH
