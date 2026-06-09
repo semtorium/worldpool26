@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
 import { ABI } from "@/lib/abi";
@@ -69,11 +69,22 @@ type Filter = typeof FILTERS[number];
 
 export function NationsCupPage() {
   const [filter, setFilter] = useState<Filter>("ALL");
+  const [flashCards, setFlashCards] = useState(false);
+  const cardsGridRef = useRef<HTMLDivElement>(null);
   const countdown = useCountdown();
   const mintDeadline = useMintDeadlineCountdown();
   const { address } = useAccount();
   const { t } = useLang();
   const queryClient = useQueryClient();
+
+  // Scroll to country cards grid and flash them
+  const handleMintNow = () => {
+    cardsGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setFlashCards(false);
+    // Small delay so the class re-applies if already animating
+    setTimeout(() => setFlashCards(true), 50);
+    setTimeout(() => setFlashCards(false), 1750); // 3 × 0.55s ≈ 1.65s + buffer
+  };
 
   const { data: tournamentFinalized, isLoading } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "tournamentFinalized" });
   const { data: winningCountryId }       = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "winningCountryId" });
@@ -276,29 +287,54 @@ export function NationsCupPage() {
             </span>
           </div>
 
-          {/* Right: slot counter */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              background: "rgba(251,191,36,0.10)",
-              border: "1px solid rgba(251,191,36,0.3)",
-              borderRadius: "10px",
-              padding: "6px 14px",
-              flexShrink: 0,
-            }}
-          >
-            <span className="font-black font-mono" style={{ fontSize: "18px", color: "#fff" }}>{ebRemaining}</span>
-            <span style={{ fontSize: "11px", color: "#6b7a9a" }}>/ {EARLY_BIRD_SUPPLY}</span>
-            <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.5)", marginLeft: 2 }}>slots</span>
-            <span style={{
-              marginLeft: 6, padding: "2px 8px", borderRadius: 99,
-              background: "rgba(251,191,36,0.18)", border: "1px solid rgba(251,191,36,0.35)",
-              fontSize: 11, fontWeight: 900, color: "#fbbf24",
-            }}>
-              {t.eb_discount}
-            </span>
+          {/* Right: slot counter + mint now button */}
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "rgba(251,191,36,0.10)",
+                border: "1px solid rgba(251,191,36,0.3)",
+                borderRadius: "10px",
+                padding: "6px 14px",
+                flexShrink: 0,
+              }}
+            >
+              <span className="font-black font-mono" style={{ fontSize: "18px", color: "#fff" }}>{ebRemaining}</span>
+              <span style={{ fontSize: "11px", color: "#6b7a9a" }}>/ {EARLY_BIRD_SUPPLY}</span>
+              <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.5)", marginLeft: 2 }}>slots</span>
+              <span style={{
+                marginLeft: 6, padding: "2px 8px", borderRadius: 99,
+                background: "rgba(251,191,36,0.18)", border: "1px solid rgba(251,191,36,0.35)",
+                fontSize: 11, fontWeight: 900, color: "#fbbf24",
+              }}>
+                {t.eb_discount}
+              </span>
+            </div>
+
+            {/* Mint Now CTA */}
+            <button
+              onClick={handleMintNow}
+              style={{
+                background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+                border: "none",
+                borderRadius: "10px",
+                padding: "8px 18px",
+                fontWeight: 900,
+                fontSize: "13px",
+                letterSpacing: "0.07em",
+                color: "#000",
+                cursor: "pointer",
+                flexShrink: 0,
+                boxShadow: "0 0 18px rgba(251,191,36,0.45)",
+                transition: "transform 0.15s, box-shadow 0.15s",
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
+            >
+              {t.eb_mint_now} ↓
+            </button>
           </div>
         </div>
       )}
@@ -430,7 +466,10 @@ export function NationsCupPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+        <div
+          ref={cardsGridRef}
+          className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3${flashCards ? " cards-flashing" : ""}`}
+        >
           {filtered.map((country) => (
             <CountryCard key={country.id} country={country}
               isWinner={!!tournamentFinalized && Number(winningCountryId) === country.id}

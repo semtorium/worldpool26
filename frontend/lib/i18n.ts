@@ -243,6 +243,7 @@ const t = {
     eb_sold:            "EARLY BIRD SOLD OUT",
     cmt_price_note_early: "0.00176 ETH per NFT · 20% early bird discount · Base Chain",
     eb_max_tx:          "Max 5 per transaction · early bird period",
+    eb_mint_now:        "MINT NOW",
 
     // TxErrorModal
     err_rejected:       "Transaction Rejected",
@@ -465,6 +466,7 @@ const t = {
     eb_sold:            "ERKEN KUŞLAR BİTTİ",
     cmt_price_note_early: "NFT başına 0.00176 ETH · %20 erken indirim · Base Chain",
     eb_max_tx:          "İşlem başına max 5 · erken dönem",
+    eb_mint_now:        "HEMEN MINT'LE",
 
     // TxErrorModal
     err_rejected:       "İşlem Reddedildi",
@@ -687,6 +689,7 @@ const t = {
     eb_sold:            "EARLY BIRD AGOTADO",
     cmt_price_note_early: "0,00176 ETH por NFT · 20% descuento early bird · Base Chain",
     eb_max_tx:          "Máx. 5 por transacción · período early bird",
+    eb_mint_now:        "MINT AHORA",
 
     // TxErrorModal
     err_rejected:       "Transacción Rechazada",
@@ -909,6 +912,7 @@ const t = {
     eb_sold:            "早鸟已售完",
     cmt_price_note_early: "每个 NFT 0.00176 ETH · 早鸟八折 · Base Chain",
     eb_max_tx:          "早鸟期间每笔最多 5 个",
+    eb_mint_now:        "立即MINT",
 
     // TxErrorModal
     err_rejected:       "交易已拒绝",
@@ -1131,6 +1135,7 @@ const t = {
     eb_sold:            "انتهى خصم المبكرين",
     cmt_price_note_early: "0.00176 ETH لكل NFT · خصم 20% للمبكرين · Base Chain",
     eb_max_tx:          "الحد الأقصى 5 لكل معاملة · الفترة المبكرة",
+    eb_mint_now:        "MINT الآن",
 
     // TxErrorModal
     err_rejected:       "تم رفض المعاملة",
@@ -1353,6 +1358,7 @@ const t = {
     eb_sold:            "얼리버드 매진",
     cmt_price_note_early: "NFT당 0.00176 ETH · 20% 얼리버드 할인 · Base Chain",
     eb_max_tx:          "얼리버드 기간 · 1회 최대 5개",
+    eb_mint_now:        "지금 MINT",
 
     // TxErrorModal
     err_rejected:       "트랜잭션 거부됨",

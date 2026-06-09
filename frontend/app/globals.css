@@ -228,6 +228,15 @@
     100% { background-position: -200% 0; }
   }
 
+  /* ─── Early-bird card flash ─── */
+  @keyframes cardFlash {
+    0%, 100% { filter: brightness(1);   box-shadow: none; }
+    50%       { filter: brightness(1.55); box-shadow: 0 0 28px rgba(251,191,36,0.75), 0 0 0 1px rgba(251,191,36,0.5); }
+  }
+  .cards-flashing > * {
+    animation: cardFlash 0.55s ease-in-out 3;
+  }
+
   /* ─── Country flag card ─── */
   .flag-card {
     position: relative;

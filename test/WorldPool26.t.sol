@@ -133,7 +133,7 @@ contract WorldPool26Test is Test {
     // ─────────────────────────────────────────────────────────────
 
     function test_earlyBird_constants() public view {
-        assertEq(pool.EARLY_BIRD_SUPPLY(), 200);
+        assertEq(pool.EARLY_BIRD_SUPPLY(), 10);
         assertEq(pool.EARLY_BIRD_DISCOUNT_BPS(), 2000);
         assertEq(pool.MAX_MINT_PER_TX_EARLY(), 5);
     }
@@ -149,8 +149,8 @@ contract WorldPool26Test is Test {
     }
 
     function test_earlyBird_calcMintCost_splitAtBoundary() public {
-        // Set totalNFTsMinted = 199 → 1 discounted slot left
-        stdstore.target(address(pool)).sig("totalNFTsMinted()").checked_write(199);
+        // Set totalNFTsMinted = 9 → 1 discounted slot left
+        stdstore.target(address(pool)).sig("totalNFTsMinted()").checked_write(9);
 
         // 5 NFTs: 1 discounted + 4 full price
         uint256 expected = DISC_PRICE * 1 + FULL_PRICE * 4;
@@ -158,8 +158,8 @@ contract WorldPool26Test is Test {
     }
 
     function test_earlyBird_calcMintCost_allFullPriceAfter200() public {
-        // Set totalNFTsMinted = 200 → early bird exhausted
-        stdstore.target(address(pool)).sig("totalNFTsMinted()").checked_write(200);
+        // Set totalNFTsMinted = 10 → early bird exhausted
+        stdstore.target(address(pool)).sig("totalNFTsMinted()").checked_write(10);
 
         assertEq(pool.calcMintCost(1),  FULL_PRICE);
         assertEq(pool.calcMintCost(5),  FULL_PRICE * 5);
@@ -205,9 +205,9 @@ contract WorldPool26Test is Test {
     }
 
     function test_postEarlyBird_noPerTxLimit() public {
-        // After all 200 early-bird slots are gone, large batches are allowed
+        // After all 10 early-bird slots are gone, large batches are allowed
         _exhaustEarlyBird();
-        assertEq(pool.totalNFTsMinted(), 200);
+        assertEq(pool.totalNFTsMinted(), 10);
 
         uint256 bigBatch = 20;
         uint256 cost = pool.calcMintCost(bigBatch);  // all at FULL_PRICE
@@ -216,7 +216,7 @@ contract WorldPool26Test is Test {
         vm.prank(alice);
         pool.mintCountryNFT{value: cost}(BRAZIL, bigBatch);
         assertEq(pool.balanceOf(alice, BRAZIL), bigBatch);
-        assertEq(pool.totalNFTsMinted(), 200 + bigBatch);
+        assertEq(pool.totalNFTsMinted(), 10 + bigBatch);
     }
 
     function test_earlyBird_exhaustThenFullPrice() public {
@@ -230,7 +230,7 @@ contract WorldPool26Test is Test {
         vm.prank(alice);
         pool.mintCountryNFT{value: cost}(BRAZIL, 1);
 
-        assertEq(pool.nationsCupPoolBalance() - (DISC_PRICE * 8000 / 10000 * 200), FULL_PRICE * 8000 / 10000);
+        assertEq(pool.nationsCupPoolBalance() - (DISC_PRICE * 8000 / 10000 * 10), FULL_PRICE * 8000 / 10000);
         assertEq(dev.balance - devBefore, FULL_PRICE * 2000 / 10000);
     }
 

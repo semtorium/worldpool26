@@ -2,7 +2,7 @@ import { baseSepolia } from "viem/chains";
 
 // ── Sözleşme Adresi ───────────────────────────────────────────
 // Mainnet deploy sonrası bu adresi güncelle
-export const CONTRACT_ADDRESS = "0x27f5067878627CB7E40b88e07c26EAEe957E968a" as `0x${string}`;
+export const CONTRACT_ADDRESS = "0xee37Ddb34a737AD274671423Feb838C72e7999e4" as `0x${string}`;
 
 // ── Admin Panel Ek Yetkili Cüzdanlar ─────────────────────────
 // Owner dışında admin panele READ-ONLY erişmesini istediğin cüzdanları buraya ekle.
@@ -19,7 +19,7 @@ export const MINT_PRICE            = BigInt("2200000000000000"); // 0.0022 ETH
 export const TICKET_PRICE          = BigInt("1800000000000000"); // 0.0018 ETH
 
 // ── Early-Bird İndirimi (v7) ──────────────────────────────────
-export const EARLY_BIRD_SUPPLY     = 200;                        // indirimli slot sayısı
+export const EARLY_BIRD_SUPPLY     = 10;                         // indirimli slot sayısı (test: 10, mainnet: 200)
 export const EARLY_BIRD_DISC_BPS   = 2000;                       // %20 indirim
 /// Discounted price = MINT_PRICE × (10000 - 2000) / 10000 = 0.00176 ETH
 export const DISC_MINT_PRICE       = BigInt("1760000000000000"); // 0.00176 ETH
