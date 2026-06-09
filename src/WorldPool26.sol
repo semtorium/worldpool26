@@ -34,7 +34,6 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     uint256 public constant EARLY_BIRD_SUPPLY       = 5;        // total discounted slots (test: 10, mainnet: 200)
     uint256 public constant EARLY_BIRD_DISCOUNT_BPS = 2000;  // 20% off
     /// @notice Per-tx limit while the discount window is open — prevents whale sweeping.
-    uint256 public constant MAX_MINT_PER_TX_EARLY   = 5;
 
     // ─────────────────────────────────────────────────────────────
     // State
@@ -226,7 +225,8 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
 
         // Early-bird whale protection: limit batch size while discount is active
         if (totalNFTsMinted < EARLY_BIRD_SUPPLY) {
-            require(amount <= MAX_MINT_PER_TX_EARLY,              "Max 5 per tx during early bird");
+            uint256 ebRemaining = EARLY_BIRD_SUPPLY - totalNFTsMinted;
+            require(amount <= ebRemaining,                         "Amount exceeds remaining early bird slots");
         }
 
         require(msg.value == calcMintCost(amount),                "Incorrect ETH payment");

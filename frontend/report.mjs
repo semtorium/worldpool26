@@ -9,7 +9,7 @@ import { createPublicClient, http, formatEther, decodeEventLog } from "viem";
 import { baseSepolia } from "viem/chains";
 
 // ── Config ─────────────────────────────────────────────────────
-const CONTRACT = "0xbeb76f35402dff7ac019232ecacaa909cc37fbdf";
+const CONTRACT = "0x83d71de9b2018fe668c112af03d810756e0a359f";
 
 const COUNTRIES = [
   { id:  1, name: "Mexico" },        { id:  2, name: "South Africa" },
@@ -101,7 +101,7 @@ const client       = createPublicClient({ chain: baseSepolia, transport: http(RP
 const BASESCAN_KEY = "NDR3E3B7YAYH6U5ADDE2VVGZIYAX6PV35I";
 // Etherscan V2 API — supports all chains via chainid param, no block-range limit
 const BASESCAN_API = "https://api.etherscan.io/v2/api?chainid=84532";
-const DEPLOY_BLOCK = 42616403;
+const DEPLOY_BLOCK = 42616991;
 const read   = (fn, args = []) => client.readContract({ address: CONTRACT, abi: ABI, functionName: fn, args });
 const ETH    = (wei) => parseFloat(formatEther(BigInt(wei))).toFixed(6);
 const line   = (char = "─", len = 66) => char.repeat(len);

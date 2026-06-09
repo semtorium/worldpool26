@@ -2,7 +2,7 @@ import { baseSepolia } from "viem/chains";
 
 // ── Sözleşme Adresi ───────────────────────────────────────────
 // Mainnet deploy sonrası bu adresi güncelle
-export const CONTRACT_ADDRESS = "0xbeb76f35402dff7ac019232ecacaa909cc37fbdf" as `0x${string}`;
+export const CONTRACT_ADDRESS = "0x83d71de9b2018fe668c112af03d810756e0a359f" as `0x${string}`;
 
 // ── Admin Panel Ek Yetkili Cüzdanlar ─────────────────────────
 // Owner dışında admin panele READ-ONLY erişmesini istediğin cüzdanları buraya ekle.
@@ -23,7 +23,6 @@ export const EARLY_BIRD_SUPPLY     = 5;                         // indirimli slo
 export const EARLY_BIRD_DISC_BPS   = 2000;                       // %20 indirim
 /// Discounted price = MINT_PRICE × (10000 - 2000) / 10000 = 0.00176 ETH
 export const DISC_MINT_PRICE       = BigInt("1760000000000000"); // 0.00176 ETH
-export const MAX_MINT_PER_TX_EARLY = 5;                          // early bird döneminde tx başına max
 
 /// @dev Aynı calcMintCost mantığını contract ile birebir aynı uygular.
 ///      `totalMinted` = contract'tan okunan `totalNFTsMinted` değeri.

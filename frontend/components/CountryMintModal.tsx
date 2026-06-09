@@ -8,7 +8,7 @@ import { Loader2, Minus, Plus, X, Zap } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import {
   CONTRACT_ADDRESS, MINT_PRICE, formatEth,
-  EARLY_BIRD_SUPPLY, MAX_MINT_PER_TX_EARLY, calcMintCost,
+  EARLY_BIRD_SUPPLY, calcMintCost,
 } from "@/lib/config";
 import { type Country } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
@@ -413,7 +413,7 @@ export function CountryMintModal({
                     {t.cmt_quantity}
                     {isEarlyBird && (
                       <span style={{ marginLeft: 6, color: "rgba(251,191,36,0.5)", fontWeight: 600, textTransform: "none", letterSpacing: 0, fontSize: 10 }}>
-                        (max {MAX_MINT_PER_TX_EARLY})
+                        (max {slotsRemaining})
                       </span>
                     )}
                   </p>
@@ -435,13 +435,13 @@ export function CountryMintModal({
                       {amount}
                     </div>
                     <button
-                      onClick={() => setAmount(Math.min(amount + 1, isEarlyBird ? MAX_MINT_PER_TX_EARLY : 999))}
+                      onClick={() => setAmount(Math.min(amount + 1, isEarlyBird ? slotsRemaining : 999))}
                       style={{
                         width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
-                        background: isEarlyBird && amount >= MAX_MINT_PER_TX_EARLY ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.05)",
+                        background: isEarlyBird && amount >= slotsRemaining ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.05)",
                         border: "1px solid rgba(255,255,255,0.1)",
-                        color: isEarlyBird && amount >= MAX_MINT_PER_TX_EARLY ? "rgba(255,255,255,0.2)" : "white",
-                        cursor: isEarlyBird && amount >= MAX_MINT_PER_TX_EARLY ? "not-allowed" : "pointer",
+                        color: isEarlyBird && amount >= slotsRemaining ? "rgba(255,255,255,0.2)" : "white",
+                        cursor: isEarlyBird && amount >= slotsRemaining ? "not-allowed" : "pointer",
                       }}
                     >
                       <Plus size={14} />
