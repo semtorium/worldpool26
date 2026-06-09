@@ -112,10 +112,10 @@ export function NationsCupPage() {
   });
   const mintedCount    = Number(totalNFTsMinted ?? 0n);
   const ebRemaining    = Math.max(0, EARLY_BIRD_SUPPLY - mintedCount);
-  const showEarlyBird  = !tournamentFinalized && ebRemaining > 0;
 
   // Mint is "closed" when mintClosed flag set OR emergency paused OR tournament finalized OR on-chain deadline passed
   const mintClosed = !!contractMintClosed || !!contractPaused || !!tournamentFinalized || (mintEndTimeMs > 0 && mintDeadline.expired);
+  const showEarlyBird  = !mintClosed && !tournamentFinalized && ebRemaining > 0;
   const { data: userBalance }         = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI, functionName: "balanceOf",
     args: address && winningCountryId ? [address, winningCountryId] : undefined,
