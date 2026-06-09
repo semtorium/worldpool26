@@ -12,6 +12,7 @@ import {
 } from "@/lib/tournamentSchedule";
 import { useLang } from "@/lib/LanguageContext";
 import type { Translations } from "@/lib/i18n";
+import { resolveSlot } from "@/lib/tournamentLogic";
 
 type StageTab  = "GE" | "R32" | "R16" | "QF" | "SF" | "F";
 type ViewMode  = "table" | "split" | "bracket" | "r32bracket" | "trophy";
@@ -215,6 +216,10 @@ const R32_BY_DATE: { date: string; matches: MatchData[] }[] = [];
 }
 
 function ScheduleCard({ m, lang }: { m: MatchData; lang: string }) {
+  const slotA = resolveSlot(m.a.label);
+  const slotB = resolveSlot(m.b.label);
+  const resolvedA = !!slotA.flagCode;
+  const resolvedB = !!slotB.flagCode;
   return (
     <div className="rounded-xl overflow-hidden mb-2"
       style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
@@ -226,16 +231,26 @@ function ScheduleCard({ m, lang }: { m: MatchData; lang: string }) {
       {/* Team A */}
       <div className="flex items-center gap-2 px-3 py-[8px]"
         style={{ borderBottom: "1px solid #0d1828" }}>
-        <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "#1a2a45" }} />
-        <span className="text-[11px] font-semibold truncate" style={{ color: "#5a7299" }}>
-          {m.a.label}
+        {resolvedA
+          ? <Image src={getFlagUrl(slotA.flagCode!, 40)} alt={slotA.label}
+              width={16} height={11} className="rounded-[2px] object-cover shrink-0" unoptimized />
+          : <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "#1a2a45" }} />
+        }
+        <span className="text-[11px] font-semibold truncate"
+          style={{ color: resolvedA ? "#c8d6f0" : "#5a7299" }}>
+          {slotA.label}
         </span>
       </div>
       {/* Team B */}
       <div className="flex items-center gap-2 px-3 py-[8px]">
-        <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "#1a2a45" }} />
-        <span className="text-[11px] font-semibold truncate" style={{ color: "#5a7299" }}>
-          {m.b.label}
+        {resolvedB
+          ? <Image src={getFlagUrl(slotB.flagCode!, 40)} alt={slotB.label}
+              width={16} height={11} className="rounded-[2px] object-cover shrink-0" unoptimized />
+          : <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "#1a2a45" }} />
+        }
+        <span className="text-[11px] font-semibold truncate"
+          style={{ color: resolvedB ? "#c8d6f0" : "#5a7299" }}>
+          {slotB.label}
         </span>
       </div>
     </div>
@@ -296,8 +311,14 @@ function SlotAvatar({ slot }: { slot: MatchSlot }) {
 }
 
 function MatchCard({ m, lang }: { m: MatchData; lang: string }) {
-  const isTbdA = m.a.label === "TBD";
-  const isTbdB = m.b.label === "TBD";
+  // Resolve slot labels → real team (once group data is available)
+  const slotA = resolveSlot(m.a.label);
+  const slotB = resolveSlot(m.b.label);
+  const isTbdA = slotA.label === "TBD";
+  const isTbdB = slotB.label === "TBD";
+  // A slot is "resolved" (real team known) when it has a flagCode
+  const resolvedA = !!slotA.flagCode;
+  const resolvedB = !!slotB.flagCode;
   return (
     <div className="space-y-1.5">
       {/* Date / note header */}
@@ -317,17 +338,17 @@ function MatchCard({ m, lang }: { m: MatchData; lang: string }) {
         style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
         <div className="flex items-center gap-2 px-3 py-2.5"
           style={{ borderBottom: "1px solid #111e35" }}>
-          <SlotAvatar slot={m.a} />
+          <SlotAvatar slot={slotA} />
           <span className="text-[12px] font-semibold leading-tight truncate"
-            style={{ color: isTbdA ? "#1f2d4a" : "#c8d6f0" }}>
-            {isTbdA ? "TBD" : m.a.label}
+            style={{ color: isTbdA ? "#1f2d4a" : resolvedA ? "#ffffff" : "#c8d6f0" }}>
+            {isTbdA ? "TBD" : slotA.label}
           </span>
         </div>
         <div className="flex items-center gap-2 px-3 py-2.5">
-          <SlotAvatar slot={m.b} />
+          <SlotAvatar slot={slotB} />
           <span className="text-[12px] font-semibold leading-tight truncate"
-            style={{ color: isTbdB ? "#1f2d4a" : "#c8d6f0" }}>
-            {isTbdB ? "TBD" : m.b.label}
+            style={{ color: isTbdB ? "#1f2d4a" : resolvedB ? "#ffffff" : "#c8d6f0" }}>
+            {isTbdB ? "TBD" : slotB.label}
           </span>
         </div>
       </div>
