@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { useAccount, useConnect } from "wagmi";
+import { useAccount } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { LangSwitcher } from "./LangSwitcher";
 import { ProfileDrawer } from "./ProfileDrawer";
 import { UsernameModal } from "./UsernameModal";
@@ -35,8 +36,8 @@ function AddressAvatar({ address }: { address: string }) {
 
 export function Navbar({ activeTab, onTabChange }: NavbarProps) {
   const { address, isConnected } = useAccount();
-  const { connect, connectors }  = useConnect();
-  const login = () => connect({ connector: connectors[0] });
+  const { openConnectModal }     = useConnectModal();
+  const login = () => openConnectModal?.();
   const { t }                    = useLang();
   const [drawerOpen, setDrawerOpen]     = useState(false);
   const [showUsernameModal, setShowUsernameModal] = useState(false);

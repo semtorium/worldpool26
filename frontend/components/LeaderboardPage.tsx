@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { usePublicClient, useAccount, useConnect } from "wagmi";
+import { usePublicClient, useAccount } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { shortenAddress } from "@/lib/config";
 import { fetchLogsWithCache } from "@/lib/logCache";
 import { Loader2, Trophy, Medal } from "lucide-react";
@@ -21,8 +22,8 @@ const MEDAL: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 export function LeaderboardPage() {
   const client = usePublicClient();
   const { address, isConnected } = useAccount();
-  const { connect, connectors }  = useConnect();
-  const login = () => connect({ connector: connectors[0] });
+  const { openConnectModal }     = useConnectModal();
+  const login = () => openConnectModal?.();
   const { t } = useLang();
   const { username } = useUsername(address);
 

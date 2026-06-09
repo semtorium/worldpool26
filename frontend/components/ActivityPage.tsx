@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { usePublicClient, useAccount, useConnect } from "wagmi";
+import { usePublicClient, useAccount } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { CONTRACT_ADDRESS, shortenAddress, MINT_PRICE, TICKET_PRICE, formatEth } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
 import { Loader2, ExternalLink } from "lucide-react";
@@ -150,8 +151,8 @@ function ActivityRow({ item, latestBlock, usernameMap }: {
 export function ActivityPage() {
   const client = usePublicClient();
   const { address, isConnected } = useAccount();
-  const { connect, connectors } = useConnect();
-  const login = () => connect({ connector: connectors[0] });
+  const { openConnectModal }    = useConnectModal();
+  const login = () => openConnectModal?.();
   const { t } = useLang();
   const [items,       setItems]       = useState<ActivityItem[]>([]);
   const [latestBlock, setLatestBlock] = useState(0n);

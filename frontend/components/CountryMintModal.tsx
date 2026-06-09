@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useConnect, useSwitchChain } from "wagmi";
+import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt, useBalance, useSwitchChain } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { baseSepolia } from "viem/chains";
 import { Loader2, Minus, Plus, X, Zap } from "lucide-react";
 import { ABI } from "@/lib/abi";
@@ -34,8 +35,8 @@ export function CountryMintModal({
   country, isWinner, isEliminated, mintClosed, openSeaUrl, onClose,
 }: CountryMintModalProps) {
   const { address, isConnected, chainId: walletChainId } = useAccount();
-  const { connect, connectors }  = useConnect();
-  const login = () => connect({ connector: connectors[0] });
+  const { openConnectModal }     = useConnectModal();
+  const login = () => openConnectModal?.();
   const { switchChain } = useSwitchChain();
   const isWrongChain = isConnected && walletChainId !== baseSepolia.id;
   const { t } = useLang();
