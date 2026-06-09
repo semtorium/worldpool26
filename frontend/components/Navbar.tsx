@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useAccount, useConnect } from "wagmi";
 import { LangSwitcher } from "./LangSwitcher";
 import { ProfileDrawer } from "./ProfileDrawer";
+import { UsernameModal } from "./UsernameModal";
 import { useLang } from "@/lib/LanguageContext";
+import { useUsername } from "@/lib/useUsername";
 import { shortenAddress } from "@/lib/config";
 import { Wallet, ChevronDown } from "lucide-react";
 
@@ -36,7 +38,31 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
   const { connect, connectors }  = useConnect();
   const login = () => connect({ connector: connectors[0] });
   const { t }                    = useLang();
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen]     = useState(false);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const didPromptRef = useRef(false);
+
+  const { username } = useUsername(address);
+
+  // Show username modal once per session when wallet connects and no username set
+  useEffect(() => {
+    if (isConnected && address && !didPromptRef.current) {
+      // Small delay so the wallet connect animation settles
+      const t = setTimeout(() => {
+        const stored = localStorage.getItem(`wp26_uname_${address.toLowerCase()}`);
+        if (stored === null) {
+          // Never set (not even skipped) → prompt
+          setShowUsernameModal(true);
+        }
+        didPromptRef.current = true;
+      }, 600);
+      return () => clearTimeout(t);
+    }
+    if (!isConnected) {
+      didPromptRef.current = false;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected, address]);
 
   const TABS: { id: Tab; label: string; emoji: string }[] = [
     { id: "nations",     label: t.tab_nations,     emoji: "🌍" },
@@ -78,8 +104,9 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
                   onMouseEnter={e => (e.currentTarget.style.borderColor = "rgba(0,82,255,0.40)")}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = "rgba(0,82,255,0.18)")}>
                   <AddressAvatar address={address} />
-                  <span className="font-mono text-sm font-semibold text-white hidden sm:block">
-                    {shortenAddress(address)}
+                  <span className="text-sm font-semibold text-white hidden sm:block max-w-[120px] truncate"
+                    style={{ fontFamily: username ? "inherit" : "monospace" }}>
+                    {username || shortenAddress(address)}
                   </span>
                   <ChevronDown size={14} style={{ color: "#6b7a9a" }} />
                 </button>
@@ -152,6 +179,14 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
 
       {/* Profile Drawer */}
       <ProfileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+      {/* Username Modal — shown once on first connect */}
+      {showUsernameModal && address && (
+        <UsernameModal
+          address={address}
+          onDone={() => setShowUsernameModal(false)}
+        />
+      )}
     </>
   );
 }
