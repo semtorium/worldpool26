@@ -5,11 +5,11 @@
  * Requires: run from frontend/ folder (viem is there)
  */
 
-import { createPublicClient, http, formatEther } from "viem";
+import { createPublicClient, http, formatEther, decodeEventLog } from "viem";
 import { baseSepolia } from "viem/chains";
 
 // ── Config ─────────────────────────────────────────────────────
-const CONTRACT = "0x57B4722d8b97DE1F254f6d2F65f4c594a850b4c7";
+const CONTRACT = "0xee37Ddb34a737AD274671423Feb838C72e7999e4";
 
 const COUNTRIES = [
   { id:  1, name: "Mexico" },        { id:  2, name: "South Africa" },
@@ -62,6 +62,9 @@ const ABI = [
   { type:"function", name:"nationsCupPoolBalance",  inputs:[],                                  outputs:[{type:"uint256"}],  stateMutability:"view" },
   { type:"function", name:"topScorerPoolBalance",   inputs:[],                                  outputs:[{type:"uint256"}],  stateMutability:"view" },
   { type:"function", name:"totalUnusedTickets",     inputs:[],                                  outputs:[{type:"uint256"}],  stateMutability:"view" },
+  { type:"function", name:"totalNFTsMinted",        inputs:[],                                  outputs:[{type:"uint256"}],  stateMutability:"view" },
+  { type:"function", name:"EARLY_BIRD_SUPPLY",      inputs:[],                                  outputs:[{type:"uint256"}],  stateMutability:"view" },
+  { type:"function", name:"EARLY_BIRD_DISCOUNT_BPS",inputs:[],                                  outputs:[{type:"uint256"}],  stateMutability:"view" },
   { type:"function", name:"mintClosed",             inputs:[],                                  outputs:[{type:"bool"}],     stateMutability:"view" },
   { type:"function", name:"votingClosed",           inputs:[],                                  outputs:[{type:"bool"}],     stateMutability:"view" },
   { type:"function", name:"paused",                 inputs:[],                                  outputs:[{type:"bool"}],     stateMutability:"view" },
@@ -89,41 +92,62 @@ const ABI = [
 ];
 
 // ── Helpers ────────────────────────────────────────────────────
-const client = createPublicClient({ chain: baseSepolia, transport: http("https://sepolia.base.org") });
+// RPC — used for contract reads only (state, not logs)
+const ALCHEMY_KEY  = process.env.ALCHEMY_KEY ?? "ZYTj1djs2u-HWWI_wDW_n";
+const RPC_URL      = `https://base-sepolia.g.alchemy.com/v2/${ALCHEMY_KEY}`;
+const client       = createPublicClient({ chain: baseSepolia, transport: http(RPC_URL) });
+
+// Basescan API — used for event logs (no block-range restriction)
+const BASESCAN_KEY = "NDR3E3B7YAYH6U5ADDE2VVGZIYAX6PV35I";
+// Etherscan V2 API — supports all chains via chainid param, no block-range limit
+const BASESCAN_API = "https://api.etherscan.io/v2/api?chainid=84532";
+const DEPLOY_BLOCK = 42614412;
 const read   = (fn, args = []) => client.readContract({ address: CONTRACT, abi: ABI, functionName: fn, args });
 const ETH    = (wei) => parseFloat(formatEther(BigInt(wei))).toFixed(6);
 const line   = (char = "─", len = 66) => char.repeat(len);
 const title  = (s) => `\n${line("═")}\n  ${s}\n${line("═")}`;
 const sec    = (s) => `\n${line()}\n  ${s}\n${line()}`;
 
+// Fetch ALL contract logs ONCE (Promise cache — safe for parallel callers)
+let _allRawLogsPromise = null;
+function fetchAllLogs() {
+  if (_allRawLogsPromise !== null) return _allRawLogsPromise;
+  const url = `${BASESCAN_API}&module=logs&action=getLogs` +
+    `&address=${CONTRACT}&fromBlock=${DEPLOY_BLOCK}&toBlock=latest` +
+    `&apikey=${BASESCAN_KEY}`;
+  _allRawLogsPromise = fetch(url)
+    .then(r => r.json())
+    .then(json => (json.status === "1" && Array.isArray(json.result)) ? json.result : [])
+    .catch(() => []);
+  return _allRawLogsPromise;
+}
+
 async function getLogs(eventName) {
-  // fromBlock = deployment block (Base Sepolia). Using 0n causes RPC to reject (43M+ block range).
-  const DEPLOY_BLOCK = 43073285n;
-  try {
-    return await client.getLogs({
-      address: CONTRACT,
-      event: ABI.find(x => x.type === "event" && x.name === eventName),
-      fromBlock: DEPLOY_BLOCK,
-      toBlock: "latest",
-    });
-  } catch {
-    // Fallback: last 50 000 blocks (~27 h) — only used if primary call fails
-    const latest = await client.getBlockNumber();
-    const from   = latest > 50000n ? latest - 50000n : DEPLOY_BLOCK;
+  const eventDef = ABI.find(x => x.type === "event" && x.name === eventName);
+  const rawLogs  = await fetchAllLogs();
+  const decoded  = [];
+  for (const raw of rawLogs) {
     try {
-      return await client.getLogs({
-        address: CONTRACT,
-        event: ABI.find(x => x.type === "event" && x.name === eventName),
-        fromBlock: from,
-        toBlock: "latest",
+      const result = decodeEventLog({ abi: [eventDef], data: raw.data, topics: raw.topics });
+      if (result.eventName !== eventName) continue;
+      decoded.push({
+        args: result.args,
+        transactionHash: raw.transactionHash,
+        blockNumber: BigInt(raw.blockNumber),
       });
-    } catch { return []; }
+    } catch { /* different event type — skip */ }
   }
+  return decoded;
 }
 
 // ── Main ───────────────────────────────────────────────────────
 async function main() {
   const now = new Date().toISOString();
+
+  // Price constants (used throughout the report)
+  const MINT_PRICE_ETH   = 0.0022;
+  const TICKET_PRICE_ETH = 0.0018;
+  const DEV_RATE         = 0.20;
 
   // ── Fetch contract state ──
   const [
@@ -136,6 +160,7 @@ async function main() {
     finalNcPool, finalTsPool,
     ncFinalizedAt, tsFinalizedAt,
     elimStatus,
+    totalNFTsMintedRaw, earlyBirdSupplyRaw, earlyBirdDiscBps,
   ] = await Promise.all([
     read("owner"), read("devWallet"),
     read("totalGlobalVolumeETH"), read("totalLockedPrizePool"),
@@ -146,7 +171,13 @@ async function main() {
     read("finalNationsCupPool"), read("finalTopScorerPool"),
     read("nationsCupFinalizedAt"), read("topScorerFinalizedAt"),
     read("getAllEliminationStatus"),
+    read("totalNFTsMinted"), read("EARLY_BIRD_SUPPLY"), read("EARLY_BIRD_DISCOUNT_BPS"),
   ]);
+
+  const totalNFTsMinted  = Number(totalNFTsMintedRaw);
+  const earlyBirdSupply  = Number(earlyBirdSupplyRaw);
+  const discountPct      = Number(earlyBirdDiscBps) / 100; // e.g. 20
+  const DISC_MINT_PRICE  = 0.0022 * (1 - Number(earlyBirdDiscBps) / 10000); // 0.00176
 
   // Fetch country supplies
   const supplies = await Promise.all(COUNTRIES.map(c => read("countryTotalSupply", [BigInt(c.id)])));
@@ -165,6 +196,15 @@ async function main() {
     getLogs("TopScorerClaimed"),
     getLogs("CountryEliminatedEvent"),
   ]);
+
+  // Fetch actual ETH value paid for each mint tx (handles discounted + full price correctly)
+  const mintTxValues = await Promise.all(
+    mintLogs.map(l =>
+      client.getTransaction({ hash: l.transactionHash })
+        .then(tx => Number(tx.value) / 1e18)
+        .catch(() => Number(l.args.amount ?? 0n) * 0.0022) // fallback: assume full price
+    )
+  );
 
   // ── Aggregate ──
   const totalVolEth   = BigInt(totalVolume);
@@ -207,6 +247,22 @@ async function main() {
   console.log(`  Maintenance Mode  : ${maintenanceMode? "🟡 YES" : "✅ No"}`);
   console.log(`  NC Finalized      : ${ncFinalized    ? "✅ YES" : "🟡 Not yet"}`);
   console.log(`  TS Finalized      : ${tsFinalized    ? "✅ YES" : "🟡 Not yet"}`);
+
+  // ── Early-Bird Discount (v7) ──
+  console.log(sec("EARLY-BIRD DISCOUNT (v7)"));
+  const ebSlotsUsed = Math.min(totalNFTsMinted, earlyBirdSupply);
+  const ebSlotsLeft = Math.max(0, earlyBirdSupply - totalNFTsMinted);
+  const ebActive    = ebSlotsLeft > 0;
+  console.log(`  Supply limit       : ${earlyBirdSupply} NFTs`);
+  console.log(`  Discount           : ${discountPct}% off (${DISC_MINT_PRICE.toFixed(5)} ETH instead of 0.00220 ETH)`);
+  console.log(`  Total minted (all) : ${totalNFTsMinted}`);
+  console.log(`  Discounted slots   : ${ebSlotsUsed} / ${earlyBirdSupply} used`);
+  console.log(`  Remaining slots    : ${ebSlotsLeft}`);
+  console.log(`  Status             : ${ebActive ? "🟢 Active" : "🔴 Exhausted"}`);
+  if (totalNFTsMinted > 0) {
+    const savings = ebSlotsUsed * (MINT_PRICE_ETH - DISC_MINT_PRICE);
+    console.log(`  Total user savings : ${savings.toFixed(6)} ETH`);
+  }
 
   // ── Financials ──
   console.log(sec("FINANCIALS"));
@@ -294,9 +350,6 @@ async function main() {
   }
 
   // ── Per-Wallet Breakdown ──
-  const MINT_PRICE_ETH   = 0.0022;
-  const TICKET_PRICE_ETH = 0.0018;
-  const DEV_RATE         = 0.20;
 
   // Aggregate per wallet
   const wallets = {};
@@ -306,11 +359,12 @@ async function main() {
     return wallets[a];
   };
 
-  for (const l of mintLogs) {
+  for (let i = 0; i < mintLogs.length; i++) {
+    const l   = mintLogs[i];
     const qty = Number(l.args.amount ?? 0n);
-    const w = track(l.args.user);
+    const w   = track(l.args.user);
     w.mintQty      += qty;
-    w.spentMintEth += qty * MINT_PRICE_ETH;
+    w.spentMintEth += mintTxValues[i]; // actual ETH paid (respects early-bird discount)
   }
   for (const l of ticketLogs) {
     const qty = Number(l.args.quantity ?? 0n);
@@ -375,7 +429,10 @@ async function main() {
 
   // ── Dev Fee Verification ──
   console.log(sec("DEV FEE VERIFICATION"));
-  const mintRevenue   = totalMints   * MINT_PRICE_ETH;
+  // Use actual tx values for mint revenue (handles early-bird discounts correctly)
+  const mintRevenue   = mintTxValues.reduce((a, v) => a + v, 0);
+  const ebMints       = Math.min(totalNFTsMinted, earlyBirdSupply);
+  const fullMints     = Math.max(0, totalMints - ebMints);
   const ticketRevenue = totalTickets * TICKET_PRICE_ETH;
   const grossRevenue  = mintRevenue + ticketRevenue;
   const expectedDevCut = grossRevenue * DEV_RATE;
@@ -384,8 +441,14 @@ async function main() {
   const expectedTotalPool = expectedNcPool + expectedTsPool;
   const actualPoolAfterClaims = Number(BigInt(totalLocked)) / 1e18;
 
-  console.log(`  Mint Revenue       : ${totalMints} NFTs × 0.0022 ETH = ${mintRevenue.toFixed(6)} ETH`);
-  console.log(`  Ticket Revenue     : ${totalTickets} tickets × 0.0018 ETH = ${ticketRevenue.toFixed(6)} ETH`);
+  // Early-bird breakdown
+  const ebRevenue   = ebMints * DISC_MINT_PRICE;
+  const fullRevenue = fullMints * MINT_PRICE_ETH;
+  console.log(`  Mint Revenue (actual tx values):`);
+  console.log(`    Early-bird : ${ebMints} NFTs × ${DISC_MINT_PRICE.toFixed(5)} ETH = ${ebRevenue.toFixed(6)} ETH`);
+  console.log(`    Full price : ${fullMints} NFTs × ${MINT_PRICE_ETH} ETH = ${fullRevenue.toFixed(6)} ETH`);
+  console.log(`    Mint Total : ${mintRevenue.toFixed(6)} ETH`);
+  console.log(`  Ticket Revenue     : ${totalTickets} tickets × ${TICKET_PRICE_ETH} ETH = ${ticketRevenue.toFixed(6)} ETH`);
   console.log(`  Gross Revenue      : ${grossRevenue.toFixed(6)} ETH`);
   console.log(``);
   console.log(`  Expected dev cut (20%)   : ${expectedDevCut.toFixed(6)} ETH`);
