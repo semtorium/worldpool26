@@ -269,6 +269,8 @@ const t = {
     tbl_group:          "Group",
     tbl_not_started:    "Group stage starts Jun 11 · All stats at zero",
     tbl_live_note:      "Standings update after each match",
+    stg_qf:             "QF",
+    stg_sf:             "SF",
   },
 
   tr: {
@@ -509,6 +511,8 @@ const t = {
     tbl_group:          "Grup",
     tbl_not_started:    "Grup aşaması 11 Haz'da başlıyor · Tüm istatistikler sıfır",
     tbl_live_note:      "Puan durumu her maç sonrası güncellenir",
+    stg_qf:             "ÇF",
+    stg_sf:             "YF",
   },
 
   es: {
@@ -749,6 +753,8 @@ const t = {
     tbl_group:          "Grupo",
     tbl_not_started:    "La fase de grupos empieza el 11 Jun · Todo a cero",
     tbl_live_note:      "La tabla se actualiza tras cada partido",
+    stg_qf:             "QF",
+    stg_sf:             "SF",
   },
 
   zh: {
@@ -989,6 +995,8 @@ const t = {
     tbl_group:          "小组",
     tbl_not_started:    "小组赛6月11日开始 · 数据暂为零",
     tbl_live_note:      "每场比赛结束后更新积分",
+    stg_qf:             "QF",
+    stg_sf:             "SF",
   },
 
   ar: {
@@ -1229,6 +1237,8 @@ const t = {
     tbl_group:          "مجموعة",
     tbl_not_started:    "دور المجموعات يبدأ 11 يونيو · كل الإحصاءات صفر",
     tbl_live_note:      "الجدول يُحدَّث بعد كل مباراة",
+    stg_qf:             "QF",
+    stg_sf:             "SF",
   },
 
   ko: {
@@ -1469,6 +1479,8 @@ const t = {
     tbl_group:          "조",
     tbl_not_started:    "조별리그 6월 11일 시작 · 모든 통계 0",
     tbl_live_note:      "경기 후 순위 업데이트",
+    stg_qf:             "QF",
+    stg_sf:             "SF",
   },
 } as const;
 

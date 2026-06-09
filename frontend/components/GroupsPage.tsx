@@ -2,35 +2,258 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { COUNTRIES, GROUPS, getCountriesByGroup, getFlagUrl } from "@/lib/countries";
+import { COUNTRIES, GROUPS, getFlagUrl } from "@/lib/countries";
 import { GROUP_STANDINGS, getPts, getGD, sortStandings } from "@/lib/tournamentData";
 import {
   MatchData, MatchSlot, BracketRow,
-  R32_ROWS, R16_ROWS, QF_ROWS, SF_ROW,
-  SF_MATCHES, FINAL_MATCH, THIRD_MATCH,
+  R32_MATCHES,
+  R16_ROWS, QF_ROWS, SF_ROW,
+  FINAL_MATCH, THIRD_MATCH,
 } from "@/lib/tournamentSchedule";
 import { useLang } from "@/lib/LanguageContext";
+import type { Translations } from "@/lib/i18n";
 
-type InnerTab = "groups" | "bracket" | "table";
 type StageTab = "GE" | "R32" | "R16" | "QF" | "SF" | "F";
 
-const STAGE_TABS: { id: StageTab; label: string }[] = [
-  { id: "GE",  label: "GE"  },
-  { id: "R32", label: "R32" },
-  { id: "R16", label: "R16" },
-  { id: "QF",  label: "QF"  },
-  { id: "SF",  label: "SF"  },
-  { id: "F",   label: "F"   },
-];
+// ── Date localization ─────────────────────────────────────────────────────────
 
-// ── Shared sub-components ─────────────────────────────────────────────────────
+const DAY_ABBR: Record<string, string[]> = {
+  en: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+  tr: ["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"],
+  es: ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"],
+  zh: ["日","一","二","三","四","五","六"],
+  ar: ["أح","إث","ثل","أر","خم","جم","سب"],
+  ko: ["일","월","화","수","목","금","토"],
+};
 
-function sortedGroupTeams(group: string) {
-  return [...getCountriesByGroup(group)].sort((a, b) => a.favoriteRank - b.favoriteRank);
+const MONTH_ABBR: Record<string, Record<string, string>> = {
+  en: { Jun:"Jun", Jul:"Jul" },
+  tr: { Jun:"Haz", Jul:"Tem" },
+  es: { Jun:"Jun", Jul:"Jul" },
+  zh: { Jun:"6月",  Jul:"7月" },
+  ar: { Jun:"يون", Jul:"يول" },
+  ko: { Jun:"6월",  Jul:"7월" },
+};
+
+const MONTH_IDX: Record<string, number> = {
+  Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11,
+};
+
+function fmtDate(dateStr: string, time: string, lang: string): string {
+  const [mon, day] = dateStr.split(" ");
+  const d   = new Date(2026, MONTH_IDX[mon], parseInt(day));
+  const da  = (DAY_ABBR[lang]   ?? DAY_ABBR.en)[d.getDay()];
+  const ma  = ((MONTH_ABBR[lang] ?? MONTH_ABBR.en)[mon]) ?? mon;
+  return `${parseInt(day)} ${ma} ${da} · ${time}`;
 }
-function teamAt(group: string, pos: 1 | 2) { return sortedGroupTeams(group)[pos - 1]; }
 
-/** Circular avatar — flag if known, grey ring if TBD */
+// ── Group standings helpers ───────────────────────────────────────────────────
+
+const cById = Object.fromEntries(COUNTRIES.map(c => [c.id, c]));
+
+function getSortedGroup(group: string) {
+  const raw = GROUP_STANDINGS[group] ?? [];
+  return sortStandings(raw).sort((a, b) => {
+    if (getPts(a) !== getPts(b) || getGD(a) !== getGD(b) || a.gf !== b.gf) return 0;
+    return (cById[a.countryId]?.favoriteRank ?? 99) - (cById[b.countryId]?.favoriteRank ?? 99);
+  });
+}
+
+// ── Left column: compact standings (R32 tab) ──────────────────────────────────
+
+function CompactGroupList({ t }: { t: Translations }) {
+  return (
+    <div className="space-y-2 pr-1">
+      {GROUPS.map(group => {
+        const sorted = getSortedGroup(group);
+        return (
+          <div key={group} className="rounded-xl overflow-hidden"
+            style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
+
+            {/* Group header */}
+            <div className="flex items-center justify-between px-3 py-1.5"
+              style={{ background: "#090f1e", borderBottom: "1px solid #141e34" }}>
+              <span className="text-[11px] font-black text-white">
+                {t.tbl_group} {group}
+              </span>
+              <span className="text-[10px] font-bold" style={{ color: "#3d5280" }}>
+                {t.tbl_pts}
+              </span>
+            </div>
+
+            {/* Team rows */}
+            {sorted.map((row, idx) => {
+              const c = cById[row.countryId];
+              if (!c) return null;
+              return (
+                <div key={row.countryId}
+                  className="flex items-center gap-1.5 px-2.5 py-[7px]"
+                  style={{ borderBottom: idx < 3 ? "1px solid #0d1828" : undefined }}>
+                  <span className="w-3.5 text-[10px] font-bold text-center shrink-0"
+                    style={{ color: idx < 2 ? "#4d7aff" : "#2a3a5c" }}>
+                    {idx + 1}
+                  </span>
+                  <Image src={getFlagUrl(c.flagCode, 40)} alt={c.name}
+                    width={18} height={12} className="rounded-[2px] object-cover shrink-0" unoptimized />
+                  <span className="text-[11px] font-semibold flex-1 truncate"
+                    style={{ color: idx < 2 ? "#b8c8e8" : "#3d5280" }}>
+                    {c.name}
+                  </span>
+                  <span className="text-[11px] font-black shrink-0 w-4 text-center"
+                    style={{ color: idx < 2 ? "#e2e8f0" : "#2a3a5c" }}>
+                    {getPts(row)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Left column: full standings (GE tab) ──────────────────────────────────────
+
+function FullGroupList({ t }: { t: Translations }) {
+  const cols = [t.tbl_p, t.tbl_w, t.tbl_d, t.tbl_l, t.tbl_gd, t.tbl_pts];
+  return (
+    <div className="space-y-2 pr-1">
+      {GROUPS.map(group => {
+        const sorted = getSortedGroup(group);
+        return (
+          <div key={group} className="rounded-xl overflow-hidden"
+            style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
+
+            {/* Group header */}
+            <div className="flex items-center gap-1 px-2.5 py-1.5"
+              style={{ background: "#090f1e", borderBottom: "1px solid #141e34" }}>
+              <span className="text-[11px] font-black text-white flex-1 truncate">
+                {t.tbl_group} {group}
+              </span>
+              {cols.map((h, i) => (
+                <span key={i} className="text-[8px] font-bold text-center shrink-0"
+                  style={{ width: 13, color: i === cols.length - 1 ? "#fbbf24" : "#2a3a5c" }}>
+                  {h}
+                </span>
+              ))}
+            </div>
+
+            {/* Team rows */}
+            {sorted.map((row, idx) => {
+              const c   = cById[row.countryId];
+              if (!c) return null;
+              const pts = getPts(row);
+              const gd  = getGD(row);
+              return (
+                <div key={row.countryId}
+                  className="flex items-center gap-1 px-2 py-[7px]"
+                  style={{ borderBottom: idx < 3 ? "1px solid #0d1828" : undefined }}>
+                  <span className="w-3 text-[9px] font-bold text-center shrink-0"
+                    style={{ color: idx < 2 ? "#4d7aff" : "#2a3a5c" }}>
+                    {idx + 1}
+                  </span>
+                  <Image src={getFlagUrl(c.flagCode, 40)} alt={c.name}
+                    width={16} height={11} className="rounded-[2px] object-cover shrink-0" unoptimized />
+                  <span className="text-[9px] font-semibold flex-1 truncate min-w-0"
+                    style={{ color: idx < 2 ? "#b8c8e8" : "#3d5280" }}>
+                    {c.name}
+                  </span>
+                  {/* P W D L GD Pts */}
+                  <span className="text-[8px] font-bold text-center shrink-0" style={{ width:13, color:"#3d5280" }}>{row.p}</span>
+                  <span className="text-[8px] font-bold text-center shrink-0" style={{ width:13, color: row.w > 0 ? "#4ade80" : "#3d5280" }}>{row.w}</span>
+                  <span className="text-[8px] font-bold text-center shrink-0" style={{ width:13, color: row.d > 0 ? "#facc15" : "#3d5280" }}>{row.d}</span>
+                  <span className="text-[8px] font-bold text-center shrink-0" style={{ width:13, color: row.l > 0 ? "#f87171" : "#3d5280" }}>{row.l}</span>
+                  <span className="text-[8px] font-bold text-center shrink-0" style={{ width:13, color: gd > 0 ? "#4ade80" : gd < 0 ? "#f87171" : "#3d5280" }}>
+                    {gd > 0 ? `+${gd}` : gd}
+                  </span>
+                  <span className="text-[9px] font-black text-center shrink-0"
+                    style={{ width:13, color: idx < 2 ? "#e2e8f0" : "#2a3a5c" }}>
+                    {pts}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Right column: R32 match schedule ─────────────────────────────────────────
+
+// Group R32 matches by date (preserving insertion order)
+const R32_BY_DATE: { date: string; matches: MatchData[] }[] = [];
+{
+  const idx: Record<string, number> = {};
+  for (const m of R32_MATCHES) {
+    if (idx[m.date] === undefined) { idx[m.date] = R32_BY_DATE.length; R32_BY_DATE.push({ date: m.date, matches: [] }); }
+    R32_BY_DATE[idx[m.date]].matches.push(m);
+  }
+}
+
+function ScheduleCard({ m, lang }: { m: MatchData; lang: string }) {
+  return (
+    <div className="rounded-xl overflow-hidden mb-2"
+      style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
+      {/* Date header */}
+      <div className="px-3 py-1 text-[9px] font-bold"
+        style={{ background: "#090f1e", color: "#2a3a5c", borderBottom: "1px solid #141e34" }}>
+        {fmtDate(m.date, m.time, lang)}
+      </div>
+      {/* Team A */}
+      <div className="flex items-center gap-2 px-3 py-[8px]"
+        style={{ borderBottom: "1px solid #0d1828" }}>
+        <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "#1a2a45" }} />
+        <span className="text-[11px] font-semibold truncate" style={{ color: "#5a7299" }}>
+          {m.a.label}
+        </span>
+      </div>
+      {/* Team B */}
+      <div className="flex items-center gap-2 px-3 py-[8px]">
+        <div className="w-2 h-2 rounded-full shrink-0" style={{ background: "#1a2a45" }} />
+        <span className="text-[11px] font-semibold truncate" style={{ color: "#5a7299" }}>
+          {m.b.label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function R32Schedule({ lang }: { lang: string }) {
+  return (
+    <div className="pl-1">
+      {R32_BY_DATE.map(({ matches }) =>
+        matches.map(m => <ScheduleCard key={m.id} m={m} lang={lang} />)
+      )}
+    </div>
+  );
+}
+
+// ── Split view wrapper ────────────────────────────────────────────────────────
+
+function SplitView({ full, t, lang }: {
+  full: boolean;
+  t: Translations;
+  lang: string;
+}) {
+  return (
+    <div className="flex gap-2" style={{ height: "clamp(460px, 64vh, 700px)" }}>
+      {/* Left: standings */}
+      <div className="overflow-y-auto" style={{ flex: "0 0 46%", scrollbarWidth: "none" }}>
+        {full ? <FullGroupList t={t} /> : <CompactGroupList t={t} />}
+      </div>
+      {/* Right: R32 match schedule */}
+      <div className="overflow-y-auto flex-1 min-w-0" style={{ scrollbarWidth: "none" }}>
+        <R32Schedule lang={lang} />
+      </div>
+    </div>
+  );
+}
+
+// ── Bracket components ────────────────────────────────────────────────────────
+
 function SlotAvatar({ slot }: { slot: MatchSlot }) {
   if (slot.flagCode) {
     return (
@@ -51,8 +274,7 @@ function SlotAvatar({ slot }: { slot: MatchSlot }) {
   );
 }
 
-/** Single match card — date header + two team rows */
-function MatchCard({ m }: { m: MatchData }) {
+function MatchCard({ m, lang }: { m: MatchData; lang: string }) {
   const isTbdA = m.a.label === "TBD";
   const isTbdB = m.b.label === "TBD";
   return (
@@ -66,13 +288,12 @@ function MatchCard({ m }: { m: MatchData }) {
           </span>
         )}
         <span className="text-[10px] font-medium" style={{ color: "#3d5280" }}>
-          {m.date} · {m.time}
+          {fmtDate(m.date, m.time, lang)}
         </span>
       </div>
       {/* Card */}
       <div className="rounded-xl overflow-hidden"
         style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
-        {/* Team A */}
         <div className="flex items-center gap-2 px-3 py-2.5"
           style={{ borderBottom: "1px solid #111e35" }}>
           <SlotAvatar slot={m.a} />
@@ -81,7 +302,6 @@ function MatchCard({ m }: { m: MatchData }) {
             {isTbdA ? "TBD" : m.a.label}
           </span>
         </div>
-        {/* Team B */}
         <div className="flex items-center gap-2 px-3 py-2.5">
           <SlotAvatar slot={m.b} />
           <span className="text-[12px] font-semibold leading-tight truncate"
@@ -94,154 +314,50 @@ function MatchCard({ m }: { m: MatchData }) {
   );
 }
 
-/** Two matches on left → one match on right, with CSS bracket connector */
-function BracketUnit({ row }: { row: BracketRow }) {
+function BracketUnit({ row, lang }: { row: BracketRow; lang: string }) {
   return (
     <div className="flex items-center gap-0" style={{ minHeight: 160 }}>
-
-      {/* LEFT: two match cards stacked */}
+      {/* Left: two match cards */}
       <div className="flex-1 space-y-3 min-w-0">
-        <MatchCard m={row.left1} />
-        <MatchCard m={row.left2} />
+        <MatchCard m={row.left1} lang={lang} />
+        <MatchCard m={row.left2} lang={lang} />
       </div>
 
-      {/* CONNECTOR — pure CSS bracket */}
+      {/* CSS bracket connector */}
       <div className="shrink-0 relative self-stretch" style={{ width: 22 }}>
-        {/* Top horizontal arm */}
-        <div className="absolute" style={{
-          top: "25%", right: 0, left: 0,
-          height: 1, background: "#1a2a45",
-        }} />
-        {/* Bottom horizontal arm */}
-        <div className="absolute" style={{
-          bottom: "25%", right: 0, left: 0,
-          height: 1, background: "#1a2a45",
-        }} />
-        {/* Vertical spine */}
-        <div className="absolute" style={{
-          top: "25%", bottom: "25%", right: 0,
-          width: 1, background: "#1a2a45",
-        }} />
-        {/* Mid output line */}
-        <div className="absolute" style={{
-          top: "calc(50% - 0.5px)", left: 0, right: 0,
-          height: 1, background: "#1a2a45",
-        }} />
+        <div className="absolute" style={{ top:"25%", right:0, left:0, height:1, background:"#1a2a45" }} />
+        <div className="absolute" style={{ bottom:"25%", right:0, left:0, height:1, background:"#1a2a45" }} />
+        <div className="absolute" style={{ top:"25%", bottom:"25%", right:0, width:1, background:"#1a2a45" }} />
+        <div className="absolute" style={{ top:"calc(50% - 0.5px)", left:0, right:0, height:1, background:"#1a2a45" }} />
       </div>
 
-      {/* RIGHT: next-round match, vertically centered */}
-      <div className="flex items-center" style={{ width: "44%", minWidth: 0 }}>
-        <div className="w-full"><MatchCard m={row.right} /></div>
+      {/* Right: next-round match */}
+      <div className="flex items-center" style={{ width:"44%", minWidth:0 }}>
+        <div className="w-full"><MatchCard m={row.right} lang={lang} /></div>
       </div>
     </div>
   );
 }
 
-// ── Stage views ───────────────────────────────────────────────────────────────
-
-/** GE — compact group standings with mini table */
-function GEView() {
-  const { t } = useLang();
-  const countryById = Object.fromEntries(COUNTRIES.map(c => [c.id, c]));
-
-  return (
-    <div className="space-y-3">
-      {GROUPS.map(group => {
-        const raw    = GROUP_STANDINGS[group] ?? [];
-        const sorted = sortStandings(raw).sort((a, b) => {
-          if (getPts(a) !== getPts(b) || getGD(a) !== getGD(b) || a.gf !== b.gf) return 0;
-          return (countryById[a.countryId]?.favoriteRank ?? 99) - (countryById[b.countryId]?.favoriteRank ?? 99);
-        });
-
-        return (
-          <div key={group} className="rounded-2xl overflow-hidden"
-            style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
-            {/* Group header */}
-            <div className="flex items-center gap-2 px-4 py-2.5"
-              style={{ background: "#0d1830", borderBottom: "1px solid #1a2a45" }}>
-              <span className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-black"
-                style={{ background: "#0f2050", color: "#4d7aff", border: "1px solid #1a3a80" }}>
-                {group}
-              </span>
-              <span className="text-xs font-black text-white">Group {group}</span>
-              {/* Column headers aligned right */}
-              <div className="ml-auto flex items-center gap-3 text-[9px] font-bold"
-                style={{ color: "#2a3a5c" }}>
-                <span className="w-5 text-center">{t.tbl_p}</span>
-                <span className="w-5 text-center">{t.tbl_w}</span>
-                <span className="w-5 text-center">{t.tbl_gd}</span>
-                <span className="w-6 text-center" style={{ color: "#fbbf24" }}>{t.tbl_pts}</span>
-              </div>
-            </div>
-
-            {/* Team rows */}
-            {sorted.map((row, idx) => {
-              const c = countryById[row.countryId];
-              if (!c) return null;
-              const pts = getPts(row);
-              const gd  = getGD(row);
-              return (
-                <div key={row.countryId}
-                  className="flex items-center gap-2 px-4 py-2.5"
-                  style={{
-                    borderBottom: idx < 3 ? "1px solid #0e1c33" : undefined,
-                    background:   idx < 2 ? "rgba(0,82,255,0.03)" : undefined,
-                  }}>
-                  {/* Rank dot */}
-                  <div className="w-1 h-5 rounded-full shrink-0"
-                    style={{ background: idx === 0 ? "#0052FF" : idx === 1 ? "#1d4ed8" : "transparent" }} />
-                  {/* Flag */}
-                  <Image src={getFlagUrl(c.flagCode, 40)} alt={c.name}
-                    width={22} height={15} className="rounded-[3px] object-cover shrink-0" unoptimized />
-                  {/* Name */}
-                  <span className="text-xs font-semibold flex-1 truncate"
-                    style={{ color: idx < 2 ? "#c8d6f0" : "#4d5e7a" }}>
-                    {c.name}
-                  </span>
-                  {/* Stats */}
-                  <div className="flex items-center gap-3 text-[11px] font-bold"
-                    style={{ color: "#4d5e7a" }}>
-                    <span className="w-5 text-center">{row.p}</span>
-                    <span className="w-5 text-center" style={{ color: row.w > 0 ? "#4ade80" : undefined }}>{row.w}</span>
-                    <span className="w-5 text-center" style={{ color: gd > 0 ? "#4ade80" : gd < 0 ? "#f87171" : undefined }}>
-                      {gd > 0 ? `+${gd}` : gd}
-                    </span>
-                    <span className="w-6 text-center font-black"
-                      style={{ color: idx < 2 ? "#d1d5db" : "#3d5280" }}>
-                      {pts}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/** Generic bracket stage view — takes an array of BracketRows */
-function BracketStageView({ rows, divider }: { rows: BracketRow[]; divider?: number }) {
-  // divider splits rows into two half-bracket sections (SF1 path / SF2 path)
+function BracketStageView({ rows, divider, lang }: {
+  rows: BracketRow[];
+  divider?: number;
+  lang: string;
+}) {
   const half = divider ?? rows.length;
   return (
     <div className="space-y-5">
-      {/* First half */}
       {rows.slice(0, half).map((row, i) => (
         <div key={row.left1.id}>
-          <BracketUnit row={row} />
-          {i < half - 1 && (
-            <div className="h-px mt-5" style={{ background: "#0e1c33" }} />
-          )}
+          <BracketUnit row={row} lang={lang} />
+          {i < half - 1 && <div className="h-px mt-5" style={{ background: "#0e1c33" }} />}
         </div>
       ))}
 
-      {/* Section divider (SF1 / SF2 path separator) */}
       {divider && divider < rows.length && (
         <div className="flex items-center gap-3 py-1">
           <div className="flex-1 h-px" style={{ background: "#0e1c33" }} />
-          <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full"
+          <span className="text-[10px] font-black px-3 py-1 rounded-full"
             style={{ background: "#0d1830", color: "#2a3a5c", border: "1px solid #1a2a45" }}>
             ·  ·  ·
           </span>
@@ -249,90 +365,85 @@ function BracketStageView({ rows, divider }: { rows: BracketRow[]; divider?: num
         </div>
       )}
 
-      {/* Second half */}
       {divider && rows.slice(half).map((row, i) => (
         <div key={row.left1.id}>
-          <BracketUnit row={row} />
-          {i < rows.length - half - 1 && (
-            <div className="h-px mt-5" style={{ background: "#0e1c33" }} />
-          )}
+          <BracketUnit row={row} lang={lang} />
+          {i < rows.length - half - 1 && <div className="h-px mt-5" style={{ background: "#0e1c33" }} />}
         </div>
       ))}
     </div>
   );
 }
 
-/** SF view: two SF matches → Final, plus 3rd place */
-function SFView() {
+function SFView({ lang }: { lang: string }) {
   return (
     <div className="space-y-6">
-      {/* SF → Final bracket */}
-      <BracketUnit row={SF_ROW} />
-
-      {/* 3rd place match */}
+      <BracketUnit row={SF_ROW} lang={lang} />
       <div className="h-px" style={{ background: "#0e1c33" }} />
-      <div className="flex items-start gap-3">
-        <div className="flex-[0.9] min-w-0">
-          <MatchCard m={THIRD_MATCH} />
+      <div className="space-y-1.5 opacity-60">
+        <div className="px-0.5">
+          <span className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded"
+            style={{ background: "rgba(251,191,36,0.13)", color: "#fbbf24" }}>
+            3rd Place
+          </span>
         </div>
-        <div className="flex-[1.1] min-w-0">
-          <div className="rounded-xl flex items-center justify-center py-8 text-center"
-            style={{ background: "#0b1427", border: "1px dashed #1a2a45" }}>
-            <p className="text-xs font-bold" style={{ color: "#2a3a5c" }}>
-              Losers of both SF matches
-            </p>
-          </div>
-        </div>
+        <MatchCard m={THIRD_MATCH} lang={lang} />
       </div>
     </div>
   );
 }
 
-/** F (Final) view: final + 3rd place side by side */
-function FinalView() {
+function FinalView({ lang }: { lang: string }) {
   return (
     <div className="space-y-5">
-      {/* Trophy header */}
-      <div className="text-center py-4">
-        <p className="text-2xl font-black text-white">🏆</p>
+      <div className="text-center py-3">
+        <p className="text-3xl">🏆</p>
         <p className="text-xs font-bold mt-1" style={{ color: "#4d5e7a" }}>
-          MetLife Stadium, East Rutherford · Jul 19, 2026
+          MetLife Stadium · Jul 19, 2026
         </p>
       </div>
-
-      {/* Final */}
-      <MatchCard m={FINAL_MATCH} />
-
-      {/* 3rd place divider */}
+      <MatchCard m={FINAL_MATCH} lang={lang} />
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px" style={{ background: "#0e1c33" }} />
         <span className="text-[10px] font-bold" style={{ color: "#2a3a5c" }}>3rd Place</span>
         <div className="flex-1 h-px" style={{ background: "#0e1c33" }} />
       </div>
-
-      {/* 3rd place match */}
-      <MatchCard m={THIRD_MATCH} />
+      <MatchCard m={THIRD_MATCH} lang={lang} />
     </div>
   );
 }
 
-// ── Bracket tab (with stage sub-navigation) ───────────────────────────────────
+// ── Main component ────────────────────────────────────────────────────────────
 
-function BracketView() {
+export function GroupsPage() {
+  const { t, lang } = useLang();
   const [stage, setStage] = useState<StageTab>("R32");
 
+  const STAGE_TABS: { id: StageTab; label: string }[] = [
+    { id: "GE",  label: "GE"       },
+    { id: "R32", label: "R32"      },
+    { id: "R16", label: "R16"      },
+    { id: "QF",  label: t.stg_qf  },
+    { id: "SF",  label: t.stg_sf  },
+    { id: "F",   label: "F"        },
+  ];
+
   return (
-    <div className="space-y-5">
-      {/* Stage tab bar — matches the screenshot pill bar */}
-      <div className="overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="text-center space-y-0.5">
+        <h1 className="text-xl font-black text-white">{t.grp_title}</h1>
+        <p className="text-sm" style={{ color: "#4d5e7a" }}>{t.grp_sub}</p>
+      </div>
+
+      {/* Stage tabs */}
+      <div className="overflow-x-auto" style={{ scrollbarWidth: "none" }}>
         <div className="flex items-center gap-1 p-1 rounded-2xl min-w-max"
           style={{ background: "#090f1e", border: "1px solid #141e34" }}>
           {STAGE_TABS.map(tab => {
             const active = stage === tab.id;
             return (
-              <button
-                key={tab.id}
-                onClick={() => setStage(tab.id)}
+              <button key={tab.id} onClick={() => setStage(tab.id)}
                 className="px-4 py-2 rounded-xl text-sm font-black transition-all"
                 style={active ? {
                   background: "linear-gradient(135deg,#0052FF,#1d4ed8)",
@@ -342,8 +453,7 @@ function BracketView() {
                 } : {
                   color: "#2a3a5c",
                   border: "1px solid transparent",
-                }}
-              >
+                }}>
                 {tab.label}
               </button>
             );
@@ -352,206 +462,12 @@ function BracketView() {
       </div>
 
       {/* Stage content */}
-      <div>
-        {stage === "GE"  && <GEView />}
-        {stage === "R32" && <BracketStageView rows={R32_ROWS} divider={4} />}
-        {stage === "R16" && <BracketStageView rows={R16_ROWS} divider={2} />}
-        {stage === "QF"  && <BracketStageView rows={QF_ROWS}  />}
-        {stage === "SF"  && <SFView />}
-        {stage === "F"   && <FinalView />}
-      </div>
-    </div>
-  );
-}
-
-// ── Groups grid sub-tab ───────────────────────────────────────────────────────
-
-function GroupsGrid() {
-  const { t } = useLang();
-  return (
-    <div className="space-y-4">
-      <p className="text-center text-sm" style={{ color: "#4d5e7a" }}>
-        {t.grp_hosts} · {t.grp_format_note}
-      </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {GROUPS.map(group => {
-          const teams = sortedGroupTeams(group);
-          return (
-            <div key={group} className="glass-card p-4 space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm shrink-0"
-                  style={{ background: "rgba(0,82,255,0.12)", border: "1px solid rgba(0,82,255,0.2)", color: "#4d7aff" }}>
-                  {group}
-                </div>
-                <span className="font-black text-white">Group {group}</span>
-              </div>
-              <div className="space-y-2">
-                {teams.map((team, idx) => (
-                  <div key={team.id} className="flex items-center gap-2.5">
-                    <span className="text-[10px] font-bold w-4 text-right shrink-0"
-                      style={{ color: idx < 2 ? "#4d7aff" : "#3d5280" }}>
-                      {idx + 1}
-                    </span>
-                    <Image src={getFlagUrl(team.flagCode, 80)} alt={team.name}
-                      width={28} height={19} className="rounded-sm object-cover shrink-0" unoptimized />
-                    <span className="text-sm font-semibold text-white truncate">{team.name}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="text-[10px]" style={{ color: "#3d5280" }}>
-                Top 2 advance · best 3rd may qualify
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ── Table (standings) sub-tab ─────────────────────────────────────────────────
-
-function TableView() {
-  const { t } = useLang();
-  const [selected, setSelected] = useState("A");
-  const countryById = Object.fromEntries(COUNTRIES.map(c => [c.id, c]));
-
-  const rawRows = GROUP_STANDINGS[selected] ?? [];
-  const sorted  = sortStandings(rawRows).sort((a, b) => {
-    const [pa, pb] = [getPts(a), getPts(b)];
-    const [gda, gdb] = [getGD(a), getGD(b)];
-    if (pa !== pb || gda !== gdb || a.gf !== b.gf) return 0;
-    return (countryById[a.countryId]?.favoriteRank ?? 99) - (countryById[b.countryId]?.favoriteRank ?? 99);
-  });
-  const allZero = sorted.every(r => r.p === 0);
-
-  return (
-    <div className="space-y-4">
-      {/* Group selector */}
-      <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-        <div className="flex gap-1.5 min-w-max">
-          {GROUPS.map(g => (
-            <button key={g} onClick={() => setSelected(g)}
-              className="w-9 h-9 rounded-xl text-sm font-black transition-all shrink-0"
-              style={selected === g
-                ? { background: "linear-gradient(135deg,#0052FF,#1d4ed8)", color: "#fff", boxShadow: "0 0 14px rgba(0,82,255,0.35)", border: "1px solid rgba(0,82,255,0.5)" }
-                : { background: "rgba(255,255,255,0.03)", color: "#3d5280", border: "1px solid #141e34" }
-              }>
-              {g}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
-        {/* Header */}
-        <div className="flex items-center gap-2 px-4 py-3"
-          style={{ borderBottom: "1px solid #1a2a45", background: "#0d1830" }}>
-          <span className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm shrink-0"
-            style={{ background: "#0f2050", color: "#4d7aff", border: "1px solid #1a3a80" }}>
-            {selected}
-          </span>
-          <span className="font-black text-white text-sm">{t.tbl_group} {selected}</span>
-          {!allZero && (
-            <span className="ml-auto flex items-center gap-1.5 text-[10px] font-bold" style={{ color: "#10b981" }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />LIVE
-            </span>
-          )}
-        </div>
-
-        {/* Column labels */}
-        <div className="grid px-4 py-2"
-          style={{ gridTemplateColumns: "20px 1fr 32px 26px 26px 26px 34px 34px", borderBottom: "1px solid #0e1c33", background: "#0a1220" }}>
-          <span /><span />
-          {[t.tbl_p, t.tbl_w, t.tbl_d, t.tbl_l, t.tbl_gd].map(h => (
-            <span key={h} className="text-[10px] font-bold text-center" style={{ color: "#2a3a5c" }}>{h}</span>
-          ))}
-          <span className="text-[10px] font-bold text-center" style={{ color: "#fbbf24" }}>{t.tbl_pts}</span>
-        </div>
-
-        {/* Rows */}
-        {sorted.map((row, idx) => {
-          const c   = countryById[row.countryId];
-          if (!c) return null;
-          const pts = getPts(row);
-          const gd  = getGD(row);
-          const bg  = idx === 0 ? "rgba(0,82,255,0.07)" : idx === 1 ? "rgba(0,82,255,0.04)" : idx === 2 ? "rgba(251,191,36,0.025)" : "transparent";
-          const accent = idx === 0 ? "#0052FF" : idx === 1 ? "#1d4ed8" : idx === 2 ? "rgba(251,191,36,0.5)" : "transparent";
-
-          return (
-            <div key={row.countryId} className="grid items-center px-4 py-3 relative"
-              style={{ gridTemplateColumns: "20px 1fr 32px 26px 26px 26px 34px 34px", background: bg, borderBottom: idx < 3 ? "1px solid #0e1c33" : undefined }}>
-              <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-r" style={{ background: accent }} />
-              <span className="text-[11px] font-black text-center" style={{ color: idx < 2 ? "#4d7aff" : idx === 2 ? "#fcd34d" : "#2a3a5c" }}>{idx + 1}</span>
-              <div className="flex items-center gap-2 min-w-0">
-                <Image src={getFlagUrl(c.flagCode, 40)} alt={c.name} width={22} height={15} className="rounded-[3px] object-cover shrink-0" unoptimized />
-                <span className="text-xs font-semibold truncate" style={{ color: idx < 2 ? "#c8d6f0" : "#4d5e7a" }}>{c.name}</span>
-              </div>
-              <span className="text-[11px] font-bold text-center" style={{ color: "#3d5280" }}>{row.p}</span>
-              <span className="text-[11px] font-bold text-center" style={{ color: row.w > 0 ? "#4ade80" : "#3d5280" }}>{row.w}</span>
-              <span className="text-[11px] font-bold text-center" style={{ color: row.d > 0 ? "#facc15" : "#3d5280" }}>{row.d}</span>
-              <span className="text-[11px] font-bold text-center" style={{ color: row.l > 0 ? "#f87171" : "#3d5280" }}>{row.l}</span>
-              <span className="text-[11px] font-bold text-center" style={{ color: gd > 0 ? "#4ade80" : gd < 0 ? "#f87171" : "#3d5280" }}>{gd > 0 ? `+${gd}` : gd}</span>
-              <span className="text-sm font-black text-center" style={{ color: idx < 2 ? "#e2e8f0" : "#3d5280" }}>{pts}</span>
-            </div>
-          );
-        })}
-
-        {/* Legend */}
-        <div className="px-4 py-3 space-y-1" style={{ background: "#080f1e", borderTop: "1px solid #0e1c33" }}>
-          <div className="flex items-center gap-2"><div className="w-0.5 h-3 rounded-full" style={{ background: "#0052FF" }} /><span className="text-[10px]" style={{ color: "#2a3a5c" }}>{t.tbl_qualifies}</span></div>
-          <div className="flex items-center gap-2"><div className="w-0.5 h-3 rounded-full" style={{ background: "rgba(251,191,36,0.5)" }} /><span className="text-[10px]" style={{ color: "#2a3a5c" }}>{t.tbl_third}</span></div>
-        </div>
-      </div>
-
-      <p className="text-center text-xs" style={{ color: "#1a2a45" }}>
-        {allZero ? t.tbl_not_started : t.tbl_live_note}
-      </p>
-    </div>
-  );
-}
-
-// ── Main component ────────────────────────────────────────────────────────────
-
-export function GroupsPage() {
-  const { t } = useLang();
-  const [innerTab, setInnerTab] = useState<InnerTab>("bracket");
-
-  const TABS: { id: InnerTab; label: string }[] = [
-    { id: "groups",  label: "Groups"   },
-    { id: "table",   label: t.tbl_tab  },
-    { id: "bracket", label: "Bracket"  },
-  ];
-
-  return (
-    <div className="space-y-5">
-      <div className="text-center space-y-1">
-        <h1 className="text-2xl font-black text-white">{t.grp_title}</h1>
-        <p className="text-sm" style={{ color: "#4d5e7a" }}>{t.grp_sub}</p>
-      </div>
-
-      {/* Inner tabs */}
-      <div className="flex justify-center">
-        <div className="flex items-center gap-1 p-1 rounded-xl"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          {TABS.map(tab => (
-            <button key={tab.id} onClick={() => setInnerTab(tab.id)}
-              className="px-5 py-2 rounded-lg text-sm font-bold transition-all"
-              style={innerTab === tab.id
-                ? { background: "rgba(0,82,255,0.12)", color: "#4d7aff", border: "1px solid rgba(0,82,255,0.25)" }
-                : { color: "#3d5280", border: "1px solid transparent" }
-              }>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Content */}
-      {innerTab === "groups"  && <GroupsGrid />}
-      {innerTab === "table"   && <TableView />}
-      {innerTab === "bracket" && <BracketView />}
+      {stage === "GE"  && <SplitView full={true}  t={t} lang={lang} />}
+      {stage === "R32" && <SplitView full={false} t={t} lang={lang} />}
+      {stage === "R16" && <BracketStageView rows={R16_ROWS} divider={2} lang={lang} />}
+      {stage === "QF"  && <BracketStageView rows={QF_ROWS}              lang={lang} />}
+      {stage === "SF"  && <SFView  lang={lang} />}
+      {stage === "F"   && <FinalView lang={lang} />}
     </div>
   );
 }
