@@ -372,7 +372,7 @@ const t = {
   tr: {
     connect:         "Cüzdan Bağla",
     disconnect:      "Bağlantıyı Kes",
-    tab_nations:     "World Cup 26",
+    tab_nations:     "Dünya Kupası 26",
     tab_groups:      "Gruplar",
     tab_scorer:      "Gol Kralı",
     tab_leaderboard: "Liderlik Tablosu",
@@ -698,7 +698,7 @@ const t = {
   es: {
     connect:         "Conectar Wallet",
     disconnect:      "Desconectar",
-    tab_nations:     "World Cup 26",
+    tab_nations:     "Copa del Mundo 26",
     tab_groups:      "Grupos",
     tab_scorer:      "Máx. Goleador",
     tab_leaderboard: "Clasificación",
@@ -1024,7 +1024,7 @@ const t = {
   zh: {
     connect:         "连接钱包",
     disconnect:      "断开连接",
-    tab_nations:     "World Cup 26",
+    tab_nations:     "世界杯 26",
     tab_groups:      "小组赛",
     tab_scorer:      "最佳射手",
     tab_leaderboard: "排行榜",
@@ -1350,7 +1350,7 @@ const t = {
   ar: {
     connect:         "ربط المحفظة",
     disconnect:      "قطع الاتصال",
-    tab_nations:     "World Cup 26",
+    tab_nations:     "كأس العالم 26",
     tab_groups:      "المجموعات",
     tab_scorer:      "هداف البطولة",
     tab_leaderboard: "لوحة الصدارة",
@@ -1676,7 +1676,7 @@ const t = {
   ko: {
     connect:         "지갑 연결",
     disconnect:      "연결 해제",
-    tab_nations:     "World Cup 26",
+    tab_nations:     "월드컵 26",
     tab_groups:      "조 편성",
     tab_scorer:      "득점왕",
     tab_leaderboard: "리더보드",
