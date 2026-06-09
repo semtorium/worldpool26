@@ -2,7 +2,7 @@ import { baseSepolia } from "viem/chains";
 
 // ── Sözleşme Adresi ───────────────────────────────────────────
 // Mainnet deploy sonrası bu adresi güncelle
-export const CONTRACT_ADDRESS = "0x83d71de9b2018fe668c112af03d810756e0a359f" as `0x${string}`;
+export const CONTRACT_ADDRESS = "0x9a49fa0c9aC671cc940f34Cbe5E96E7Fc3ad3D57" as `0x${string}`;
 
 // ── Admin Panel Ek Yetkili Cüzdanlar ─────────────────────────
 // Owner dışında admin panele READ-ONLY erişmesini istediğin cüzdanları buraya ekle.
