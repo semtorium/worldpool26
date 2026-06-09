@@ -236,15 +236,18 @@ export function LeaderboardPage() {
                     {(() => {
                       const name = isUser ? username : (usernameMap[e.address.toLowerCase()] ?? "");
                       return (
-                        <span
-                          className="text-sm font-bold truncate"
+                        <a
+                          href={`https://sepolia.basescan.org/address/${e.address}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-bold truncate hover:underline"
                           style={{
                             color: isUser ? "#0052FF" : "#f0f4ff",
                             fontFamily: name ? "inherit" : "monospace",
                           }}
                         >
                           {name ? `@${name}` : shortenAddress(e.address)}
-                        </span>
+                        </a>
                       );
                     })()}
                     {isUser && (
@@ -294,15 +297,18 @@ export function LeaderboardPage() {
                     <span className="text-sm font-bold" style={{ color: "#6b7a9a" }}>#{userEntry.rank}</span>
                   </div>
                   <div className="flex-1 min-w-0 flex items-center gap-2">
-                    <span
-                      className="text-sm font-bold truncate"
+                    <a
+                      href={`https://sepolia.basescan.org/address/${userEntry.address}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-bold truncate hover:underline"
                       style={{
                         color: "#0052FF",
                         fontFamily: username ? "inherit" : "monospace",
                       }}
                     >
                       {username ? `@${username}` : shortenAddress(userEntry.address)}
-                    </span>
+                    </a>
                     <span
                       className="text-[10px] font-black px-1.5 py-0.5 rounded-full shrink-0"
                       style={{ background: "rgba(0,82,255,0.15)", color: "#4d88ff", border: "1px solid rgba(0,82,255,0.35)" }}
