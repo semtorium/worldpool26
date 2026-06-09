@@ -291,7 +291,7 @@ const t = {
     // TopScorerPage
     ts_voting_closed:     "Voting Closed",
     ts_voting_closed_sub: "Ticket purchases and voting have been disabled by the admin",
-    switch_network:       "Switch to Base Sepolia",
+    switch_network:       "Switch to Base",
     ts_claimed_badge:     "✓ Claimed",
     ts_no_winning_votes:  "No winning votes",
 
@@ -626,7 +626,7 @@ const t = {
 
     ts_voting_closed:     "Oylama Kapalı",
     ts_voting_closed_sub: "Bilet alımı ve oylama admin tarafından devre dışı bırakıldı",
-    switch_network:       "Base Sepolia'ya Geç",
+    switch_network:       "Base'e Geç",
     ts_claimed_badge:     "✓ Talep Edildi",
     ts_no_winning_votes:  "Kazanan oy yok",
 
@@ -952,7 +952,7 @@ const t = {
 
     ts_voting_closed:     "Votación Cerrada",
     ts_voting_closed_sub: "La compra de entradas y la votación han sido deshabilitadas por el administrador",
-    switch_network:       "Cambiar a Base Sepolia",
+    switch_network:       "Cambiar a Base",
     ts_claimed_badge:     "✓ Reclamado",
     ts_no_winning_votes:  "Sin votos ganadores",
 
@@ -1278,7 +1278,7 @@ const t = {
 
     ts_voting_closed:     "投票已关闭",
     ts_voting_closed_sub: "管理员已禁用票券购买和投票",
-    switch_network:       "切换到 Base Sepolia",
+    switch_network:       "切换到 Base",
     ts_claimed_badge:     "✓ 已领取",
     ts_no_winning_votes:  "没有获胜投票",
 
@@ -1604,7 +1604,7 @@ const t = {
 
     ts_voting_closed:     "انتهى التصويت",
     ts_voting_closed_sub: "تم تعطيل شراء التذاكر والتصويت من قِبل المسؤول",
-    switch_network:       "التبديل إلى Base Sepolia",
+    switch_network:       "التبديل إلى Base",
     ts_claimed_badge:     "✓ تم الاستلام",
     ts_no_winning_votes:  "لا توجد أصوات فائزة",
 
@@ -1930,7 +1930,7 @@ const t = {
 
     ts_voting_closed:     "투표 종료",
     ts_voting_closed_sub: "관리자가 티켓 구매와 투표를 비활성화했습니다",
-    switch_network:       "Base Sepolia로 전환",
+    switch_network:       "Base로 전환",
     ts_claimed_badge:     "✓ 수령 완료",
     ts_no_winning_votes:  "당첨 투표 없음",
 

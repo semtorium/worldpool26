@@ -206,9 +206,9 @@ export default function AdminPage() {
     }
   };
 
-  // ── Switch to Base Sepolia if needed ──
+  // ── Switch to Base Mainnet if needed ──
   const ensureChain = async () => {
-    const CHAIN_HEX = "0x14A34"; // 84532 decimal
+    const CHAIN_HEX = "0x2105"; // 8453 decimal
     try {
       await provider.request({
         method: "wallet_switchEthereumChain",
@@ -221,7 +221,7 @@ export default function AdminPage() {
           method: "wallet_addEthereumChain",
           params: [{
             chainId: CHAIN_HEX,
-            chainName: "Base Sepolia Testnet",
+            chainName: "Base",
             nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
             rpcUrls: ["https://mainnet.base.org"],
             blockExplorerUrls: ["https://basescan.org"],
@@ -429,7 +429,7 @@ export default function AdminPage() {
           <div style={{ marginBottom: 20, padding: "12px 16px", background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <div>
               <p style={{ color: "#fbbf24", fontWeight: 700, fontSize: 13 }}>⚠️ Wrong Network — connected to chain {chainId}</p>
-              <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 2 }}>Transactions will automatically switch to Base Sepolia when you click any action button.</p>
+              <p style={{ color: "#6b7a9a", fontSize: 12, marginTop: 2 }}>Transactions will automatically switch to Base when you click any action button.</p>
             </div>
             <button
               onClick={async () => { try { await ensureChain(); const cid = await provider.request({ method: "eth_chainId" }); setChainId(parseInt(cid, 16)); } catch {} }}
