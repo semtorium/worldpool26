@@ -148,7 +148,12 @@ export function TopScorerPage() {
     setSearchQuery("");
     setShowDropdown(false);
     const el = playerRowRefs.current.get(name);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (el) {
+      const headerEl = document.querySelector("header");
+      const headerH = (headerEl?.offsetHeight ?? 110) + 16;
+      const elTop = el.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: elTop - headerH, behavior: "smooth" });
+    }
   };
 
   const handleQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -168,10 +173,15 @@ export function TopScorerPage() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Vote Now: scroll to player list + flash
+  // Vote Now: scroll to player list + flash (header-aware)
   const handleVoteNow = () => {
     setTimeout(() => {
-      playerListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (playerListRef.current) {
+        const headerEl = document.querySelector("header");
+        const headerH = (headerEl?.offsetHeight ?? 110) + 16;
+        const elTop = playerListRef.current.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: elTop - headerH, behavior: "smooth" });
+      }
       setFlashList(true);
       setTimeout(() => setFlashList(false), 2200);
     }, 80);
