@@ -6,12 +6,19 @@
  * instantly without waiting for the next RPC poll.
  *
  * Keys:
- *   wp26_uname_<addr>   — cached username  (""  = skipped/no name)
- *   wp26_hidden_<addr>  — "true" if hidden  (absent = visible)
- *   wp26_prompted_<addr>— "1" once the modal has been shown at least once
+ *   wp26_uname_<addr>    — cached username  (""  = skipped/no name)
+ *   wp26_hidden_<addr>   — "true" if hidden  (absent = visible)
+ *   wp26_prompted_<addr> — "1" once the modal has been shown at least once
+ *
+ * IMPORTANT: localName / localHidden are read DIRECTLY from localStorage on
+ * every render (synchronous read, ~0 cost). This avoids the stale-state bug
+ * where a useState value from the previous address lingers for one render
+ * cycle after the address changes. Optimistic overrides (post-tx) are stored
+ * in a state object keyed to the current addr so they auto-invalidate on
+ * wallet switch.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useReadContract } from "wagmi";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
@@ -22,10 +29,16 @@ const promptedKey = (addr: string) => `wp26_prompted_${addr.toLowerCase()}`;
 
 export { promptedKey };
 
+interface Optimistic {
+  addr:   string;
+  name:   string;
+  hidden: boolean;
+}
+
 export function useUsername(address?: string) {
   const addr = address?.toLowerCase();
 
-  // ── On-chain reads ────────────────────────────────────────────
+  // ── On-chain reads ─────────────────────────────────────────────
   const { data: onChainName } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI,
     functionName: "usernames",
@@ -40,70 +53,83 @@ export function useUsername(address?: string) {
     query: { enabled: !!addr, refetchInterval: 15_000 },
   });
 
-  // ── Local optimistic state (initialised from localStorage) ────
-  const [localName,   setLocalName]   = useState<string>("");
-  const [localHidden, setLocalHidden] = useState<boolean>(false);
+  // ── Optimistic state (post-tx fast update, keyed to current addr) ──
+  // Automatically invalid when addr changes — no stale data from prev wallet.
+  const [optimistic, setOptimistic] = useState<Optimistic | null>(null);
+  const currentOptimistic = optimistic?.addr === addr ? optimistic : null;
 
+  // ── Sync on-chain → localStorage (side-effect only, no state) ──
+  const prevOnChainRef = useRef<{ name?: unknown; hidden?: unknown }>({});
   useEffect(() => {
-    if (!addr) { setLocalName(""); setLocalHidden(false); return; }
-    setLocalName(localStorage.getItem(unameKey(addr)) ?? "");
-    setLocalHidden(localStorage.getItem(hiddenKey(addr)) === "true");
+    if (!addr) return;
+    const name   = (onChainName   as string)  ?? "";
+    const hidden = !!(onChainHidden as boolean);
+
+    // Only write when the value actually changed to avoid thrashing
+    if (onChainName !== prevOnChainRef.current.name) {
+      if (name) localStorage.setItem(unameKey(addr), name);
+      prevOnChainRef.current.name = onChainName;
+    }
+    if (onChainHidden !== prevOnChainRef.current.hidden) {
+      localStorage.setItem(hiddenKey(addr), hidden ? "true" : "false");
+      prevOnChainRef.current.hidden = onChainHidden;
+    }
+  }, [onChainName, onChainHidden, addr]);
+
+  // Reset prev-ref when addr changes so the next on-chain value always writes
+  useEffect(() => {
+    prevOnChainRef.current = {};
   }, [addr]);
 
-  // ── Sync on-chain → localStorage when contract data arrives ──
-  useEffect(() => {
-    if (!addr) return;
-    const name = (onChainName as string) ?? "";
-    if (name) {
-      localStorage.setItem(unameKey(addr), name);
-      setLocalName(name);
-    }
-  }, [onChainName, addr]);
+  // ── Synchronous localStorage reads (always correct for current addr) ──
+  const lsName   = addr ? (localStorage.getItem(unameKey(addr))   ?? "") : "";
+  const lsHidden = addr ? (localStorage.getItem(hiddenKey(addr)) === "true") : false;
 
-  useEffect(() => {
-    if (!addr) return;
-    const hidden = !!(onChainHidden as boolean);
-    localStorage.setItem(hiddenKey(addr), hidden ? "true" : "false");
-    setLocalHidden(hidden);
-  }, [onChainHidden, addr]);
-
-  // ── Helpers called AFTER a successful tx to update local cache ─
+  // ── Helpers called AFTER a successful tx ───────────────────────
   const saveUsername = (name: string) => {
     if (!addr) return;
-    localStorage.setItem(unameKey(addr), name.trim());
+    const trimmed = name.trim();
+    localStorage.setItem(unameKey(addr),    trimmed);
     localStorage.setItem(promptedKey(addr), "1");
-    setLocalName(name.trim());
-    // auto-unhide
-    localStorage.setItem(hiddenKey(addr), "false");
-    setLocalHidden(false);
+    localStorage.setItem(hiddenKey(addr),   "false");
+    setOptimistic({ addr, name: trimmed, hidden: false });
   };
 
   const saveHidden = (hidden: boolean) => {
     if (!addr) return;
     localStorage.setItem(hiddenKey(addr), hidden ? "true" : "false");
-    setLocalHidden(hidden);
+    // Preserve existing optimistic name, or fall back to what we know
+    const existingName = currentOptimistic?.name ?? (onChainName as string) ?? lsName;
+    setOptimistic({ addr, name: existingName, hidden });
   };
 
   const markPrompted = () => {
     if (!addr) return;
     localStorage.setItem(promptedKey(addr), "1");
-    // also store "" so old code path (wp26_uname_) also considers it prompted
     if (!localStorage.getItem(unameKey(addr))) {
       localStorage.setItem(unameKey(addr), "");
     }
   };
 
-  // Prefer on-chain data; fall back to local cache while RPC loads
-  const rawUsername = ((onChainName as string) || localName) ?? "";
-  const isHidden    = (onChainHidden !== undefined ? !!(onChainHidden as boolean) : localHidden);
+  // ── Derived display values ─────────────────────────────────────
+  // Priority: optimistic (post-tx) > on-chain > localStorage cache
+  const rawUsername = currentOptimistic?.name
+    ?? (onChainName as string | undefined)
+    ?? lsName;
 
-  // displayName is "" when hidden (others should show the wallet address instead)
-  const username = isHidden ? "" : rawUsername;
+  const isHidden = currentOptimistic !== null
+    ? currentOptimistic.hidden
+    : onChainHidden !== undefined
+      ? !!(onChainHidden as boolean)
+      : lsHidden;
+
+  // Empty string when hidden so callers can fall back to shortened address
+  const username = isHidden ? "" : (rawUsername ?? "");
 
   const wasPrompted = !!addr && (
     !!localStorage.getItem(promptedKey(addr)) ||
     localStorage.getItem(unameKey(addr)) !== null
   );
 
-  return { username, rawUsername, isHidden, saveUsername, saveHidden, markPrompted, wasPrompted };
+  return { username, rawUsername: rawUsername ?? "", isHidden, saveUsername, saveHidden, markPrompted, wasPrompted };
 }
