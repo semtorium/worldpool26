@@ -253,6 +253,22 @@ const t = {
     err_failed:         "Transaction Failed",
     err_unknown:        "Unknown Error",
     err_close:          "Close",
+
+    // Group Table
+    tbl_tab:            "Table",
+    tbl_p:              "P",
+    tbl_w:              "W",
+    tbl_d:              "D",
+    tbl_l:              "L",
+    tbl_gf:             "GF",
+    tbl_ga:             "GA",
+    tbl_gd:             "GD",
+    tbl_pts:            "Pts",
+    tbl_qualifies:      "Advance to R32",
+    tbl_third:          "Best 3rd may qualify",
+    tbl_group:          "Group",
+    tbl_not_started:    "Group stage starts Jun 11 · All stats at zero",
+    tbl_live_note:      "Standings update after each match",
   },
 
   tr: {
@@ -477,6 +493,22 @@ const t = {
     err_failed:         "İşlem Başarısız",
     err_unknown:        "Bilinmeyen Hata",
     err_close:          "Kapat",
+
+    // Grup Puan Tablosu
+    tbl_tab:            "Puan Durumu",
+    tbl_p:              "O",
+    tbl_w:              "G",
+    tbl_d:              "B",
+    tbl_l:              "M",
+    tbl_gf:             "AG",
+    tbl_ga:             "YG",
+    tbl_gd:             "AV",
+    tbl_pts:            "P",
+    tbl_qualifies:      "Son 32'ye geçer",
+    tbl_third:          "En iyi 3. olarak geçebilir",
+    tbl_group:          "Grup",
+    tbl_not_started:    "Grup aşaması 11 Haz'da başlıyor · Tüm istatistikler sıfır",
+    tbl_live_note:      "Puan durumu her maç sonrası güncellenir",
   },
 
   es: {
@@ -701,6 +733,22 @@ const t = {
     err_failed:         "Transacción Fallida",
     err_unknown:        "Error Desconocido",
     err_close:          "Cerrar",
+
+    // Tabla del Grupo
+    tbl_tab:            "Tabla",
+    tbl_p:              "PJ",
+    tbl_w:              "G",
+    tbl_d:              "E",
+    tbl_l:              "P",
+    tbl_gf:             "GF",
+    tbl_ga:             "GC",
+    tbl_gd:             "DG",
+    tbl_pts:            "Pts",
+    tbl_qualifies:      "Avanza a R32",
+    tbl_third:          "Mejor 3.º puede clasificar",
+    tbl_group:          "Grupo",
+    tbl_not_started:    "La fase de grupos empieza el 11 Jun · Todo a cero",
+    tbl_live_note:      "La tabla se actualiza tras cada partido",
   },
 
   zh: {
@@ -925,6 +973,22 @@ const t = {
     err_failed:         "交易失败",
     err_unknown:        "未知错误",
     err_close:          "关闭",
+
+    // 小组积分榜
+    tbl_tab:            "积分榜",
+    tbl_p:              "赛",
+    tbl_w:              "胜",
+    tbl_d:              "平",
+    tbl_l:              "负",
+    tbl_gf:             "进",
+    tbl_ga:             "失",
+    tbl_gd:             "净",
+    tbl_pts:            "分",
+    tbl_qualifies:      "晋级32强",
+    tbl_third:          "最佳第三名或可晋级",
+    tbl_group:          "小组",
+    tbl_not_started:    "小组赛6月11日开始 · 数据暂为零",
+    tbl_live_note:      "每场比赛结束后更新积分",
   },
 
   ar: {
@@ -1149,6 +1213,22 @@ const t = {
     err_failed:         "فشلت المعاملة",
     err_unknown:        "خطأ غير معروف",
     err_close:          "إغلاق",
+
+    // جدول المجموعات
+    tbl_tab:            "الجدول",
+    tbl_p:              "ل",
+    tbl_w:              "ف",
+    tbl_d:              "ت",
+    tbl_l:              "خ",
+    tbl_gf:             "أه",
+    tbl_ga:             "أع",
+    tbl_gd:             "فا",
+    tbl_pts:            "نق",
+    tbl_qualifies:      "تتأهل لدور الـ32",
+    tbl_third:          "أفضل ثالث قد يتأهل",
+    tbl_group:          "مجموعة",
+    tbl_not_started:    "دور المجموعات يبدأ 11 يونيو · كل الإحصاءات صفر",
+    tbl_live_note:      "الجدول يُحدَّث بعد كل مباراة",
   },
 
   ko: {
@@ -1373,6 +1453,22 @@ const t = {
     err_failed:         "트랜잭션 실패",
     err_unknown:        "알 수 없는 오류",
     err_close:          "닫기",
+
+    // 조별 순위표
+    tbl_tab:            "순위표",
+    tbl_p:              "경기",
+    tbl_w:              "승",
+    tbl_d:              "무",
+    tbl_l:              "패",
+    tbl_gf:             "득점",
+    tbl_ga:             "실점",
+    tbl_gd:             "득실",
+    tbl_pts:            "승점",
+    tbl_qualifies:      "32강 진출",
+    tbl_third:          "최고 3위 팀 진출 가능",
+    tbl_group:          "조",
+    tbl_not_started:    "조별리그 6월 11일 시작 · 모든 통계 0",
+    tbl_live_note:      "경기 후 순위 업데이트",
   },
 } as const;
 
