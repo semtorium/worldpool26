@@ -1,28 +1,12 @@
 {
-  "name": "Portugal — 2026 World Cup",
+  "name": "Germany — 2026 World Cup",
   "description": "WorldPool26 Nations Cup entry NFT. Hold this token to earn a share of the prize pool if your country wins the 2026 FIFA World Cup.",
-  "image": "https://flagcdn.com/w640/pt.png",
+  "image": "https://flagcdn.com/w640/de.png",
   "external_url": "https://worldpool26.com",
   "attributes": [
     {
       "trait_type": "Country",
-      "value": "Portugal"
-    },
-    {
-      "trait_type": "Continent",
-      "value": "UEFA"
-    },
-    {
-      "trait_type": "Group",
-      "value": "Group E"
-    },
-    {
-      "trait_type": "Token ID",
-      "value": "17"
-    },
-    {
-      "trait_type": "Tournament",
-      "value": "2026 FIFA World Cup"
+      "value": "Germany"
     }
   ]
 }

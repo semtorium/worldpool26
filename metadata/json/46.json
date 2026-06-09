@@ -1,28 +1,12 @@
 {
-  "name": "New Zealand — 2026 World Cup",
+  "name": "Croatia — 2026 World Cup",
   "description": "WorldPool26 Nations Cup entry NFT. Hold this token to earn a share of the prize pool if your country wins the 2026 FIFA World Cup.",
-  "image": "https://flagcdn.com/w640/nz.png",
+  "image": "https://flagcdn.com/w640/hr.png",
   "external_url": "https://worldpool26.com",
   "attributes": [
     {
       "trait_type": "Country",
-      "value": "New Zealand"
-    },
-    {
-      "trait_type": "Continent",
-      "value": "OFC"
-    },
-    {
-      "trait_type": "Group",
-      "value": "Group J"
-    },
-    {
-      "trait_type": "Token ID",
-      "value": "46"
-    },
-    {
-      "trait_type": "Tournament",
-      "value": "2026 FIFA World Cup"
+      "value": "Croatia"
     }
   ]
 }

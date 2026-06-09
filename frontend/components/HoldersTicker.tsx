@@ -53,7 +53,7 @@ export function HoldersTicker() {
           event: parseAbiItem(
             "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"
           ),
-          fromBlock: 0n, // TODO: Update after mainnet deploy — set to the deploy block
+          fromBlock: 47128622n,
           toBlock: "latest",
         });
 

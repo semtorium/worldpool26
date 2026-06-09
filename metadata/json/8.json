@@ -1,28 +1,12 @@
 {
-  "name": "Argentina — 2026 World Cup",
+  "name": "Switzerland — 2026 World Cup",
   "description": "WorldPool26 Nations Cup entry NFT. Hold this token to earn a share of the prize pool if your country wins the 2026 FIFA World Cup.",
-  "image": "https://flagcdn.com/w640/ar.png",
+  "image": "https://flagcdn.com/w640/ch.png",
   "external_url": "https://worldpool26.com",
   "attributes": [
     {
       "trait_type": "Country",
-      "value": "Argentina"
-    },
-    {
-      "trait_type": "Continent",
-      "value": "CONMEBOL"
-    },
-    {
-      "trait_type": "Group",
-      "value": "Group H"
-    },
-    {
-      "trait_type": "Token ID",
-      "value": "8"
-    },
-    {
-      "trait_type": "Tournament",
-      "value": "2026 FIFA World Cup"
+      "value": "Switzerland"
     }
   ]
 }

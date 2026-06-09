@@ -1,8 +1,7 @@
 import { base } from "viem/chains";
 
 // ── Sözleşme Adresi ───────────────────────────────────────────
-// TODO: Deploy sonrası mainnet adresini buraya yaz
-export const CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000" as `0x${string}`;
+export const CONTRACT_ADDRESS = "0x406B5D62Aa3BE4FCc73B347eDEcBE250c68034D7" as `0x${string}`;
 
 // ── Admin Panel Ek Yetkili Cüzdanlar ─────────────────────────
 // Owner dışında admin panele READ-ONLY erişmesini istediğin cüzdanları buraya ekle.

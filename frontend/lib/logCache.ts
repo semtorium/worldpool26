@@ -3,8 +3,7 @@
 import { parseAbiItem } from "viem";
 import { CONTRACT_ADDRESS } from "./config";
 
-// TODO: Update after mainnet deploy — set to the block where the contract was deployed
-const DEPLOY_BLOCK = 0n;
+const DEPLOY_BLOCK = 47128622n;
 const CHUNK_SIZE   = 2000n;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

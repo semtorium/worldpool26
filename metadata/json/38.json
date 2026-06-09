@@ -1,28 +1,12 @@
 {
-  "name": "Japan — 2026 World Cup",
+  "name": "Algeria — 2026 World Cup",
   "description": "WorldPool26 Nations Cup entry NFT. Hold this token to earn a share of the prize pool if your country wins the 2026 FIFA World Cup.",
-  "image": "https://flagcdn.com/w640/jp.png",
+  "image": "https://flagcdn.com/w640/dz.png",
   "external_url": "https://worldpool26.com",
   "attributes": [
     {
       "trait_type": "Country",
-      "value": "Japan"
-    },
-    {
-      "trait_type": "Continent",
-      "value": "AFC"
-    },
-    {
-      "trait_type": "Group",
-      "value": "Group B"
-    },
-    {
-      "trait_type": "Token ID",
-      "value": "38"
-    },
-    {
-      "trait_type": "Tournament",
-      "value": "2026 FIFA World Cup"
+      "value": "Algeria"
     }
   ]
 }

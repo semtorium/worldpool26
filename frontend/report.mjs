@@ -9,8 +9,7 @@ import { createPublicClient, http, formatEther, decodeEventLog } from "viem";
 import { base } from "viem/chains";
 
 // ── Config ─────────────────────────────────────────────────────
-// TODO: Update after mainnet deploy
-const CONTRACT = "0x0000000000000000000000000000000000000000";
+const CONTRACT = "0x406B5D62Aa3BE4FCc73B347eDEcBE250c68034D7";
 
 const COUNTRIES = [
   { id:  1, name: "Mexico" },        { id:  2, name: "South Africa" },
@@ -102,8 +101,7 @@ const client       = createPublicClient({ chain: base, transport: http(RPC_URL) 
 const BASESCAN_KEY = "NDR3E3B7YAYH6U5ADDE2VVGZIYAX6PV35I";
 // Etherscan V2 API — supports all chains via chainid param, no block-range limit
 const BASESCAN_API = "https://api.etherscan.io/v2/api?chainid=8453";
-// TODO: Update after mainnet deploy — set to the block where the contract was deployed
-const DEPLOY_BLOCK = 0;
+const DEPLOY_BLOCK = 47128622;
 const read   = (fn, args = []) => client.readContract({ address: CONTRACT, abi: ABI, functionName: fn, args });
 const ETH    = (wei) => parseFloat(formatEther(BigInt(wei))).toFixed(6);
 const line   = (char = "─", len = 66) => char.repeat(len);

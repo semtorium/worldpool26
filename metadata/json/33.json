@@ -1,28 +1,12 @@
 {
-  "name": "South Africa — 2026 World Cup",
+  "name": "France — 2026 World Cup",
   "description": "WorldPool26 Nations Cup entry NFT. Hold this token to earn a share of the prize pool if your country wins the 2026 FIFA World Cup.",
-  "image": "https://flagcdn.com/w640/za.png",
+  "image": "https://flagcdn.com/w640/fr.png",
   "external_url": "https://worldpool26.com",
   "attributes": [
     {
       "trait_type": "Country",
-      "value": "South Africa"
-    },
-    {
-      "trait_type": "Continent",
-      "value": "CAF"
-    },
-    {
-      "trait_type": "Group",
-      "value": "Group I"
-    },
-    {
-      "trait_type": "Token ID",
-      "value": "33"
-    },
-    {
-      "trait_type": "Tournament",
-      "value": "2026 FIFA World Cup"
+      "value": "France"
     }
   ]
 }

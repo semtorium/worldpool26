@@ -1,28 +1,12 @@
 {
-  "name": "Scotland — 2026 World Cup",
+  "name": "Iran — 2026 World Cup",
   "description": "WorldPool26 Nations Cup entry NFT. Hold this token to earn a share of the prize pool if your country wins the 2026 FIFA World Cup.",
-  "image": "https://flagcdn.com/w640/gb-sct.png",
+  "image": "https://flagcdn.com/w640/ir.png",
   "external_url": "https://worldpool26.com",
   "attributes": [
     {
       "trait_type": "Country",
-      "value": "Scotland"
-    },
-    {
-      "trait_type": "Continent",
-      "value": "UEFA"
-    },
-    {
-      "trait_type": "Group",
-      "value": "Group C"
-    },
-    {
-      "trait_type": "Token ID",
-      "value": "27"
-    },
-    {
-      "trait_type": "Tournament",
-      "value": "2026 FIFA World Cup"
+      "value": "Iran"
     }
   ]
 }
