@@ -3,18 +3,18 @@ pragma solidity 0.8.24;
 
 import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
 import "@openzeppelin/contracts/token/common/ERC2981.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/Ownable2Step.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-/// @title WorldPool26 v7
+/// @title WorldPool26 v8
 /// @notice 2026 World Cup Web3 prediction platform on Base Chain.
 ///         Two parallel games: Nations Cup (ERC-1155 mint) + Top Scorer (ticket voting).
 ///         v6: Single main Nations Cup prize pool — eliminations no longer move funds.
 ///             Final champion's NFT holders split the entire accumulated pool.
 ///         v7: Early-bird discount — first EARLY_BIRD_SUPPLY NFTs minted globally get
 ///             EARLY_BIRD_DISCOUNT_BPS off. MAX_MINT_PER_TX_EARLY limits per-tx whale sweep.
-contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
+contract WorldPool26 is ERC1155, ERC2981, Ownable2Step, ReentrancyGuard {
     using Strings for uint256;
 
     // ─────────────────────────────────────────────────────────────
@@ -238,12 +238,6 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
         require(countryId >= 1 && countryId <= MAX_COUNTRIES,     "Invalid country ID");
         require(!countryEliminated[countryId],                     "Country already eliminated");
         require(amount > 0,                                        "Amount must be > 0");
-
-        // Early-bird whale protection: limit batch size while discount is active
-        if (totalNFTsMinted < EARLY_BIRD_SUPPLY) {
-            uint256 ebRemaining = EARLY_BIRD_SUPPLY - totalNFTsMinted;
-            require(amount <= ebRemaining,                         "Amount exceeds remaining early bird slots");
-        }
 
         require(msg.value == calcMintCost(amount),                "Incorrect ETH payment");
 
@@ -469,10 +463,13 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
         emit NationsCupFinalized(_winningCountryId, nationsCupPoolBalance);
     }
 
-    /// @notice Finalize Top Scorer. If the real winner has 0 votes nobody can claim —
-    ///         pool stays locked until withdrawUnclaimedTopScorer() after 30 days.
+    /// @notice Finalize Top Scorer. Call setVotingClosed(true) in a SEPARATE transaction
+    ///         first to prevent mempool front-running (same pattern as finalizeNationsCup
+    ///         requiring mintClosed). If the real winner has 0 votes nobody can claim —
+    ///         pool stays locked until withdrawUnclaimedTopScorer() after 15 days.
     function finalizeTopScorer(string calldata playerName) external onlyOwner {
         require(!topScorerFinalized,          "Already finalized");
+        require(votingClosed,                 "Close voting before finalizing");
         require(bytes(playerName).length > 0, "Empty player name");
 
         uint256 refundPerTicket  = (TICKET_PRICE * (10000 - DEV_SHARE_BPS)) / 10000;

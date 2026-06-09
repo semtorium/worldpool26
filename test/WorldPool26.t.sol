@@ -77,8 +77,17 @@ contract WorldPool26Test is Test {
         vm.stopPrank();
     }
 
+    /// @dev Close voting then finalize Top Scorer — required because contract (v8)
+    ///      enforces `require(votingClosed)` before finalizeTopScorer to prevent
+    ///      mempool front-running.
+    function _closeVotingAndFinalizeTopScorer(string memory playerName) internal {
+        vm.startPrank(owner);
+        pool.setVotingClosed(true);
+        pool.finalizeTopScorer(playerName);
+        vm.stopPrank();
+    }
+
     /// @dev Exhaust the early-bird window by minting exactly EARLY_BIRD_SUPPLY NFTs in one tx.
-    ///      Per-tx limit = remaining slots, so entire supply can be minted at once.
     ///      Uses GERMANY (not BRAZIL/FRANCE) so whale tokens don't pollute claim tests.
     function _exhaustEarlyBird() internal {
         address whale = makeAddr("whale");
@@ -123,7 +132,41 @@ contract WorldPool26Test is Test {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Early-Bird Discount (v7)
+    // Ownable2Step (v8)
+    // ─────────────────────────────────────────────────────────────
+
+    function test_ownable2step_pendingOwner() public {
+        address newOwner = makeAddr("newOwner");
+        vm.prank(owner);
+        pool.transferOwnership(newOwner);
+        // Ownership has NOT transferred yet — pending acceptance
+        assertEq(pool.owner(), owner);
+        assertEq(pool.pendingOwner(), newOwner);
+    }
+
+    function test_ownable2step_acceptOwnership() public {
+        address newOwner = makeAddr("newOwner");
+        vm.prank(owner);
+        pool.transferOwnership(newOwner);
+        vm.prank(newOwner);
+        pool.acceptOwnership();
+        assertEq(pool.owner(), newOwner);
+        assertEq(pool.pendingOwner(), address(0));
+    }
+
+    function test_ownable2step_onlyPendingCanAccept() public {
+        address newOwner = makeAddr("newOwner");
+        vm.prank(owner);
+        pool.transferOwnership(newOwner);
+        // Attacker tries to hijack ownership acceptance
+        vm.prank(alice);
+        vm.expectRevert();
+        pool.acceptOwnership();
+        assertEq(pool.owner(), owner); // unchanged
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Early-Bird Discount (v7/v8)
     // ─────────────────────────────────────────────────────────────
 
     function test_earlyBird_constants() public view {
@@ -142,7 +185,7 @@ contract WorldPool26Test is Test {
     }
 
     function test_earlyBird_calcMintCost_splitAtBoundary() public {
-        // Set totalNFTsMinted = 9 → 1 discounted slot left
+        // Set totalNFTsMinted = 4 → 1 discounted slot left
         stdstore.target(address(pool)).sig("totalNFTsMinted()").checked_write(4);
 
         // 5 NFTs: 1 discounted + 4 full price
@@ -151,7 +194,7 @@ contract WorldPool26Test is Test {
     }
 
     function test_earlyBird_calcMintCost_allFullPriceAfter200() public {
-        // Set totalNFTsMinted = 10 → early bird exhausted
+        // Set totalNFTsMinted = 5 → early bird exhausted
         stdstore.target(address(pool)).sig("totalNFTsMinted()").checked_write(5);
 
         assertEq(pool.calcMintCost(1),  FULL_PRICE);
@@ -181,40 +224,39 @@ contract WorldPool26Test is Test {
         assertEq(pool.totalNFTsMinted(), 5);
     }
 
-    function test_earlyBird_perTxLimit_enforced() public {
-        // EARLY_BIRD_SUPPLY=5, totalMinted=0 → remaining=5 → trying 6 reverts
-        uint256 wrongCost = FULL_PRICE * 6;
+    /// @dev v8: per-tx whale limit removed — minting across the early-bird boundary
+    ///      in a single tx is now allowed. calcMintCost returns the correct split price.
+    function test_earlyBird_straddle_allowed() public {
+        // EARLY_BIRD_SUPPLY=5, totalMinted=0 → minting 8 straddles the boundary
+        // cost = 5 × DISC_PRICE + 3 × FULL_PRICE
+        uint256 cost = pool.calcMintCost(8);
+        assertEq(cost, DISC_PRICE * 5 + FULL_PRICE * 3);
+
+        vm.deal(alice, cost);
         vm.prank(alice);
-        vm.expectRevert("Amount exceeds remaining early bird slots");
-        pool.mintCountryNFT{value: wrongCost}(BRAZIL, 6);
+        pool.mintCountryNFT{value: cost}(BRAZIL, 8);
+
+        assertEq(pool.balanceOf(alice, BRAZIL), 8);
+        assertEq(pool.totalNFTsMinted(), 8);
     }
 
-    function test_earlyBird_perTxLimit_maxAllowed() public {
-        // Exactly remaining (5) is fine
-        uint256 cost = pool.calcMintCost(5);
-        vm.prank(alice);
-        pool.mintCountryNFT{value: cost}(BRAZIL, 5);
-        assertEq(pool.balanceOf(alice, BRAZIL), 5);
-    }
-
-    function test_earlyBird_perTxLimit_dynamic() public {
-        // After 3 minted, remaining=2 → can mint exactly 2, not 3
+    function test_earlyBird_straddle_dynamic() public {
+        // After 3 minted, remaining=2; minting 5 straddles: 2×disc + 3×full
         _mintForAlice(BRAZIL, 3);
         assertEq(pool.totalNFTsMinted(), 3);
 
-        uint256 wrongCost = DISC_PRICE * 3;
-        vm.prank(bob);
-        vm.expectRevert("Amount exceeds remaining early bird slots");
-        pool.mintCountryNFT{value: wrongCost}(FRANCE, 3); // only 2 left
+        uint256 cost = pool.calcMintCost(5); // 2 × DISC + 3 × FULL
+        assertEq(cost, DISC_PRICE * 2 + FULL_PRICE * 3);
 
-        uint256 cost = pool.calcMintCost(2);
+        vm.deal(bob, cost);
         vm.prank(bob);
-        pool.mintCountryNFT{value: cost}(FRANCE, 2); // exactly 2 remaining → ok
-        assertEq(pool.balanceOf(bob, FRANCE), 2);
+        pool.mintCountryNFT{value: cost}(FRANCE, 5);
+        assertEq(pool.balanceOf(bob, FRANCE), 5);
+        assertEq(pool.totalNFTsMinted(), 8);
     }
 
     function test_postEarlyBird_noPerTxLimit() public {
-        // After all 10 early-bird slots are gone, large batches are allowed
+        // After all early-bird slots are gone, large batches are allowed
         _exhaustEarlyBird();
         assertEq(pool.totalNFTsMinted(), 5);
 
@@ -356,13 +398,15 @@ contract WorldPool26Test is Test {
         pool.buyScorerTickets{value: wrongValue}(1);
     }
 
-    function test_buyTickets_revertsAfterFinalized() public {
+    function test_buyTickets_revertsAfterVotingClosed() public {
         _buyTickets(alice, 1);
         _vote(alice, MBAPPE, 1);
-        vm.prank(owner);
+        // v8: close voting separately before finalizing (front-run protection)
+        vm.startPrank(owner);
+        pool.setVotingClosed(true);
         pool.finalizeTopScorer(MBAPPE);
+        vm.stopPrank();
 
-        // finalizeTopScorer sets votingClosed=true; whenVotingOpen modifier fires first
         uint256 price = pool.TICKET_PRICE();
         vm.prank(bob);
         vm.expectRevert("Voting is closed");
@@ -415,13 +459,15 @@ contract WorldPool26Test is Test {
         pool.voteTopScorer("", 1);
     }
 
-    function test_vote_revertsAfterFinalized() public {
+    function test_vote_revertsAfterVotingClosed() public {
         _buyTickets(alice, 2);
         _vote(alice, MBAPPE, 1);
-        vm.prank(owner);
+        // v8: close voting separately before finalizing
+        vm.startPrank(owner);
+        pool.setVotingClosed(true);
         pool.finalizeTopScorer(MBAPPE);
+        vm.stopPrank();
 
-        // finalizeTopScorer sets votingClosed=true; whenVotingOpen modifier fires first
         vm.prank(alice);
         vm.expectRevert("Voting is closed");
         pool.voteTopScorer(MBAPPE, 1);
@@ -675,23 +721,32 @@ contract WorldPool26Test is Test {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // finalizeTopScorer
+    // finalizeTopScorer (v8 — requires votingClosed first)
     // ─────────────────────────────────────────────────────────────
 
     function test_finalizeTopScorer_happy() public {
         _buyTickets(alice, 3);
         _vote(alice, MBAPPE, 3);
 
-        vm.prank(owner);
-        pool.finalizeTopScorer(MBAPPE);
+        _closeVotingAndFinalizeTopScorer(MBAPPE);
 
         assertTrue(pool.topScorerFinalized());
         assertEq(pool.finalTopScorer(), MBAPPE);
     }
 
-    function test_finalizeTopScorer_allowsZeroVotes() public {
+    /// @dev v8: finalizeTopScorer now requires votingClosed=true first.
+    function test_finalizeTopScorer_requiresVotingClosed() public {
+        _buyTickets(alice, 1);
+        _vote(alice, MBAPPE, 1);
+        // Attempt to finalize WITHOUT closing voting first — must revert
         vm.prank(owner);
+        vm.expectRevert("Close voting before finalizing");
         pool.finalizeTopScorer(MBAPPE);
+    }
+
+    function test_finalizeTopScorer_allowsZeroVotes() public {
+        // No tickets, no votes — still possible to finalize after closing voting
+        _closeVotingAndFinalizeTopScorer(MBAPPE);
         assertTrue(pool.topScorerFinalized());
         assertEq(pool.finalTopScorerPool(), 0);
     }
@@ -699,8 +754,7 @@ contract WorldPool26Test is Test {
     function test_finalizeTopScorer_revertsDoubleFinalize() public {
         _buyTickets(alice, 1);
         _vote(alice, MBAPPE, 1);
-        vm.prank(owner);
-        pool.finalizeTopScorer(MBAPPE);
+        _closeVotingAndFinalizeTopScorer(MBAPPE);
 
         vm.prank(owner);
         vm.expectRevert("Already finalized");
@@ -715,8 +769,7 @@ contract WorldPool26Test is Test {
         _buyTickets(alice, 3);
         _vote(alice, MBAPPE, 3);
 
-        vm.prank(owner);
-        pool.finalizeTopScorer(MBAPPE);
+        _closeVotingAndFinalizeTopScorer(MBAPPE);
 
         uint256 totalPool   = pool.topScorerPoolBalance();
         uint256 aliceBefore = alice.balance;
@@ -742,8 +795,7 @@ contract WorldPool26Test is Test {
         _vote(bob, MBAPPE, 1);
         _vote(carol, HAALAND, 5); // wrong player
 
-        vm.prank(owner);
-        pool.finalizeTopScorer(MBAPPE);
+        _closeVotingAndFinalizeTopScorer(MBAPPE);
 
         uint256 snapshot      = pool.finalTopScorerPool();
         uint256 totalWinVotes = pool.getPlayerVotes(MBAPPE); // 4
@@ -767,8 +819,7 @@ contract WorldPool26Test is Test {
     function test_claim_topScorer_noDoubleClaim() public {
         _buyTickets(alice, 2);
         _vote(alice, MBAPPE, 2);
-        vm.prank(owner);
-        pool.finalizeTopScorer(MBAPPE);
+        _closeVotingAndFinalizeTopScorer(MBAPPE);
 
         vm.prank(alice);
         pool.claimTopScorerRewards();
@@ -848,8 +899,7 @@ contract WorldPool26Test is Test {
         _buyTickets(alice, 5);   // 5 tickets
         _vote(alice, MBAPPE, 2); // use 2, 3 unused
 
-        vm.prank(owner);
-        pool.finalizeTopScorer(MBAPPE);
+        _closeVotingAndFinalizeTopScorer(MBAPPE);
 
         uint256 refundPerTicket = (pool.TICKET_PRICE() * (10000 - pool.DEV_SHARE_BPS())) / 10000;
         uint256 expectedRefund  = 3 * refundPerTicket;
@@ -870,8 +920,7 @@ contract WorldPool26Test is Test {
         _buyTickets(alice, 2);
         _vote(alice, MBAPPE, 2); // all used
 
-        vm.prank(owner);
-        pool.finalizeTopScorer(MBAPPE);
+        _closeVotingAndFinalizeTopScorer(MBAPPE);
 
         vm.prank(alice);
         vm.expectRevert("No unused tickets");
@@ -889,8 +938,7 @@ contract WorldPool26Test is Test {
 
     function test_refundUnusedTickets_noDoubleClaim() public {
         _buyTickets(alice, 3);
-        vm.prank(owner);
-        pool.finalizeTopScorer(MBAPPE);
+        _closeVotingAndFinalizeTopScorer(MBAPPE);
 
         vm.prank(alice);
         pool.refundUnusedTickets();
@@ -936,8 +984,7 @@ contract WorldPool26Test is Test {
     function test_withdrawUnclaimedTopScorer_happy() public {
         _buyTickets(alice, 3);
         _vote(alice, MBAPPE, 3);
-        vm.prank(owner);
-        pool.finalizeTopScorer(MBAPPE);
+        _closeVotingAndFinalizeTopScorer(MBAPPE);
 
         // Alice does NOT claim — owner recovers after 15 days
         vm.warp(block.timestamp + pool.UNCLAIMED_TIMEOUT() + 1);
@@ -1127,8 +1174,8 @@ contract WorldPool26Test is Test {
     // ─────────────────────────────────────────────────────────────
 
     function testFuzz_mint_correctSplit(uint256 amount) public {
-        // During early bird, per-tx limit is 5
-        amount = bound(amount, 1, 5);
+        // Bound to a reasonable size — no per-tx limit in v8
+        amount = bound(amount, 1, 20);
         uint256 totalCost = pool.calcMintCost(amount);
         vm.deal(alice, totalCost);
 
@@ -1149,10 +1196,10 @@ contract WorldPool26Test is Test {
         aliceTokens = bound(aliceTokens, 1, 5);
         bobTokens   = bound(bobTokens, 1, 5);
 
-        // Exhaust early bird first so per-tx limit doesn't interfere with fuzz inputs
+        // Exhaust early bird first
         _exhaustEarlyBird();
 
-        // Alice and Bob mint full price (no EB limit)
+        // Alice and Bob mint full price
         uint256 aliceCost = FULL_PRICE * aliceTokens;
         vm.deal(alice, aliceCost);
         vm.prank(alice);
