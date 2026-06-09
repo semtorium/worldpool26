@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 import "../src/WorldPool26.sol";
 
 contract WorldPool26Test is Test {
+    using stdStorage for StdStorage;
 
     WorldPool26 public pool;
 
@@ -21,6 +22,11 @@ contract WorldPool26Test is Test {
     uint256 constant BRAZIL  = 1;
     uint256 constant FRANCE  = 2;
     uint256 constant GERMANY = 3;
+
+    /// @dev Early-bird discounted price: MINT_PRICE × 80% = 0.00176 ETH
+    uint256 constant DISC_PRICE = 1760000000000000;
+    /// @dev Full mint price for reference
+    uint256 constant FULL_PRICE = 2200000000000000;
 
     // ─────────────────────────────────────────────────────────────
     // Setup
@@ -41,7 +47,7 @@ contract WorldPool26Test is Test {
     // ─────────────────────────────────────────────────────────────
 
     function _mintForAlice(uint256 countryId, uint256 amount) internal {
-        uint256 price = pool.MINT_PRICE() * amount;
+        uint256 price = pool.calcMintCost(amount);
         vm.prank(alice);
         pool.mintCountryNFT{value: price}(countryId, amount);
     }
@@ -71,6 +77,25 @@ contract WorldPool26Test is Test {
         vm.stopPrank();
     }
 
+    /// @dev Exhaust the early-bird window by minting exactly EARLY_BIRD_SUPPLY NFTs.
+    ///      Uses a dedicated "whale" account so it doesn't pollute alice/bob balances.
+    function _exhaustEarlyBird() internal {
+        address whale = makeAddr("whale");
+        uint256 batchSize = pool.MAX_MINT_PER_TX_EARLY();  // 5
+        uint256 batches   = pool.EARLY_BIRD_SUPPLY() / batchSize; // 40
+
+        // Each discounted batch costs: batchSize × DISC_PRICE
+        vm.deal(whale, batches * batchSize * DISC_PRICE + 1 ether);
+
+        for (uint256 i = 0; i < batches; i++) {
+            uint256 cost = pool.calcMintCost(batchSize);
+            vm.prank(whale);
+            pool.mintCountryNFT{value: cost}(BRAZIL, batchSize);
+        }
+
+        assertEq(pool.totalNFTsMinted(), pool.EARLY_BIRD_SUPPLY());
+    }
+
     // ─────────────────────────────────────────────────────────────
     // Constructor
     // ─────────────────────────────────────────────────────────────
@@ -81,6 +106,7 @@ contract WorldPool26Test is Test {
         assertFalse(pool.tournamentFinalized());
         assertFalse(pool.topScorerFinalized());
         assertEq(pool.nationsCupPoolBalance(), 0);
+        assertEq(pool.totalNFTsMinted(), 0);
     }
 
     function test_constructor_revertsZeroDevWallet() public {
@@ -103,12 +129,118 @@ contract WorldPool26Test is Test {
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Early-Bird Discount (v7)
+    // ─────────────────────────────────────────────────────────────
+
+    function test_earlyBird_constants() public view {
+        assertEq(pool.EARLY_BIRD_SUPPLY(), 200);
+        assertEq(pool.EARLY_BIRD_DISCOUNT_BPS(), 2000);
+        assertEq(pool.MAX_MINT_PER_TX_EARLY(), 5);
+    }
+
+    function test_earlyBird_calcMintCost_singleDiscounted() public view {
+        // totalNFTsMinted = 0 → single NFT gets discount
+        assertEq(pool.calcMintCost(1), DISC_PRICE);
+    }
+
+    function test_earlyBird_calcMintCost_fiveDiscounted() public view {
+        // totalNFTsMinted = 0 → max batch during early bird
+        assertEq(pool.calcMintCost(5), DISC_PRICE * 5);
+    }
+
+    function test_earlyBird_calcMintCost_splitAtBoundary() public {
+        // Set totalNFTsMinted = 199 → 1 discounted slot left
+        stdstore.target(address(pool)).sig("totalNFTsMinted()").checked_write(199);
+
+        // 5 NFTs: 1 discounted + 4 full price
+        uint256 expected = DISC_PRICE * 1 + FULL_PRICE * 4;
+        assertEq(pool.calcMintCost(5), expected);
+    }
+
+    function test_earlyBird_calcMintCost_allFullPriceAfter200() public {
+        // Set totalNFTsMinted = 200 → early bird exhausted
+        stdstore.target(address(pool)).sig("totalNFTsMinted()").checked_write(200);
+
+        assertEq(pool.calcMintCost(1),  FULL_PRICE);
+        assertEq(pool.calcMintCost(5),  FULL_PRICE * 5);
+        assertEq(pool.calcMintCost(20), FULL_PRICE * 20);
+    }
+
+    function test_earlyBird_discountedMint_correctSplit() public {
+        uint256 devBefore  = dev.balance;
+        uint256 cost       = pool.calcMintCost(1);
+        assertEq(cost, DISC_PRICE);
+
+        vm.prank(alice);
+        pool.mintCountryNFT{value: cost}(BRAZIL, 1);
+
+        assertEq(pool.totalNFTsMinted(), 1);
+        assertEq(pool.nationsCupPoolBalance(), DISC_PRICE * 8000 / 10000);
+        assertEq(dev.balance - devBefore,      DISC_PRICE * 2000 / 10000);
+        assertEq(pool.totalGlobalVolumeETH(),  DISC_PRICE);
+    }
+
+    function test_earlyBird_counterIncrements() public {
+        assertEq(pool.totalNFTsMinted(), 0);
+        _mintForAlice(BRAZIL,  3);
+        assertEq(pool.totalNFTsMinted(), 3);
+        _mintForAlice(FRANCE,  2);
+        assertEq(pool.totalNFTsMinted(), 5);
+    }
+
+    function test_earlyBird_perTxLimit_enforced() public {
+        // 6 NFTs during early bird → should revert
+        uint256 wrongCost = FULL_PRICE * 6; // any non-zero value; revert fires before price check
+        vm.prank(alice);
+        vm.expectRevert("Max 5 per tx during early bird");
+        pool.mintCountryNFT{value: wrongCost}(BRAZIL, 6);
+    }
+
+    function test_earlyBird_perTxLimit_maxAllowed() public {
+        // Exactly 5 is fine during early bird
+        uint256 cost = pool.calcMintCost(5);
+        vm.prank(alice);
+        pool.mintCountryNFT{value: cost}(BRAZIL, 5);
+        assertEq(pool.balanceOf(alice, BRAZIL), 5);
+    }
+
+    function test_postEarlyBird_noPerTxLimit() public {
+        // After all 200 early-bird slots are gone, large batches are allowed
+        _exhaustEarlyBird();
+        assertEq(pool.totalNFTsMinted(), 200);
+
+        uint256 bigBatch = 20;
+        uint256 cost = pool.calcMintCost(bigBatch);  // all at FULL_PRICE
+        assertEq(cost, FULL_PRICE * bigBatch);
+        vm.deal(alice, cost);
+        vm.prank(alice);
+        pool.mintCountryNFT{value: cost}(BRAZIL, bigBatch);
+        assertEq(pool.balanceOf(alice, BRAZIL), bigBatch);
+        assertEq(pool.totalNFTsMinted(), 200 + bigBatch);
+    }
+
+    function test_earlyBird_exhaustThenFullPrice() public {
+        _exhaustEarlyBird();
+
+        // Next mint pays full price
+        uint256 cost = pool.calcMintCost(1);
+        assertEq(cost, FULL_PRICE);
+
+        uint256 devBefore = dev.balance;
+        vm.prank(alice);
+        pool.mintCountryNFT{value: cost}(BRAZIL, 1);
+
+        assertEq(pool.nationsCupPoolBalance() - (DISC_PRICE * 8000 / 10000 * 200), FULL_PRICE * 8000 / 10000);
+        assertEq(dev.balance - devBefore, FULL_PRICE * 2000 / 10000);
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // mintCountryNFT — Happy Path
     // ─────────────────────────────────────────────────────────────
 
     function test_mint_singleNFT() public {
         uint256 devBefore = dev.balance;
-        uint256 price = pool.MINT_PRICE();
+        uint256 price     = pool.calcMintCost(1); // discounted: 0.00176 ETH
 
         vm.expectEmit(true, true, false, true);
         emit WorldPool26.CountryMinted(alice, BRAZIL, 1, block.timestamp);
@@ -118,39 +250,44 @@ contract WorldPool26Test is Test {
 
         assertEq(pool.balanceOf(alice, BRAZIL), 1);
         assertEq(pool.countryTotalSupply(BRAZIL), 1);
+        assertEq(pool.totalNFTsMinted(), 1);
 
-        uint256 expectedPool = pool.MINT_PRICE() * 8000 / 10000;
+        uint256 expectedPool = price * 8000 / 10000;
         assertEq(pool.nationsCupPoolBalance(), expectedPool);
-        assertEq(pool.totalLockedPrizePool(), expectedPool);
+        assertEq(pool.totalLockedPrizePool(),  expectedPool);
 
-        uint256 expectedDev = pool.MINT_PRICE() * 2000 / 10000;
+        uint256 expectedDev = price * 2000 / 10000;
         assertEq(dev.balance - devBefore, expectedDev);
-        assertEq(pool.totalGlobalVolumeETH(), pool.MINT_PRICE());
+        assertEq(pool.totalGlobalVolumeETH(), price);
     }
 
     function test_mint_multipleCountries_singlePool() public {
-        // Minting different countries all go to the same main pool
+        // Alice mints 3 (totalNFTsMinted → 3)
+        uint256 aliceCost = pool.calcMintCost(3);
         _mintForAlice(BRAZIL, 3);
 
-        uint256 price2 = pool.MINT_PRICE() * 2;
+        // Bob mints 2 (totalNFTsMinted → 5); still in early bird window
+        uint256 bobCost = pool.calcMintCost(2);
         vm.prank(bob);
-        pool.mintCountryNFT{value: price2}(FRANCE, 2);
+        pool.mintCountryNFT{value: bobCost}(FRANCE, 2);
 
-        uint256 expectedPool = pool.MINT_PRICE() * 5 * 8000 / 10000;
+        // All 5 NFTs at discounted price
+        uint256 expectedPool = (aliceCost + bobCost) * 8000 / 10000;
         assertEq(pool.nationsCupPoolBalance(), expectedPool);
         assertEq(pool.balanceOf(alice, BRAZIL), 3);
         assertEq(pool.balanceOf(bob, FRANCE), 2);
+        assertEq(pool.totalNFTsMinted(), 5);
     }
 
     function test_mint_revertsInvalidCountryId_zero() public {
-        uint256 price = pool.MINT_PRICE();
+        uint256 price = pool.calcMintCost(1);
         vm.prank(alice);
         vm.expectRevert("Invalid country ID");
         pool.mintCountryNFT{value: price}(0, 1);
     }
 
     function test_mint_revertsInvalidCountryId_over48() public {
-        uint256 price = pool.MINT_PRICE();
+        uint256 price = pool.calcMintCost(1);
         vm.prank(alice);
         vm.expectRevert("Invalid country ID");
         pool.mintCountryNFT{value: price}(49, 1);
@@ -163,17 +300,11 @@ contract WorldPool26Test is Test {
     }
 
     function test_mint_revertsWrongPayment() public {
-        uint256 wrongValue = pool.MINT_PRICE() - 1;
+        // Sending 1 wei less than the discounted price should revert
+        uint256 wrongValue = pool.calcMintCost(1) - 1;
         vm.prank(alice);
         vm.expectRevert("Incorrect ETH payment");
         pool.mintCountryNFT{value: wrongValue}(BRAZIL, 1);
-    }
-
-    function test_mint_noWalletLimit() public {
-        uint256 price20 = pool.MINT_PRICE() * 20;
-        vm.deal(alice, price20);
-        vm.prank(alice);
-        pool.mintCountryNFT{value: price20}(BRAZIL, 20);
     }
 
     function test_mint_revertsAfterTournamentFinalized() public {
@@ -369,9 +500,11 @@ contract WorldPool26Test is Test {
     }
 
     function test_finalizeNationsCup_snapshotsMainPool() public {
-        // Three countries minted — all go to main pool
+        // Alice mints 3 (totalNFTsMinted → 3)
         _mintForAlice(BRAZIL, 3);
-        uint256 price2 = pool.MINT_PRICE() * 2;
+
+        // Bob mints 2 (totalNFTsMinted → 5), still in early bird window
+        uint256 price2 = pool.calcMintCost(2);
         vm.prank(bob);
         pool.mintCountryNFT{value: price2}(FRANCE, 2);
 
@@ -443,12 +576,13 @@ contract WorldPool26Test is Test {
         // Alice: 3 tokens, Bob: 1 token → Alice gets 75%, Bob gets 25% of ENTIRE main pool
         _mintForAlice(BRAZIL, 3);
 
-        uint256 price = pool.MINT_PRICE();
+        // Bob mints 1 after alice's 3 (totalNFTsMinted = 4, still in early bird)
+        uint256 price = pool.calcMintCost(1);
         vm.prank(bob);
         pool.mintCountryNFT{value: price}(BRAZIL, 1);
 
-        // France also minted — contributes to main pool but loses
-        uint256 price2 = pool.MINT_PRICE() * 2;
+        // Carol mints 2 France (totalNFTsMinted = 6, still early bird)
+        uint256 price2 = pool.calcMintCost(2);
         vm.prank(carol);
         pool.mintCountryNFT{value: price2}(FRANCE, 2);
 
@@ -484,7 +618,9 @@ contract WorldPool26Test is Test {
     function test_claim_nationsCup_losingCountryHolderGetsNothing() public {
         // Bob minted France (loses), Alice minted Brazil (wins)
         _mintForAlice(BRAZIL, 2);
-        uint256 price = pool.MINT_PRICE();
+
+        // Bob mints 1 after alice's 2 (still early bird)
+        uint256 price = pool.calcMintCost(1);
         vm.prank(bob);
         pool.mintCountryNFT{value: price}(FRANCE, 1);
 
@@ -632,17 +768,20 @@ contract WorldPool26Test is Test {
     // ─────────────────────────────────────────────────────────────
 
     function test_fullTournamentFlow() public {
-        // Three countries minted — ALL go to the same main pool
-        _mintForAlice(BRAZIL, 5);
-        uint256 price3 = pool.MINT_PRICE() * 3;
+        // Three countries minted — ALL go to the same main pool (all in early bird window)
+        _mintForAlice(BRAZIL, 5);  // totalNFTsMinted → 5
+
+        uint256 price3 = pool.calcMintCost(3); // after 5 mints
         vm.prank(bob);
-        pool.mintCountryNFT{value: price3}(FRANCE, 3);
-        uint256 price2 = pool.MINT_PRICE() * 2;
+        pool.mintCountryNFT{value: price3}(FRANCE, 3);   // → 8
+
+        uint256 price2 = pool.calcMintCost(2); // after 8 mints
         vm.prank(carol);
-        pool.mintCountryNFT{value: price2}(GERMANY, 2);
+        pool.mintCountryNFT{value: price2}(GERMANY, 2);  // → 10
 
         uint256 mainPoolAfterMints = pool.nationsCupPoolBalance();
-        assertEq(mainPoolAfterMints, pool.MINT_PRICE() * 10 * 8000 / 10000);
+        // All 10 NFTs are at discounted price (10 << 200)
+        assertEq(mainPoolAfterMints, DISC_PRICE * 10 * 8000 / 10000);
 
         // Eliminate France and Germany — pool stays the same
         uint256[] memory losers = new uint256[](2);
@@ -671,7 +810,7 @@ contract WorldPool26Test is Test {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // mintCountryNFT — Eliminated Country Guard  (NEW)
+    // mintCountryNFT — Eliminated Country Guard
     // ─────────────────────────────────────────────────────────────
 
     function test_mint_revertsEliminated() public {
@@ -679,14 +818,14 @@ contract WorldPool26Test is Test {
         losers[0] = FRANCE;
         _eliminate(losers);
 
-        uint256 price = pool.MINT_PRICE();
+        uint256 price = pool.calcMintCost(1);
         vm.prank(alice);
         vm.expectRevert("Country already eliminated");
         pool.mintCountryNFT{value: price}(FRANCE, 1);
     }
 
     // ─────────────────────────────────────────────────────────────
-    // refundUnusedTickets  (NEW)
+    // refundUnusedTickets
     // ─────────────────────────────────────────────────────────────
 
     function test_refundUnusedTickets_happy() public {
@@ -746,7 +885,7 @@ contract WorldPool26Test is Test {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Withdraw Unclaimed (15-day window)  (NEW)
+    // Withdraw Unclaimed (15-day window)
     // ─────────────────────────────────────────────────────────────
 
     function test_withdrawUnclaimedNationsCup_happy() public {
@@ -798,14 +937,14 @@ contract WorldPool26Test is Test {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Pause controls  (NEW)
+    // Pause controls
     // ─────────────────────────────────────────────────────────────
 
     function test_pause_blocks_mint() public {
         vm.prank(owner);
         pool.setPaused(true);
 
-        uint256 price = pool.MINT_PRICE();
+        uint256 price = pool.calcMintCost(1);
         vm.prank(alice);
         vm.expectRevert("Contract is paused");
         pool.mintCountryNFT{value: price}(BRAZIL, 1);
@@ -849,7 +988,7 @@ contract WorldPool26Test is Test {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // ERC-1155 Transfer then Claim  (NEW)
+    // ERC-1155 Transfer then Claim
     // ─────────────────────────────────────────────────────────────
 
     function test_claim_afterTransfer_correctProRata() public {
@@ -929,8 +1068,9 @@ contract WorldPool26Test is Test {
     // ─────────────────────────────────────────────────────────────
 
     function testFuzz_mint_correctSplit(uint256 amount) public {
-        amount = bound(amount, 1, 10);
-        uint256 totalCost = pool.MINT_PRICE() * amount;
+        // During early bird, per-tx limit is 5
+        amount = bound(amount, 1, 5);
+        uint256 totalCost = pool.calcMintCost(amount);
         vm.deal(alice, totalCost);
 
         uint256 devBefore = dev.balance;
@@ -950,16 +1090,15 @@ contract WorldPool26Test is Test {
         aliceTokens = bound(aliceTokens, 1, 5);
         bobTokens   = bound(bobTokens, 1, 5);
 
-        uint256 mintPrice = pool.MINT_PRICE();
-        uint256 aliceCost = mintPrice * aliceTokens;
-        uint256 bobCost   = mintPrice * bobTokens;
-
+        // Alice mints first (reads calcMintCost at totalNFTsMinted = 0)
+        uint256 aliceCost = pool.calcMintCost(aliceTokens);
         vm.deal(alice, aliceCost);
-        vm.deal(bob,   bobCost);
-
         vm.prank(alice);
         pool.mintCountryNFT{value: aliceCost}(BRAZIL, aliceTokens);
 
+        // Bob mints after alice (reads calcMintCost at totalNFTsMinted = aliceTokens)
+        uint256 bobCost = pool.calcMintCost(bobTokens);
+        vm.deal(bob, bobCost);
         vm.prank(bob);
         pool.mintCountryNFT{value: bobCost}(BRAZIL, bobTokens);
 

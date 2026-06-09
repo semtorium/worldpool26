@@ -237,6 +237,13 @@ const t = {
     chart_loading:      "Loading…",
     chart_no_holders:   "No holders yet",
 
+    // Early-Bird Discount (v7)
+    eb_title:           "EARLY BIRD DISCOUNT",
+    eb_discount:        "20% OFF",
+    eb_sold:            "EARLY BIRD SOLD OUT",
+    cmt_price_note_early: "0.00176 ETH per NFT · 20% early bird discount · Base Chain",
+    eb_max_tx:          "Max 5 per transaction · early bird period",
+
     // TxErrorModal
     err_rejected:       "Transaction Rejected",
     err_contract:       "Contract Error",
@@ -451,6 +458,13 @@ const t = {
     chart_nft:          "NFT",
     chart_loading:      "Yükleniyor…",
     chart_no_holders:   "Henüz tutucu yok",
+
+    // Early-Bird İndirimi (v7)
+    eb_title:           "ERKEN KUŞLAR İNDİRİMİ",
+    eb_discount:        "%20 İNDİRİM",
+    eb_sold:            "ERKEN KUŞLAR BİTTİ",
+    cmt_price_note_early: "NFT başına 0.00176 ETH · %20 erken indirim · Base Chain",
+    eb_max_tx:          "İşlem başına max 5 · erken dönem",
 
     // TxErrorModal
     err_rejected:       "İşlem Reddedildi",
@@ -667,6 +681,13 @@ const t = {
     chart_loading:      "Cargando…",
     chart_no_holders:   "Sin tenedores aún",
 
+    // Early-Bird (v7)
+    eb_title:           "DESCUENTO EARLY BIRD",
+    eb_discount:        "20% DE DTO.",
+    eb_sold:            "EARLY BIRD AGOTADO",
+    cmt_price_note_early: "0,00176 ETH por NFT · 20% descuento early bird · Base Chain",
+    eb_max_tx:          "Máx. 5 por transacción · período early bird",
+
     // TxErrorModal
     err_rejected:       "Transacción Rechazada",
     err_contract:       "Error de Contrato",
@@ -881,6 +902,13 @@ const t = {
     chart_nft:          "NFT",
     chart_loading:      "加载中…",
     chart_no_holders:   "暂无持有者",
+
+    // Early-Bird (v7)
+    eb_title:           "早鸟优惠",
+    eb_discount:        "8折优惠",
+    eb_sold:            "早鸟已售完",
+    cmt_price_note_early: "每个 NFT 0.00176 ETH · 早鸟八折 · Base Chain",
+    eb_max_tx:          "早鸟期间每笔最多 5 个",
 
     // TxErrorModal
     err_rejected:       "交易已拒绝",
@@ -1097,6 +1125,13 @@ const t = {
     chart_loading:      "جارٍ التحميل…",
     chart_no_holders:   "لا يوجد حاملون بعد",
 
+    // Early-Bird (v7)
+    eb_title:           "خصم المبكرين",
+    eb_discount:        "خصم 20%",
+    eb_sold:            "انتهى خصم المبكرين",
+    cmt_price_note_early: "0.00176 ETH لكل NFT · خصم 20% للمبكرين · Base Chain",
+    eb_max_tx:          "الحد الأقصى 5 لكل معاملة · الفترة المبكرة",
+
     // TxErrorModal
     err_rejected:       "تم رفض المعاملة",
     err_contract:       "خطأ في العقد",
@@ -1311,6 +1346,13 @@ const t = {
     chart_nft:          "NFT",
     chart_loading:      "불러오는 중…",
     chart_no_holders:   "아직 보유자 없음",
+
+    // Early-Bird (v7)
+    eb_title:           "얼리버드 할인",
+    eb_discount:        "20% 할인",
+    eb_sold:            "얼리버드 매진",
+    cmt_price_note_early: "NFT당 0.00176 ETH · 20% 얼리버드 할인 · Base Chain",
+    eb_max_tx:          "얼리버드 기간 · 1회 최대 5개",
 
     // TxErrorModal
     err_rejected:       "트랜잭션 거부됨",

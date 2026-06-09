@@ -2,7 +2,7 @@ import { baseSepolia } from "viem/chains";
 
 // ── Sözleşme Adresi ───────────────────────────────────────────
 // Mainnet deploy sonrası bu adresi güncelle
-export const CONTRACT_ADDRESS = "0x0B3DCcd345b238A44939F0A677DA2961bb0feb58" as `0x${string}`;
+export const CONTRACT_ADDRESS = "0x27f5067878627CB7E40b88e07c26EAEe957E968a" as `0x${string}`;
 
 // ── Admin Panel Ek Yetkili Cüzdanlar ─────────────────────────
 // Owner dışında admin panele READ-ONLY erişmesini istediğin cüzdanları buraya ekle.
@@ -15,8 +15,29 @@ export const EXTRA_ADMIN_WALLETS: string[] = [
 export const CHAIN = baseSepolia;
 
 // ── Fiyatlar (wei) ────────────────────────────────────────────
-export const MINT_PRICE   = BigInt("2200000000000000"); // 0.0022 ETH
-export const TICKET_PRICE = BigInt("1800000000000000"); // 0.0018 ETH
+export const MINT_PRICE            = BigInt("2200000000000000"); // 0.0022 ETH
+export const TICKET_PRICE          = BigInt("1800000000000000"); // 0.0018 ETH
+
+// ── Early-Bird İndirimi (v7) ──────────────────────────────────
+export const EARLY_BIRD_SUPPLY     = 200;                        // indirimli slot sayısı
+export const EARLY_BIRD_DISC_BPS   = 2000;                       // %20 indirim
+/// Discounted price = MINT_PRICE × (10000 - 2000) / 10000 = 0.00176 ETH
+export const DISC_MINT_PRICE       = BigInt("1760000000000000"); // 0.00176 ETH
+export const MAX_MINT_PER_TX_EARLY = 5;                          // early bird döneminde tx başına max
+
+/// @dev Aynı calcMintCost mantığını contract ile birebir aynı uygular.
+///      `totalMinted` = contract'tan okunan `totalNFTsMinted` değeri.
+export function calcMintCost(amount: number, totalMinted: number): bigint {
+  if (totalMinted >= EARLY_BIRD_SUPPLY) {
+    return MINT_PRICE * BigInt(amount);
+  }
+  const remaining = EARLY_BIRD_SUPPLY - totalMinted;
+  if (amount <= remaining) {
+    return DISC_MINT_PRICE * BigInt(amount);
+  }
+  // Sınırı aşan batch: kısmen indirimli + kısmen tam fiyat
+  return DISC_MINT_PRICE * BigInt(remaining) + MINT_PRICE * BigInt(amount - remaining);
+}
 
 // ── Limitler ──────────────────────────────────────────────────
 export const MAX_MINT_PER_WALLET = 10;

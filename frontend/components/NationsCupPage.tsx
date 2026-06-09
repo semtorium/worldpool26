@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
 import { ABI } from "@/lib/abi";
-import { CONTRACT_ADDRESS } from "@/lib/config";
+import { CONTRACT_ADDRESS, EARLY_BIRD_SUPPLY } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
 import { CountryCard } from "./CountryCard";
 import { MintBarChart } from "./MintBarChart";
@@ -80,6 +80,16 @@ export function NationsCupPage() {
   const { data: eliminationStatus }      = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "getAllEliminationStatus", query: { refetchInterval: 30_000 } });
   const { data: contractMintClosed }     = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "mintClosed", query: { refetchInterval: 30_000 } });
   const { data: contractPaused }         = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "paused" });
+
+  // Early-bird global counter
+  const { data: totalNFTsMinted } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI,
+    functionName: "totalNFTsMinted",
+    query: { refetchInterval: 5_000 },
+  });
+  const mintedCount    = Number(totalNFTsMinted ?? 0n);
+  const ebRemaining    = Math.max(0, EARLY_BIRD_SUPPLY - mintedCount);
+  const showEarlyBird  = !tournamentFinalized && ebRemaining > 0;
 
   // Mint is "closed" when mintClosed flag set OR emergency paused OR tournament finalized OR deadline passed
   const mintClosed = !!contractMintClosed || !!contractPaused || !!tournamentFinalized || mintDeadline.expired;
@@ -234,6 +244,62 @@ export function NationsCupPage() {
             {(isClaiming || isClaimConfirming) && <Loader2 size={16} className="animate-spin" />}
             {isClaimSuccess ? t.nc_claimed : t.nc_claim_btn}
           </button>
+        </div>
+      )}
+
+      {/* Early-Bird Banner — visible while discount slots remain */}
+      {showEarlyBird && (
+        <div
+          style={{
+            borderRadius: "14px",
+            border: "1px solid rgba(251,191,36,0.5)",
+            background: "linear-gradient(135deg, rgba(251,191,36,0.10) 0%, rgba(245,158,11,0.04) 100%)",
+            boxShadow: "0 0 28px rgba(251,191,36,0.12), inset 0 1px 0 rgba(255,255,255,0.05)",
+            padding: "14px 20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          {/* Left */}
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2">
+              <div style={{ width: 7, height: 7, minWidth: 7, borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 8px #fbbf24", animation: "liveDotPulse 1.5s ease-in-out infinite" }} />
+              <span className="font-black tracking-[0.2em] uppercase" style={{ fontSize: "13px", color: "#fbbf24" }}>
+                🔥 {t.eb_title}
+              </span>
+            </div>
+            <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.5)", paddingLeft: "15px" }}>
+              {t.eb_max_tx}
+            </span>
+          </div>
+
+          {/* Right: slot counter */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              background: "rgba(251,191,36,0.10)",
+              border: "1px solid rgba(251,191,36,0.3)",
+              borderRadius: "10px",
+              padding: "6px 14px",
+              flexShrink: 0,
+            }}
+          >
+            <span className="font-black font-mono" style={{ fontSize: "18px", color: "#fff" }}>{ebRemaining}</span>
+            <span style={{ fontSize: "11px", color: "#6b7a9a" }}>/ {EARLY_BIRD_SUPPLY}</span>
+            <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.5)", marginLeft: 2 }}>slots</span>
+            <span style={{
+              marginLeft: 6, padding: "2px 8px", borderRadius: 99,
+              background: "rgba(251,191,36,0.18)", border: "1px solid rgba(251,191,36,0.35)",
+              fontSize: 11, fontWeight: 900, color: "#fbbf24",
+            }}>
+              {t.eb_discount}
+            </span>
+          </div>
         </div>
       )}
 

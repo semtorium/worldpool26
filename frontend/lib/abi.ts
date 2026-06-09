@@ -13,6 +13,14 @@ export const ABI = [
   { type: "function", name: "nationsCupPoolBalance", inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
   { type: "function", name: "topScorerPoolBalance",  inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
   { type: "function", name: "totalUnusedTickets",    inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
+  // ── View: early-bird (v7) ─────────────────────────────────────
+  { type: "function", name: "totalNFTsMinted",      inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
+  { type: "function", name: "EARLY_BIRD_SUPPLY",    inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
+  {
+    type: "function", name: "calcMintCost",
+    inputs: [{ name: "amount", type: "uint256" }],
+    outputs: [{ type: "uint256" }], stateMutability: "view",
+  },
   { type: "function", name: "tournamentFinalized",   inputs: [], outputs: [{ type: "bool" }],     stateMutability: "view" },
   { type: "function", name: "topScorerFinalized",    inputs: [], outputs: [{ type: "bool" }],     stateMutability: "view" },
   { type: "function", name: "winningCountryId",      inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },

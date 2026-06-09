@@ -7,11 +7,13 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 
-/// @title WorldPool26 v6
+/// @title WorldPool26 v7
 /// @notice 2026 World Cup Web3 prediction platform on Base Chain.
 ///         Two parallel games: Nations Cup (ERC-1155 mint) + Top Scorer (ticket voting).
 ///         v6: Single main Nations Cup prize pool — eliminations no longer move funds.
 ///             Final champion's NFT holders split the entire accumulated pool.
+///         v7: Early-bird discount — first EARLY_BIRD_SUPPLY NFTs minted globally get
+///             EARLY_BIRD_DISCOUNT_BPS off. MAX_MINT_PER_TX_EARLY limits per-tx whale sweep.
 contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     using Strings for uint256;
 
@@ -26,6 +28,13 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     uint96  public constant ROYALTY_BPS   = 500;   // 5%  EIP-2981 secondary sale royalty
     uint256 public constant MAX_COUNTRIES = 48;
     uint256 public constant UNCLAIMED_TIMEOUT = 15 days;
+
+    // ── Early-Bird Discount (v7) ───────────────────────────────
+    /// @notice First EARLY_BIRD_SUPPLY NFTs minted globally get EARLY_BIRD_DISCOUNT_BPS off.
+    uint256 public constant EARLY_BIRD_SUPPLY       = 200;   // total discounted slots
+    uint256 public constant EARLY_BIRD_DISCOUNT_BPS = 2000;  // 20% off
+    /// @notice Per-tx limit while the discount window is open — prevents whale sweeping.
+    uint256 public constant MAX_MINT_PER_TX_EARLY   = 5;
 
     // ─────────────────────────────────────────────────────────────
     // State
@@ -55,6 +64,9 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
 
     uint256 public totalGlobalVolumeETH;
     uint256 public totalLockedPrizePool;
+
+    /// @notice Total NFTs minted across all countries — used for early-bird tracking.
+    uint256 public totalNFTsMinted;
 
     /// @notice Single shared pool for all Nations Cup mints.
     ///         Every mint contributes here regardless of country.
@@ -174,6 +186,31 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     // Game 1: Nations Cup — Mint
     // ─────────────────────────────────────────────────────────────
 
+    /// @notice Calculate total ETH required to mint `amount` NFTs given the current state.
+    ///         Handles the early-bird discount window transparently:
+    ///         - First EARLY_BIRD_SUPPLY NFTs globally get EARLY_BIRD_DISCOUNT_BPS off.
+    ///         - If a batch straddles the boundary, pricing is split automatically.
+    ///         Frontend should call this view before submitting a mint transaction.
+    function calcMintCost(uint256 amount) public view returns (uint256) {
+        uint256 discountedPrice = (MINT_PRICE * (10000 - EARLY_BIRD_DISCOUNT_BPS)) / 10000;
+        uint256 minted = totalNFTsMinted;
+
+        if (minted >= EARLY_BIRD_SUPPLY) {
+            // All early-bird slots exhausted — full price for everyone
+            return MINT_PRICE * amount;
+        }
+
+        uint256 remaining = EARLY_BIRD_SUPPLY - minted;
+
+        if (amount <= remaining) {
+            // Entire batch falls within the discount window
+            return discountedPrice * amount;
+        }
+
+        // Batch straddles the 200-NFT boundary: split pricing
+        return (discountedPrice * remaining) + (MINT_PRICE * (amount - remaining));
+    }
+
     function mintCountryNFT(uint256 countryId, uint256 amount)
         external payable nonReentrant whenMintOpen
     {
@@ -181,13 +218,20 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
         require(countryId >= 1 && countryId <= MAX_COUNTRIES,     "Invalid country ID");
         require(!countryEliminated[countryId],                     "Country already eliminated");
         require(amount > 0,                                        "Amount must be > 0");
-        require(msg.value == MINT_PRICE * amount,                 "Incorrect ETH payment");
+
+        // Early-bird whale protection: limit batch size while discount is active
+        if (totalNFTsMinted < EARLY_BIRD_SUPPLY) {
+            require(amount <= MAX_MINT_PER_TX_EARLY,              "Max 5 per tx during early bird");
+        }
+
+        require(msg.value == calcMintCost(amount),                "Incorrect ETH payment");
 
         uint256 devShare  = (msg.value * DEV_SHARE_BPS) / 10000;
         uint256 poolShare = msg.value - devShare;
 
         userMintCount[msg.sender][countryId] += amount;
         countryTotalSupply[countryId]        += amount;
+        totalNFTsMinted                      += amount;
         nationsCupPoolBalance                += poolShare;
         totalGlobalVolumeETH                 += msg.value;
         totalLockedPrizePool                 += poolShare;

@@ -6,7 +6,10 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { baseSepolia } from "viem/chains";
 import { Loader2, Minus, Plus, X, Zap } from "lucide-react";
 import { ABI } from "@/lib/abi";
-import { CONTRACT_ADDRESS, MINT_PRICE, formatEth } from "@/lib/config";
+import {
+  CONTRACT_ADDRESS, MINT_PRICE, formatEth,
+  EARLY_BIRD_SUPPLY, MAX_MINT_PER_TX_EARLY, calcMintCost,
+} from "@/lib/config";
 import { type Country } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
 import { MintSuccessModal } from "./MintSuccessModal";
@@ -69,9 +72,19 @@ export function CountryMintModal({
     query: { enabled: !!address, refetchInterval: 5_000 },
   });
 
+  // Early-bird state
+  const { data: totalNFTsMinted } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI,
+    functionName: "totalNFTsMinted",
+    query: { refetchInterval: 5_000 },
+  });
+  const mintedCount     = Number(totalNFTsMinted ?? 0n);
+  const isEarlyBird     = mintedCount < EARLY_BIRD_SUPPLY;
+  const slotsRemaining  = Math.max(0, EARLY_BIRD_SUPPLY - mintedCount);
+
   const { data: ethBalance } = useBalance({ address });
 
-  const totalCost    = MINT_PRICE * BigInt(amount);
+  const totalCost    = calcMintCost(amount, mintedCount);
   const hasEnoughEth = !ethBalance || ethBalance.value >= totalCost;
 
   const { writeContract, data: txHash, isPending, error: writeError, reset: resetWrite } = useWriteContract();
@@ -363,10 +376,46 @@ export function CountryMintModal({
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+
+                {/* Early-Bird Banner */}
+                {isEarlyBird && (
+                  <div style={{
+                    borderRadius: 12,
+                    border: "1px solid rgba(251,191,36,0.45)",
+                    background: "linear-gradient(135deg, rgba(251,191,36,0.10) 0%, rgba(245,158,11,0.05) 100%)",
+                    padding: "10px 14px",
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8,
+                  }}>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 6px #fbbf24", animation: "liveDotPulse 1.5s ease-in-out infinite" }} />
+                        <span style={{ fontSize: 11, fontWeight: 900, color: "#fbbf24", letterSpacing: "0.18em", textTransform: "uppercase" }}>
+                          {t.eb_title}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: 10, color: "rgba(251,191,36,0.55)", marginTop: 2, paddingLeft: 14 }}>
+                        {slotsRemaining} / {EARLY_BIRD_SUPPLY} slots left · {t.eb_max_tx}
+                      </p>
+                    </div>
+                    <span style={{
+                      padding: "3px 10px", borderRadius: 99,
+                      background: "rgba(251,191,36,0.18)", border: "1px solid rgba(251,191,36,0.4)",
+                      fontSize: 11, fontWeight: 900, color: "#fbbf24",
+                    }}>
+                      {t.eb_discount}
+                    </span>
+                  </div>
+                )}
+
                 {/* Quantity selector */}
                 <div>
                   <p style={{ fontSize: 11, color: "#6b7a9a", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", marginBottom: 8 }}>
                     {t.cmt_quantity}
+                    {isEarlyBird && (
+                      <span style={{ marginLeft: 6, color: "rgba(251,191,36,0.5)", fontWeight: 600, textTransform: "none", letterSpacing: 0, fontSize: 10 }}>
+                        (max {MAX_MINT_PER_TX_EARLY})
+                      </span>
+                    )}
                   </p>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <button
@@ -386,11 +435,13 @@ export function CountryMintModal({
                       {amount}
                     </div>
                     <button
-                      onClick={() => setAmount(amount + 1)}
+                      onClick={() => setAmount(Math.min(amount + 1, isEarlyBird ? MAX_MINT_PER_TX_EARLY : 999))}
                       style={{
                         width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
-                        background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                        color: "white", cursor: "pointer",
+                        background: isEarlyBird && amount >= MAX_MINT_PER_TX_EARLY ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.05)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        color: isEarlyBird && amount >= MAX_MINT_PER_TX_EARLY ? "rgba(255,255,255,0.2)" : "white",
+                        cursor: isEarlyBird && amount >= MAX_MINT_PER_TX_EARLY ? "not-allowed" : "pointer",
                       }}
                     >
                       <Plus size={14} />
@@ -402,12 +453,20 @@ export function CountryMintModal({
                 <div style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "10px 14px", borderRadius: 10,
-                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                  background: isEarlyBird ? "rgba(251,191,36,0.04)" : "rgba(255,255,255,0.03)",
+                  border: isEarlyBird ? "1px solid rgba(251,191,36,0.15)" : "1px solid rgba(255,255,255,0.06)",
                 }}>
                   <span style={{ fontSize: 12, color: "#6b7a9a", fontWeight: 600 }}>{t.cmt_total_cost}</span>
-                  <span className="font-black font-mono text-white" style={{ fontSize: 16 }}>
-                    {formatEth(totalCost, 4)} ETH
-                  </span>
+                  <div style={{ textAlign: "right" }}>
+                    <span className="font-black font-mono text-white" style={{ fontSize: 16 }}>
+                      {formatEth(totalCost, 5)} ETH
+                    </span>
+                    {isEarlyBird && (
+                      <p style={{ fontSize: 10, color: "rgba(251,191,36,0.55)", margin: 0 }}>
+                        vs {formatEth(MINT_PRICE * BigInt(amount), 4)} ETH normal
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Mint button */}
@@ -439,7 +498,7 @@ export function CountryMintModal({
                     : !hasEnoughEth      ? t.cmt_insufficient_eth
                     : (
                       <span className="flex flex-col items-center leading-tight gap-0.5">
-                        <span>{t.card_mint} · {formatEth(totalCost, 4)} ETH</span>
+                        <span>{t.card_mint} · {formatEth(totalCost, 5)} ETH</span>
                         {ethUsd && (
                           <span style={{ fontSize: 11, opacity: 0.55, fontWeight: 600 }}>
                             ≈ ${(Number(totalCost) / 1e18 * ethUsd).toFixed(2)}
@@ -450,7 +509,7 @@ export function CountryMintModal({
                 </button>
 
                 <p style={{ fontSize: 11, color: "rgba(107,122,154,0.6)", textAlign: "center" }}>
-                  {t.cmt_price_note}
+                  {isEarlyBird ? t.cmt_price_note_early : t.cmt_price_note}
                 </p>
               </div>
             )}
