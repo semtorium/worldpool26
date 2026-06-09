@@ -7,7 +7,6 @@ import { COUNTRIES } from "@/lib/countries";
 import { Loader2, ExternalLink } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 import { fetchLogsWithCache } from "@/lib/logCache";
-import { useAddressUsernames } from "@/lib/useAddressUsernames";
 
 const EXPLORER_TX   = "https://sepolia.basescan.org/tx/";
 const EXPLORER_ADDR = "https://sepolia.basescan.org/address/";
@@ -154,13 +153,11 @@ export function ActivityPage() {
   const { connect, connectors } = useConnect();
   const login = () => connect({ connector: connectors[0] });
   const { t } = useLang();
-  const [items, setItems]           = useState<ActivityItem[]>([]);
+  const [items,       setItems]       = useState<ActivityItem[]>([]);
   const [latestBlock, setLatestBlock] = useState(0n);
-  const [loading, setLoading]         = useState(true);
+  const [loading,     setLoading]     = useState(true);
+  const [usernameMap, setUsernameMap] = useState<Record<string, string>>({});
   const initialized                   = useRef(false);
-
-  // Resolve on-chain usernames for all visible addresses
-  const usernameMap = useAddressUsernames(items.map(i => i.address));
 
   useEffect(() => {
     if (!client) return;
@@ -169,11 +166,13 @@ export function ActivityPage() {
       if (!initialized.current) setLoading(true);
       try {
         const c = client as NonNullable<typeof client>;
-        const [mintLogs, ticketLogs, voteLogs, blockNum] = await Promise.all([
+        const [mintLogs, ticketLogs, voteLogs, blockNum, setLogs, hideLogs] = await Promise.all([
           fetchLogsWithCache(c, "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"),
           fetchLogsWithCache(c, "event TicketPurchased(address indexed user, uint256 quantity, uint256 timestamp)"),
           fetchLogsWithCache(c, "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"),
           c.getBlockNumber(),
+          fetchLogsWithCache(c, "event UsernameSet(address indexed user, string name)").catch(() => []),
+          fetchLogsWithCache(c, "event UsernameVisibilityChanged(address indexed user, bool hidden)").catch(() => []),
         ]);
 
         setLatestBlock(blockNum as bigint);
@@ -203,6 +202,20 @@ export function ActivityPage() {
             votes: l.args.votes as bigint,
           })),
         ];
+
+        // Build username map from events (last write wins, block order)
+        const nameMap:   Record<string, string>  = {};
+        const hiddenMap: Record<string, boolean> = {};
+        for (const log of setLogs)  nameMap[(log.args.user  as string).toLowerCase()] = log.args.name   as string;
+        for (const log of hideLogs) hiddenMap[(log.args.user as string).toLowerCase()] = log.args.hidden as boolean;
+        const newUsernameMap: Record<string, string> = {};
+        const allAddrs = new Set(merged.map(i => i.address.toLowerCase()));
+        for (const addr of allAddrs) {
+          const name   = nameMap[addr]   ?? "";
+          const hidden = hiddenMap[addr] ?? false;
+          newUsernameMap[addr] = (name && !hidden) ? name : "";
+        }
+        setUsernameMap(newUsernameMap);
 
         // Sort newest first, cap at 100
         merged.sort((a, b) => (b.blockNumber > a.blockNumber ? 1 : -1));

@@ -7,7 +7,6 @@ import { fetchLogsWithCache } from "@/lib/logCache";
 import { Loader2, Trophy, Medal } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 import { useUsername } from "@/lib/useUsername";
-import { useAddressUsernames } from "@/lib/useAddressUsernames";
 
 interface LeaderEntry {
   address: string;
@@ -27,12 +26,10 @@ export function LeaderboardPage() {
   const { t } = useLang();
   const { username } = useUsername(address);
 
-  const [top50,     setTop50]     = useState<LeaderEntry[]>([]);
-  const [userEntry, setUserEntry] = useState<LeaderEntry | undefined>();
-  const [loading,   setLoading]   = useState(true);
-
-  // Resolve on-chain usernames for all top-50 addresses
-  const usernameMap = useAddressUsernames(top50.map(e => e.address));
+  const [top50,       setTop50]       = useState<LeaderEntry[]>([]);
+  const [userEntry,   setUserEntry]   = useState<LeaderEntry | undefined>();
+  const [loading,     setLoading]     = useState(true);
+  const [usernameMap, setUsernameMap] = useState<Record<string, string>>({});
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -43,9 +40,11 @@ export function LeaderboardPage() {
       if (!initialized.current) setLoading(true);
       try {
         const c = client as NonNullable<typeof client>;
-        const [mintLogs, voteLogs] = await Promise.all([
+        const [mintLogs, voteLogs, setLogs, hideLogs] = await Promise.all([
           fetchLogsWithCache(c, "event CountryMinted(address indexed user, uint256 indexed countryId, uint256 amount, uint256 timestamp)"),
           fetchLogsWithCache(c, "event VoteCast(address indexed user, string playerName, uint256 votes, uint256 timestamp)"),
+          fetchLogsWithCache(c, "event UsernameSet(address indexed user, string name)").catch(() => []),
+          fetchLogsWithCache(c, "event UsernameVisibilityChanged(address indexed user, bool hidden)").catch(() => []),
         ]);
 
         const nftMap:  Record<string, number> = {};
@@ -59,6 +58,19 @@ export function LeaderboardPage() {
           const u = (log.args.user as string).toLowerCase();
           voteMap[u] = (voteMap[u] ?? 0) + Number(log.args.votes);
         }
+
+        // Build username map from events (last write wins, block order)
+        const nameMap:   Record<string, string>  = {};
+        const hiddenMap: Record<string, boolean> = {};
+        for (const log of setLogs)  nameMap[(log.args.user  as string).toLowerCase()] = log.args.name   as string;
+        for (const log of hideLogs) hiddenMap[(log.args.user as string).toLowerCase()] = log.args.hidden as boolean;
+        const newUsernameMap: Record<string, string> = {};
+        for (const addr of Object.keys({ ...nftMap, ...voteMap })) {
+          const name   = nameMap[addr]   ?? "";
+          const hidden = hiddenMap[addr] ?? false;
+          newUsernameMap[addr] = (name && !hidden) ? name : "";
+        }
+        setUsernameMap(newUsernameMap);
 
         const sorted: LeaderEntry[] = Array.from(
           new Set([...Object.keys(nftMap), ...Object.keys(voteMap)])
