@@ -58,6 +58,9 @@ export const ABI = [
   { type: "function", name: "claimNationsCupRewards", inputs: [], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "claimTopScorerRewards",  inputs: [], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "refundUnusedTickets",    inputs: [], outputs: [], stateMutability: "nonpayable" },
+  // ── Username ban ─────────────────────────────────────────────
+  { type: "function", name: "banUsername",      inputs: [{ name: "name", type: "string" }], outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "isUsernameBanned", inputs: [{ name: "name", type: "string" }], outputs: [{ type: "bool" }], stateMutability: "view" },
   // ── Write: onlyOwner ─────────────────────────────────────────
   { type: "function", name: "setMintClosed",        inputs: [{ name: "_mintClosed", type: "bool" }],    outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "setVotingClosed",      inputs: [{ name: "_votingClosed", type: "bool" }],  outputs: [], stateMutability: "nonpayable" },

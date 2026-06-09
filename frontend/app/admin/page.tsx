@@ -100,6 +100,11 @@ export default function AdminPage() {
   const [mintEndTimeVal,   setMintEndTimeVal]   = useState<bigint>(0n);
   const [mintEndTimeInput, setMintEndTimeInput] = useState("");
 
+  // Username ban
+  const [banInput,  setBanInput]  = useState("");
+  const [banStatus, setBanStatus] = useState<"idle"|"checking"|"banned"|"done"|"error">("idle");
+  const [banMessage, setBanMessage] = useState("");
+
   // Tx state
   const [ncWinnerId,    setNcWinnerId]    = useState("");
   const [tsPlayer,      setTsPlayer]      = useState("");
@@ -573,6 +578,76 @@ export default function AdminPage() {
               </button>
             )}
           </div>
+        </div>
+
+        {/* Username Ban */}
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: "rgba(239,68,68,0.25)" }}>
+          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>🚫 Username Ban</h2>
+          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
+            Bir username'i yasakla — on-chain kaydedilir, o isim bir daha kimse tarafından kullanılamaz. Case-sensitive.
+          </p>
+
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+            <input
+              type="text"
+              placeholder="Username to ban…"
+              maxLength={32}
+              value={banInput}
+              onChange={e => { setBanInput(e.target.value); setBanStatus("idle"); setBanMessage(""); }}
+              style={{ ...inputStyle, maxWidth: 220 }}
+            />
+            <button
+              disabled={!banInput.trim() || txPending === "banUsername"}
+              onClick={async () => {
+                const name = banInput.trim();
+                if (!name) return;
+                setBanStatus("checking");
+                setBanMessage("");
+                // Check if already banned
+                try {
+                  const already = await publicClient.readContract({
+                    address: CONTRACT_ADDRESS, abi: ABI,
+                    functionName: "isUsernameBanned", args: [name],
+                  });
+                  if (already) {
+                    setBanStatus("banned");
+                    setBanMessage(`"${name}" zaten yasak listesinde.`);
+                    return;
+                  }
+                } catch { /* ignore */ }
+                // Send ban TX
+                try {
+                  await sendTx("banUsername", [name], "banUsername");
+                  setBanStatus("done");
+                  setBanMessage(`"${name}" başarıyla yasaklandı.`);
+                  setBanInput("");
+                } catch {
+                  setBanStatus("error");
+                  setBanMessage("TX başarısız.");
+                }
+              }}
+              style={{
+                background: banInput.trim() ? "linear-gradient(135deg,#ef4444,#dc2626)" : "rgba(255,255,255,0.05)",
+                color: banInput.trim() ? "#fff" : "#4a5568",
+                border: "none", borderRadius: 12, padding: "10px 20px",
+                fontWeight: 800, fontSize: 13,
+                cursor: banInput.trim() ? "pointer" : "not-allowed",
+                display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
+              }}>
+              {txPending === "banUsername" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+              🚫 Ban this username
+            </button>
+          </div>
+
+          {/* Status message */}
+          {banMessage && (
+            <p style={{
+              fontSize: 12, fontWeight: 700, marginTop: 6,
+              color: banStatus === "done" ? "#22c55e" : banStatus === "banned" ? "#fbbf24" : "#ef4444",
+            }}>
+              {banStatus === "done" ? "✓" : banStatus === "banned" ? "⚠" : "✕"} {banMessage}
+            </p>
+          )}
         </div>
 
         {/* Vote Control */}

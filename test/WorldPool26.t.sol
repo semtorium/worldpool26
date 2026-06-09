@@ -1071,6 +1071,49 @@ contract WorldPool26Test is Test {
         pool.setDevWallet(address(0));
     }
 
+    // ─────────────────────────────────────────────────────────────
+    // Username Ban
+    // ─────────────────────────────────────────────────────────────
+
+    function test_banUsername_happy() public {
+        assertFalse(pool.isUsernameBanned("badword"));
+        vm.prank(owner);
+        pool.banUsername("badword");
+        assertTrue(pool.isUsernameBanned("badword"));
+    }
+
+    function test_banUsername_caseSensitive() public {
+        vm.prank(owner);
+        pool.banUsername("BadWord");
+        assertTrue(pool.isUsernameBanned("BadWord"));
+        assertFalse(pool.isUsernameBanned("badword")); // different hash
+    }
+
+    function test_banUsername_revertsEmptyName() public {
+        vm.prank(owner);
+        vm.expectRevert("Empty name");
+        pool.banUsername("");
+    }
+
+    function test_banUsername_revertsTooLong() public {
+        vm.prank(owner);
+        vm.expectRevert("Name too long");
+        pool.banUsername("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"); // 33 chars
+    }
+
+    function test_banUsername_revertsNonOwner() public {
+        vm.prank(alice);
+        vm.expectRevert();
+        pool.banUsername("badword");
+    }
+
+    function test_banUsername_emitsEvent() public {
+        vm.prank(owner);
+        vm.expectEmit(false, false, false, true);
+        emit WorldPool26.UsernameBanned("badword");
+        pool.banUsername("badword");
+    }
+
     function test_setBaseURI() public {
         string memory newURI = "https://new.example.com/";
         vm.prank(owner);

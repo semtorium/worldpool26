@@ -115,6 +115,10 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     ///         Owner can withdraw via withdrawPendingDev(). Prevents mint/claim DOS
     ///         if devWallet is temporarily unreachable (e.g. a contract wallet mid-upgrade).
     uint256 public pendingDevBalance;
+    /// @notice Banned usernames — hashed for gas efficiency and privacy.
+    ///         Frontend stores usernames in localStorage; this mapping prevents
+    ///         banned names from being re-registered on any device.
+    mapping(bytes32 => bool) public usernameBanned;
 
     // ─────────────────────────────────────────────────────────────
     // Events
@@ -139,6 +143,7 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     event PausedStateChanged(bool paused);
     event MaintenanceModeChanged(bool maintenance);
     event CountryEliminatedEvent(uint256 indexed countryId);
+    event UsernameBanned(string name);
     /// @dev ERC-4906: signals marketplaces (OpenSea etc.) to refresh metadata
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
@@ -540,6 +545,21 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
         emit DevWalletUpdated(devWallet, _newDevWallet);
         devWallet = _newDevWallet;
         _setDefaultRoyalty(_newDevWallet, ROYALTY_BPS);
+    }
+
+    /// @notice Permanently ban a username. Banned names cannot be registered by anyone.
+    ///         Case-sensitive: ban "BadName" separately from "badname" if needed.
+    ///         Frontend checks this mapping before saving a username to localStorage.
+    function banUsername(string calldata name) external onlyOwner {
+        require(bytes(name).length > 0,   "Empty name");
+        require(bytes(name).length <= 32, "Name too long");
+        usernameBanned[keccak256(bytes(name))] = true;
+        emit UsernameBanned(name);
+    }
+
+    /// @notice Returns true if `name` is banned.
+    function isUsernameBanned(string calldata name) external view returns (bool) {
+        return usernameBanned[keccak256(bytes(name))];
     }
 
     function setBaseURI(string calldata _newBaseURI) external onlyOwner {

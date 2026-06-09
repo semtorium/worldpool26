@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Loader2, User, X } from "lucide-react";
+import { useReadContract } from "wagmi";
+import { ABI } from "@/lib/abi";
+import { CONTRACT_ADDRESS } from "@/lib/config";
 import { useBasename } from "@/lib/useBasename";
 import { useUsername } from "@/lib/useUsername";
 
@@ -14,10 +17,20 @@ export function UsernameModal({ address, onDone }: Props) {
   const { name: basename, loading: bnLoading } = useBasename(address);
   const { applyUsername, isTaken }             = useUsername(address);
 
-  const [input, setInput]     = useState("");
-  const [error, setError]     = useState("");
+  const [input, setInput]         = useState("");
+  const [error, setError]         = useState("");
   const [prefilled, setPrefilled] = useState(false);
-  const inputRef              = useRef<HTMLInputElement>(null);
+  const [checking, setChecking]   = useState(false);
+  const inputRef                  = useRef<HTMLInputElement>(null);
+
+  // On-chain ban check — lazy, triggered on Apply
+  const [checkName, setCheckName]   = useState<string | undefined>(undefined);
+  const { data: isBanned, isFetching: isBanFetching } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI,
+    functionName: "isUsernameBanned",
+    args: checkName ? [checkName] : undefined,
+    query: { enabled: !!checkName },
+  });
 
   // Auto-fill from Basename/ENS when resolved
   useEffect(() => {
@@ -30,6 +43,20 @@ export function UsernameModal({ address, onDone }: Props) {
   // Focus input on mount
   useEffect(() => { inputRef.current?.focus(); }, []);
 
+  // When ban check resolves, proceed or show error
+  useEffect(() => {
+    if (!checkName || isBanFetching) return;
+    if (isBanned) {
+      setError("This username is not allowed.");
+      setCheckName(undefined);
+      setChecking(false);
+    } else {
+      applyUsername(checkName);
+      onDone();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isBanned, isBanFetching]);
+
   const handleApply = () => {
     const trimmed = input.trim();
     if (!trimmed) { onDone(); return; } // empty = same as skip
@@ -37,8 +64,9 @@ export function UsernameModal({ address, onDone }: Props) {
       setError("This username is already taken by another wallet.");
       return;
     }
-    applyUsername(trimmed);
-    onDone();
+    // Trigger on-chain ban check
+    setChecking(true);
+    setCheckName(trimmed);
   };
 
   const handleSkip = () => {
@@ -165,7 +193,8 @@ export function UsernameModal({ address, onDone }: Props) {
           </button>
           <button
             onClick={handleApply}
-            className="flex-1 py-2.5 rounded-xl text-sm font-black transition-all"
+            disabled={checking || isBanFetching}
+            className="flex-1 py-2.5 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2"
             style={{
               background: input.trim()
                 ? "linear-gradient(135deg,#0052FF,#2563EB)"
@@ -174,8 +203,10 @@ export function UsernameModal({ address, onDone }: Props) {
               color: input.trim() ? "#fff" : "rgba(255,255,255,0.3)",
               boxShadow: input.trim() ? "0 0 20px rgba(0,82,255,0.25)" : "none",
               transition: "all 0.15s",
+              opacity: checking || isBanFetching ? 0.7 : 1,
             }}
           >
+            {(checking || isBanFetching) && <Loader2 size={14} className="animate-spin" />}
             Apply
           </button>
         </div>
