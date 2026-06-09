@@ -7,6 +7,7 @@ import { COUNTRIES } from "@/lib/countries";
 import { Loader2, ExternalLink } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 import { fetchLogsWithCache } from "@/lib/logCache";
+import { useUsername } from "@/lib/useUsername";
 
 const EXPLORER_TX   = "https://sepolia.basescan.org/tx/";
 const EXPLORER_ADDR = "https://sepolia.basescan.org/address/";
@@ -49,9 +50,16 @@ function kindMeta(kind: EventKind) {
   return                        { emoji: "⚽", color: "#fbbf24" };
 }
 
-function ActivityRow({ item, latestBlock }: { item: ActivityItem; latestBlock: bigint }) {
+function ActivityRow({ item, latestBlock, myAddress, myUsername }: {
+  item: ActivityItem;
+  latestBlock: bigint;
+  myAddress?: string;
+  myUsername?: string;
+}) {
   const { t } = useLang();
   const { emoji, color } = kindMeta(item.kind);
+  const isMe       = !!myAddress && item.address.toLowerCase() === myAddress.toLowerCase();
+  const displayName = isMe && myUsername ? `@${myUsername}` : shortenAddress(item.address);
   const label = item.kind === "mint" ? t.act_kind_mint : item.kind === "ticket" ? t.act_kind_ticket : t.act_kind_vote;
 
   let description: string;
@@ -96,10 +104,10 @@ function ActivityRow({ item, latestBlock }: { item: ActivityItem; latestBlock: b
             href={`${EXPLORER_ADDR}${item.address}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-sm font-bold hover:underline"
-            style={{ color }}
+            className="text-sm font-bold hover:underline"
+            style={{ color, fontFamily: isMe && myUsername ? "inherit" : "monospace" }}
           >
-            {shortenAddress(item.address)}
+            {displayName}
           </a>
           <span className="text-sm" style={{ color: "#f0f4ff" }}>{description}</span>
           {ethValue && (
@@ -143,10 +151,11 @@ function ActivityRow({ item, latestBlock }: { item: ActivityItem; latestBlock: b
 
 export function ActivityPage() {
   const client = usePublicClient();
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
   const { connect, connectors } = useConnect();
   const login = () => connect({ connector: connectors[0] });
   const { t } = useLang();
+  const { username } = useUsername(address);
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [latestBlock, setLatestBlock] = useState(0n);
   const [loading, setLoading] = useState(true);
@@ -283,7 +292,13 @@ export function ActivityPage() {
           </div>
         ) : (
           items.map((item, i) => (
-            <ActivityRow key={`${item.txHash}-${i}`} item={item} latestBlock={latestBlock} />
+            <ActivityRow
+              key={`${item.txHash}-${i}`}
+              item={item}
+              latestBlock={latestBlock}
+              myAddress={address}
+              myUsername={username}
+            />
           ))
         )}
       </div>

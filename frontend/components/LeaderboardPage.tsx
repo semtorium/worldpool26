@@ -6,6 +6,7 @@ import { shortenAddress } from "@/lib/config";
 import { fetchLogsWithCache } from "@/lib/logCache";
 import { Loader2, Trophy, Medal } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
+import { useUsername } from "@/lib/useUsername";
 
 interface LeaderEntry {
   address: string;
@@ -23,6 +24,7 @@ export function LeaderboardPage() {
   const { connect, connectors }  = useConnect();
   const login = () => connect({ connector: connectors[0] });
   const { t } = useLang();
+  const { username } = useUsername(address);
 
   const [top50,     setTop50]     = useState<LeaderEntry[]>([]);
   const [userEntry, setUserEntry] = useState<LeaderEntry | undefined>();
@@ -216,10 +218,13 @@ export function LeaderboardPage() {
 
                   <div className="flex-1 min-w-0 flex items-center gap-2">
                     <span
-                      className="font-mono text-sm font-bold truncate"
-                      style={{ color: isUser ? "#0052FF" : "#f0f4ff" }}
+                      className="text-sm font-bold truncate"
+                      style={{
+                        color: isUser ? "#0052FF" : "#f0f4ff",
+                        fontFamily: isUser && username ? "inherit" : "monospace",
+                      }}
                     >
-                      {shortenAddress(e.address)}
+                      {isUser && username ? `@${username}` : shortenAddress(e.address)}
                     </span>
                     {isUser && (
                       <span
@@ -268,8 +273,14 @@ export function LeaderboardPage() {
                     <span className="text-sm font-bold" style={{ color: "#6b7a9a" }}>#{userEntry.rank}</span>
                   </div>
                   <div className="flex-1 min-w-0 flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold truncate" style={{ color: "#0052FF" }}>
-                      {shortenAddress(userEntry.address)}
+                    <span
+                      className="text-sm font-bold truncate"
+                      style={{
+                        color: "#0052FF",
+                        fontFamily: username ? "inherit" : "monospace",
+                      }}
+                    >
+                      {username ? `@${username}` : shortenAddress(userEntry.address)}
                     </span>
                     <span
                       className="text-[10px] font-black px-1.5 py-0.5 rounded-full shrink-0"
