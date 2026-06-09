@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useAccount, useDisconnect, useReadContract, useBalance } from "wagmi";
-import { X, LogOut, Ticket, ExternalLink, Pencil, UserPlus } from "lucide-react";
+import { useAccount, useDisconnect, useReadContract, useBalance, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import { X, LogOut, Ticket, ExternalLink, Pencil, UserPlus, EyeOff, Eye, Loader2 } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, formatEth, shortenAddress, TOP_SCORER_PLAYERS, MINT_PRICE, TICKET_PRICE } from "@/lib/config";
 import { COUNTRIES, getFlagUrl } from "@/lib/countries";
@@ -39,7 +39,41 @@ export function ProfileDrawer({ open, onClose, onSetUsername }: ProfileDrawerPro
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
   const { t } = useLang();
-  const { username } = useUsername(address);
+  const { username, rawUsername, isHidden, saveHidden } = useUsername(address);
+
+  // ── Hide toggle tx ────────────────────────────────────────────
+  const { writeContract: writeHide, data: hideHash, isPending: hideWalletPending } = useWriteContract();
+  const { isLoading: hideConfirming, isSuccess: hideSuccess } = useWaitForTransactionReceipt({
+    hash: hideHash, query: { enabled: !!hideHash },
+  });
+  const hideBusy = hideWalletPending || hideConfirming;
+  const [optimisticHidden, setOptimisticHidden] = useState<boolean | null>(null);
+
+  // Sync optimistic back to real value after tx confirms
+  useEffect(() => {
+    if (hideSuccess) setOptimisticHidden(null);
+  }, [hideSuccess]);
+
+  const displayHidden = optimisticHidden !== null ? optimisticHidden : isHidden;
+
+  const toggleHide = () => {
+    if (!address || !rawUsername) return;
+    const next = !displayHidden;
+    setOptimisticHidden(next);
+    writeHide({
+      address: CONTRACT_ADDRESS, abi: ABI,
+      functionName: "setUsernameHidden",
+      args: [next],
+    });
+  };
+
+  // Persist to localStorage when tx succeeds
+  useEffect(() => {
+    if (hideSuccess && optimisticHidden !== null) {
+      saveHidden(optimisticHidden);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hideSuccess]);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Close on ESC
@@ -146,29 +180,68 @@ export function ProfileDrawer({ open, onClose, onSetUsername }: ProfileDrawerPro
               </div>
 
               {/* Username row */}
-              <button
-                onClick={() => { onSetUsername?.(); onClose(); }}
-                className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg transition-all"
-                style={{
-                  background: username ? "rgba(0,82,255,0.08)" : "rgba(255,255,255,0.04)",
-                  border: `1px solid ${username ? "rgba(0,82,255,0.25)" : "rgba(255,255,255,0.1)"}`,
-                  maxWidth: "100%",
-                }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = username ? "rgba(0,82,255,0.5)" : "rgba(255,255,255,0.22)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = username ? "rgba(0,82,255,0.25)" : "rgba(255,255,255,0.1)"; }}
-              >
-                {username ? (
-                  <>
-                    <span className="text-sm font-bold truncate" style={{ color: "#60A5FA" }}>@{username}</span>
+              {rawUsername ? (
+                <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                  {/* Name + edit */}
+                  <button
+                    onClick={() => { onSetUsername?.(); onClose(); }}
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all"
+                    style={{
+                      background: displayHidden ? "rgba(255,255,255,0.03)" : "rgba(0,82,255,0.08)",
+                      border: `1px solid ${displayHidden ? "rgba(255,255,255,0.08)" : "rgba(0,82,255,0.25)"}`,
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.8"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
+                  >
+                    <span
+                      className="text-sm font-bold truncate max-w-[120px]"
+                      style={{ color: displayHidden ? "#6b7a9a" : "#60A5FA" }}
+                    >
+                      @{rawUsername}
+                    </span>
                     <Pencil size={11} style={{ color: "#6b7a9a", flexShrink: 0 }} />
-                  </>
-                ) : (
-                  <>
-                    <UserPlus size={12} style={{ color: "#6b7a9a" }} />
-                    <span className="text-xs font-semibold" style={{ color: "#6b7a9a" }}>Set username</span>
-                  </>
-                )}
-              </button>
+                  </button>
+
+                  {/* Hide / Show toggle */}
+                  <button
+                    onClick={toggleHide}
+                    disabled={hideBusy}
+                    title={displayHidden ? "Show username publicly" : "Hide username from others"}
+                    className="flex items-center gap-1 px-2 py-1 rounded-lg transition-all"
+                    style={{
+                      background: displayHidden ? "rgba(251,191,36,0.08)" : "rgba(255,255,255,0.04)",
+                      border: `1px solid ${displayHidden ? "rgba(251,191,36,0.3)" : "rgba(255,255,255,0.1)"}`,
+                      opacity: hideBusy ? 0.6 : 1,
+                    }}
+                    onMouseEnter={e => { if (!hideBusy) (e.currentTarget as HTMLButtonElement).style.opacity = "0.75"; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = hideBusy ? "0.6" : "1"; }}
+                  >
+                    {hideBusy
+                      ? <Loader2 size={11} className="animate-spin" style={{ color: "#6b7a9a" }} />
+                      : displayHidden
+                        ? <EyeOff size={11} style={{ color: "#fbbf24" }} />
+                        : <Eye     size={11} style={{ color: "#6b7a9a" }} />
+                    }
+                    <span className="text-[10px] font-semibold" style={{ color: displayHidden ? "#fbbf24" : "#6b7a9a" }}>
+                      {displayHidden ? "Hidden" : "Hide"}
+                    </span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { onSetUsername?.(); onClose(); }}
+                  className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg transition-all"
+                  style={{
+                    background: "rgba(255,255,255,0.04)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.22)"; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)"; }}
+                >
+                  <UserPlus size={12} style={{ color: "#6b7a9a" }} />
+                  <span className="text-xs font-semibold" style={{ color: "#6b7a9a" }}>Set username</span>
+                </button>
+              )}
             </div>
           </div>
           <button onClick={onClose}

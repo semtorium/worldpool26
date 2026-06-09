@@ -116,9 +116,18 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     ///         if devWallet is temporarily unreachable (e.g. a contract wallet mid-upgrade).
     uint256 public pendingDevBalance;
     /// @notice Banned usernames — hashed for gas efficiency and privacy.
-    ///         Frontend stores usernames in localStorage; this mapping prevents
-    ///         banned names from being re-registered on any device.
     mapping(bytes32 => bool) public usernameBanned;
+
+    // ─────────────────────────────────────────────────────────────
+    // Mappings — On-chain Usernames
+    // ─────────────────────────────────────────────────────────────
+
+    /// @notice username stored on-chain per address
+    mapping(address => string)  public usernames;
+    /// @notice true = user has hidden their username from public display
+    mapping(address => bool)    public usernameHidden;
+    /// @notice name hash → owner address (ensures global uniqueness)
+    mapping(bytes32 => address) public usernameOwner;
 
     // ─────────────────────────────────────────────────────────────
     // Events
@@ -144,6 +153,8 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     event MaintenanceModeChanged(bool maintenance);
     event CountryEliminatedEvent(uint256 indexed countryId);
     event UsernameBanned(string name);
+    event UsernameSet(address indexed user, string name);
+    event UsernameVisibilityChanged(address indexed user, bool hidden);
     /// @dev ERC-4906: signals marketplaces (OpenSea etc.) to refresh metadata
     event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
 
@@ -545,6 +556,48 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
         emit DevWalletUpdated(devWallet, _newDevWallet);
         devWallet = _newDevWallet;
         _setDefaultRoyalty(_newDevWallet, ROYALTY_BPS);
+    }
+
+    /// @notice Register or update an on-chain username.
+    ///         - Max 32 chars, globally unique (case-sensitive), not banned.
+    ///         - Re-registering your own current name is a no-op (succeeds silently).
+    ///         - Setting a new name releases your old name for others.
+    ///         - Automatically clears the hidden flag when a new name is set.
+    function setUsername(string calldata name) external {
+        require(bytes(name).length > 0,   "Empty name");
+        require(bytes(name).length <= 32, "Name too long");
+        bytes32 nameHash = keccak256(bytes(name));
+        require(!usernameBanned[nameHash], "Banned");
+        // Uniqueness: allowed only if unclaimed or already owned by caller
+        address currentOwner = usernameOwner[nameHash];
+        require(currentOwner == address(0) || currentOwner == msg.sender, "Name taken");
+        // Release old name slot
+        string memory oldName = usernames[msg.sender];
+        if (bytes(oldName).length > 0 && keccak256(bytes(oldName)) != nameHash) {
+            usernameOwner[keccak256(bytes(oldName))] = address(0);
+        }
+        usernames[msg.sender]    = name;
+        usernameOwner[nameHash]  = msg.sender;
+        // Auto-unhide when a new username is set
+        if (usernameHidden[msg.sender]) {
+            usernameHidden[msg.sender] = false;
+            emit UsernameVisibilityChanged(msg.sender, false);
+        }
+        emit UsernameSet(msg.sender, name);
+    }
+
+    /// @notice Show or hide your username from public leaderboard/activity.
+    ///         Requires an existing username to be set.
+    function setUsernameHidden(bool hidden) external {
+        require(bytes(usernames[msg.sender]).length > 0, "No username set");
+        usernameHidden[msg.sender] = hidden;
+        emit UsernameVisibilityChanged(msg.sender, hidden);
+    }
+
+    /// @notice Returns true if `name` is already registered by someone else.
+    function isUsernameTaken(string calldata name) external view returns (bool) {
+        address owner = usernameOwner[keccak256(bytes(name))];
+        return owner != address(0);
     }
 
     /// @notice Permanently ban a username. Banned names cannot be registered by anyone.

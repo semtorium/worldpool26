@@ -1176,4 +1176,95 @@ contract WorldPool26Test is Test {
         assertLe(address(pool).balance, 2);
         assertLe(address(pool).balance, contractBalanceBefore);
     }
+
+    // ─────────────────────────────────────────────────────────────
+    // On-chain Usernames
+    // ─────────────────────────────────────────────────────────────
+
+    function test_setUsername_happy() public {
+        vm.prank(alice);
+        pool.setUsername("alice26");
+        assertEq(pool.usernames(alice), "alice26");
+        assertEq(pool.usernameHidden(alice), false);
+        assertEq(pool.isUsernameTaken("alice26"), true);
+    }
+
+    function test_setUsername_revertsEmpty() public {
+        vm.prank(alice);
+        vm.expectRevert("Empty name");
+        pool.setUsername("");
+    }
+
+    function test_setUsername_revertsTooLong() public {
+        vm.prank(alice);
+        vm.expectRevert("Name too long");
+        pool.setUsername("123456789012345678901234567890123"); // 33 chars
+    }
+
+    function test_setUsername_revertsTaken() public {
+        vm.prank(alice);
+        pool.setUsername("coolname");
+        vm.prank(bob);
+        vm.expectRevert("Name taken");
+        pool.setUsername("coolname");
+    }
+
+    function test_setUsername_sameOwnerCanReset() public {
+        vm.prank(alice);
+        pool.setUsername("alice26");
+        vm.prank(alice);
+        pool.setUsername("alice26");
+        assertEq(pool.usernames(alice), "alice26");
+    }
+
+    function test_setUsername_releasesOldName() public {
+        vm.prank(alice);
+        pool.setUsername("alice26");
+        vm.prank(alice);
+        pool.setUsername("alice_new");
+        // old name is now free
+        vm.prank(bob);
+        pool.setUsername("alice26");
+        assertEq(pool.usernames(bob), "alice26");
+    }
+
+    function test_setUsername_revertsBanned() public {
+        vm.prank(owner);
+        pool.banUsername("badword");
+        vm.prank(alice);
+        vm.expectRevert("Banned");
+        pool.setUsername("badword");
+    }
+
+    function test_setUsernameHidden_happy() public {
+        vm.prank(alice);
+        pool.setUsername("alice26");
+        vm.prank(alice);
+        pool.setUsernameHidden(true);
+        assertEq(pool.usernameHidden(alice), true);
+        vm.prank(alice);
+        pool.setUsernameHidden(false);
+        assertEq(pool.usernameHidden(alice), false);
+    }
+
+    function test_setUsernameHidden_revertsNoUsername() public {
+        vm.prank(alice);
+        vm.expectRevert("No username set");
+        pool.setUsernameHidden(true);
+    }
+
+    function test_setUsername_autoUnhides() public {
+        vm.prank(alice);
+        pool.setUsername("alice26");
+        vm.prank(alice);
+        pool.setUsernameHidden(true);
+        assertEq(pool.usernameHidden(alice), true);
+        vm.prank(alice);
+        pool.setUsername("alice_new");
+        assertEq(pool.usernameHidden(alice), false);
+    }
+
+    function test_isUsernameTaken_falseWhenFree() public view {
+        assertEq(pool.isUsernameTaken("freebird"), false);
+    }
 }

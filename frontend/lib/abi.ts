@@ -58,9 +58,18 @@ export const ABI = [
   { type: "function", name: "claimNationsCupRewards", inputs: [], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "claimTopScorerRewards",  inputs: [], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "refundUnusedTickets",    inputs: [], outputs: [], stateMutability: "nonpayable" },
+  // ── On-chain Usernames ────────────────────────────────────────
+  { type: "function", name: "setUsername",       inputs: [{ name: "name", type: "string" }],    outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "setUsernameHidden", inputs: [{ name: "hidden", type: "bool" }],    outputs: [], stateMutability: "nonpayable" },
+  { type: "function", name: "isUsernameTaken",   inputs: [{ name: "name", type: "string" }],    outputs: [{ type: "bool" }], stateMutability: "view" },
+  { type: "function", name: "usernames",         inputs: [{ name: "user", type: "address" }],   outputs: [{ type: "string" }], stateMutability: "view" },
+  { type: "function", name: "usernameHidden",    inputs: [{ name: "user", type: "address" }],   outputs: [{ type: "bool" }], stateMutability: "view" },
   // ── Username ban ─────────────────────────────────────────────
   { type: "function", name: "banUsername",      inputs: [{ name: "name", type: "string" }], outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "isUsernameBanned", inputs: [{ name: "name", type: "string" }], outputs: [{ type: "bool" }], stateMutability: "view" },
+  // ── Events: Usernames ─────────────────────────────────────────
+  { type: "event", name: "UsernameSet",                inputs: [{ name: "user", type: "address", indexed: true }, { name: "name", type: "string" }] },
+  { type: "event", name: "UsernameVisibilityChanged",  inputs: [{ name: "user", type: "address", indexed: true }, { name: "hidden", type: "bool"   }] },
   // ── Write: onlyOwner ─────────────────────────────────────────
   { type: "function", name: "setMintClosed",        inputs: [{ name: "_mintClosed", type: "bool" }],    outputs: [], stateMutability: "nonpayable" },
   { type: "function", name: "setVotingClosed",      inputs: [{ name: "_votingClosed", type: "bool" }],  outputs: [], stateMutability: "nonpayable" },

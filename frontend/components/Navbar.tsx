@@ -7,7 +7,7 @@ import { LangSwitcher } from "./LangSwitcher";
 import { ProfileDrawer } from "./ProfileDrawer";
 import { UsernameModal } from "./UsernameModal";
 import { useLang } from "@/lib/LanguageContext";
-import { useUsername } from "@/lib/useUsername";
+import { useUsername, promptedKey } from "@/lib/useUsername";
 import { shortenAddress } from "@/lib/config";
 import { Wallet, ChevronDown } from "lucide-react";
 
@@ -44,23 +44,20 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
 
   const { username } = useUsername(address);
 
-  // Show username modal once per session when wallet connects and no username set
+  // Show username modal once when wallet connects and user was never prompted
   useEffect(() => {
     if (isConnected && address && !didPromptRef.current) {
-      // Small delay so the wallet connect animation settles
       const t = setTimeout(() => {
-        const stored = localStorage.getItem(`wp26_uname_${address.toLowerCase()}`);
-        if (stored === null) {
-          // Never set (not even skipped) → prompt
-          setShowUsernameModal(true);
-        }
+        const addr = address.toLowerCase();
+        const prompted =
+          !!localStorage.getItem(promptedKey(addr)) ||
+          localStorage.getItem(`wp26_uname_${addr}`) !== null;
+        if (!prompted) setShowUsernameModal(true);
         didPromptRef.current = true;
       }, 600);
       return () => clearTimeout(t);
     }
-    if (!isConnected) {
-      didPromptRef.current = false;
-    }
+    if (!isConnected) didPromptRef.current = false;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isConnected, address]);
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Loader2, User, X } from "lucide-react";
-import { useReadContract } from "wagmi";
+import { useWriteContract, useWaitForTransactionReceipt, useReadContract } from "wagmi";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { useBasename } from "@/lib/useBasename";
@@ -15,22 +15,38 @@ interface Props {
 
 export function UsernameModal({ address, onDone }: Props) {
   const { name: basename, loading: bnLoading } = useBasename(address);
-  const { applyUsername, isTaken }             = useUsername(address);
+  const { saveUsername, markPrompted }          = useUsername(address);
 
   const [input, setInput]         = useState("");
   const [error, setError]         = useState("");
   const [prefilled, setPrefilled] = useState(false);
-  const [checking, setChecking]   = useState(false);
   const inputRef                  = useRef<HTMLInputElement>(null);
 
-  // On-chain ban check — lazy, triggered on Apply
-  const [checkName, setCheckName]   = useState<string | undefined>(undefined);
+  // ── On-chain checks (lazy — triggered on Apply) ───────────────
+  const [checkName, setCheckName] = useState<string | undefined>(undefined);
+
   const { data: isBanned, isFetching: isBanFetching } = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI,
     functionName: "isUsernameBanned",
     args: checkName ? [checkName] : undefined,
     query: { enabled: !!checkName },
   });
+
+  const { data: isTaken, isFetching: isTakenFetching } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI,
+    functionName: "isUsernameTaken",
+    args: checkName ? [checkName] : undefined,
+    query: { enabled: !!checkName },
+  });
+
+  // ── Write: setUsername ────────────────────────────────────────
+  const { writeContract, data: txHash, isPending: isWalletPending, reset: resetWrite } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isTxSuccess } = useWaitForTransactionReceipt({
+    hash: txHash,
+    query: { enabled: !!txHash },
+  });
+
+  const isBusy = isWalletPending || isConfirming || isBanFetching || isTakenFetching;
 
   // Auto-fill from Basename/ENS when resolved
   useEffect(() => {
@@ -43,50 +59,77 @@ export function UsernameModal({ address, onDone }: Props) {
   // Focus input on mount
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  // When ban check resolves, proceed or show error
+  // When checks resolve, proceed or show error
   useEffect(() => {
-    if (!checkName || isBanFetching) return;
+    if (!checkName || isBanFetching || isTakenFetching) return;
     if (isBanned) {
       setError("This username is not allowed.");
       setCheckName(undefined);
-      setChecking(false);
-    } else {
-      applyUsername(checkName);
-      onDone();
+      return;
     }
+    if (isTaken) {
+      setError("This username is already taken.");
+      setCheckName(undefined);
+      return;
+    }
+    // All clear — send tx
+    writeContract({
+      address: CONTRACT_ADDRESS,
+      abi: ABI,
+      functionName: "setUsername",
+      args: [checkName],
+    });
+    setCheckName(undefined);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isBanned, isBanFetching]);
+  }, [isBanned, isTaken, isBanFetching, isTakenFetching]);
+
+  // On tx success — save to localStorage + close
+  useEffect(() => {
+    if (!isTxSuccess || !txHash) return;
+    const name = input.trim();
+    saveUsername(name);
+    onDone();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTxSuccess]);
 
   const handleApply = () => {
     const trimmed = input.trim();
-    if (!trimmed) { applyUsername(""); onDone(); return; } // empty = same as skip, but mark as prompted
-    if (isTaken(trimmed)) {
-      setError("This username is already taken by another wallet.");
+    if (!trimmed) {
+      // Empty = skip; mark as prompted so modal doesn't re-appear
+      markPrompted();
+      onDone();
       return;
     }
-    // Trigger on-chain ban check
-    setChecking(true);
+    setError("");
+    resetWrite();
     setCheckName(trimmed);
   };
 
   const handleSkip = () => {
-    applyUsername(""); // explicitly clear so we don't re-prompt
+    markPrompted();
     onDone();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") handleApply();
+    if (e.key === "Enter")  handleApply();
     if (e.key === "Escape") handleSkip();
   };
 
+  // Status label inside Apply button
+  const btnLabel = isWalletPending
+    ? "Waiting for wallet…"
+    : isConfirming
+      ? "Confirming…"
+      : (isBanFetching || isTakenFetching)
+        ? "Checking…"
+        : "Apply";
+
   return (
-    /* Backdrop */
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)" }}
       onClick={e => { if (e.target === e.currentTarget) handleSkip(); }}
     >
-      {/* Card */}
       <div
         className="w-full max-w-sm rounded-2xl p-6 space-y-5 relative"
         style={{
@@ -120,7 +163,7 @@ export function UsernameModal({ address, onDone }: Props) {
           <div>
             <h2 className="font-black text-white text-base leading-tight">Set a Username</h2>
             <p className="text-xs mt-0.5" style={{ color: "#6b7a9a" }}>
-              Shown instead of your wallet address
+              Shown on leaderboard &amp; activity feed
             </p>
           </div>
         </div>
@@ -157,14 +200,10 @@ export function UsernameModal({ address, onDone }: Props) {
             )}
           </div>
 
-          {/* Taken error */}
           {error && (
-            <p className="text-xs font-semibold" style={{ color: "#ef4444" }}>
-              ⚠ {error}
-            </p>
+            <p className="text-xs font-semibold" style={{ color: "#ef4444" }}>⚠ {error}</p>
           )}
 
-          {/* Basename hint */}
           {basename && !bnLoading && (
             <p className="text-xs" style={{ color: "rgba(96,165,250,0.7)" }}>
               ✦ Basename detected: <span className="font-bold text-blue-400">{basename}</span>
@@ -172,7 +211,7 @@ export function UsernameModal({ address, onDone }: Props) {
           )}
 
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
-            Max 32 characters · stored locally on this device
+            Max 32 characters · stored on-chain · globally unique
           </p>
         </div>
 
@@ -180,34 +219,33 @@ export function UsernameModal({ address, onDone }: Props) {
         <div className="flex gap-2">
           <button
             onClick={handleSkip}
+            disabled={isBusy}
             className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
             style={{
               background: "rgba(255,255,255,0.04)",
               border: "1px solid rgba(255,255,255,0.09)",
               color: "#6b7a9a",
+              opacity: isBusy ? 0.5 : 1,
             }}
-            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)"; }}
+            onMouseEnter={e => { if (!isBusy) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)"; }}
           >
             Skip
           </button>
           <button
             onClick={handleApply}
-            disabled={checking || isBanFetching}
+            disabled={isBusy}
             className="flex-1 py-2.5 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2"
             style={{
-              background: input.trim()
-                ? "linear-gradient(135deg,#0052FF,#2563EB)"
-                : "rgba(0,82,255,0.15)",
+              background: input.trim() ? "linear-gradient(135deg,#0052FF,#2563EB)" : "rgba(0,82,255,0.15)",
               border: "1px solid rgba(0,82,255,0.4)",
               color: input.trim() ? "#fff" : "rgba(255,255,255,0.3)",
               boxShadow: input.trim() ? "0 0 20px rgba(0,82,255,0.25)" : "none",
-              transition: "all 0.15s",
-              opacity: checking || isBanFetching ? 0.7 : 1,
+              opacity: isBusy ? 0.7 : 1,
             }}
           >
-            {(checking || isBanFetching) && <Loader2 size={14} className="animate-spin" />}
-            Apply
+            {isBusy && <Loader2 size={14} className="animate-spin" />}
+            {btnLabel}
           </button>
         </div>
       </div>

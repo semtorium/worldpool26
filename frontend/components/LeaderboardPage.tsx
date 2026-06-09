@@ -7,6 +7,7 @@ import { fetchLogsWithCache } from "@/lib/logCache";
 import { Loader2, Trophy, Medal } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 import { useUsername } from "@/lib/useUsername";
+import { useAddressUsernames } from "@/lib/useAddressUsernames";
 
 interface LeaderEntry {
   address: string;
@@ -29,6 +30,9 @@ export function LeaderboardPage() {
   const [top50,     setTop50]     = useState<LeaderEntry[]>([]);
   const [userEntry, setUserEntry] = useState<LeaderEntry | undefined>();
   const [loading,   setLoading]   = useState(true);
+
+  // Resolve on-chain usernames for all top-50 addresses
+  const usernameMap = useAddressUsernames(top50.map(e => e.address));
   const initialized = useRef(false);
 
   useEffect(() => {
@@ -217,15 +221,20 @@ export function LeaderboardPage() {
                   </div>
 
                   <div className="flex-1 min-w-0 flex items-center gap-2">
-                    <span
-                      className="text-sm font-bold truncate"
-                      style={{
-                        color: isUser ? "#0052FF" : "#f0f4ff",
-                        fontFamily: isUser && username ? "inherit" : "monospace",
-                      }}
-                    >
-                      {isUser && username ? `@${username}` : shortenAddress(e.address)}
-                    </span>
+                    {(() => {
+                      const name = isUser ? username : (usernameMap[e.address.toLowerCase()] ?? "");
+                      return (
+                        <span
+                          className="text-sm font-bold truncate"
+                          style={{
+                            color: isUser ? "#0052FF" : "#f0f4ff",
+                            fontFamily: name ? "inherit" : "monospace",
+                          }}
+                        >
+                          {name ? `@${name}` : shortenAddress(e.address)}
+                        </span>
+                      );
+                    })()}
                     {isUser && (
                       <span
                         className="text-[10px] font-black px-1.5 py-0.5 rounded-full shrink-0"

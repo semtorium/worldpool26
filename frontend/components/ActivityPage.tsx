@@ -7,7 +7,7 @@ import { COUNTRIES } from "@/lib/countries";
 import { Loader2, ExternalLink } from "lucide-react";
 import { useLang } from "@/lib/LanguageContext";
 import { fetchLogsWithCache } from "@/lib/logCache";
-import { useUsername } from "@/lib/useUsername";
+import { useAddressUsernames } from "@/lib/useAddressUsernames";
 
 const EXPLORER_TX   = "https://sepolia.basescan.org/tx/";
 const EXPLORER_ADDR = "https://sepolia.basescan.org/address/";
@@ -50,16 +50,15 @@ function kindMeta(kind: EventKind) {
   return                        { emoji: "⚽", color: "#fbbf24" };
 }
 
-function ActivityRow({ item, latestBlock, myAddress, myUsername }: {
+function ActivityRow({ item, latestBlock, usernameMap }: {
   item: ActivityItem;
   latestBlock: bigint;
-  myAddress?: string;
-  myUsername?: string;
+  usernameMap: Record<string, string>;
 }) {
   const { t } = useLang();
   const { emoji, color } = kindMeta(item.kind);
-  const isMe       = !!myAddress && item.address.toLowerCase() === myAddress.toLowerCase();
-  const displayName = isMe && myUsername ? `@${myUsername}` : shortenAddress(item.address);
+  const resolvedName = usernameMap[item.address.toLowerCase()] ?? "";
+  const displayName  = resolvedName ? `@${resolvedName}` : shortenAddress(item.address);
   const label = item.kind === "mint" ? t.act_kind_mint : item.kind === "ticket" ? t.act_kind_ticket : t.act_kind_vote;
 
   let description: string;
@@ -105,7 +104,7 @@ function ActivityRow({ item, latestBlock, myAddress, myUsername }: {
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-bold hover:underline"
-            style={{ color, fontFamily: isMe && myUsername ? "inherit" : "monospace" }}
+            style={{ color, fontFamily: resolvedName ? "inherit" : "monospace" }}
           >
             {displayName}
           </a>
@@ -155,11 +154,13 @@ export function ActivityPage() {
   const { connect, connectors } = useConnect();
   const login = () => connect({ connector: connectors[0] });
   const { t } = useLang();
-  const { username } = useUsername(address);
-  const [items, setItems] = useState<ActivityItem[]>([]);
+  const [items, setItems]           = useState<ActivityItem[]>([]);
   const [latestBlock, setLatestBlock] = useState(0n);
-  const [loading, setLoading] = useState(true);
-  const initialized = useRef(false);
+  const [loading, setLoading]         = useState(true);
+  const initialized                   = useRef(false);
+
+  // Resolve on-chain usernames for all visible addresses
+  const usernameMap = useAddressUsernames(items.map(i => i.address));
 
   useEffect(() => {
     if (!client) return;
@@ -296,8 +297,7 @@ export function ActivityPage() {
               key={`${item.txHash}-${i}`}
               item={item}
               latestBlock={latestBlock}
-              myAddress={address}
-              myUsername={username}
+              usernameMap={usernameMap}
             />
           ))
         )}
