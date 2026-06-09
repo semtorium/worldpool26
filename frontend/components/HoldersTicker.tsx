@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePublicClient } from "wagmi";
 import { parseAbiItem } from "viem";
 import { CONTRACT_ADDRESS, shortenAddress } from "@/lib/config";
+import { useLang } from "@/lib/LanguageContext";
 
 interface HolderEntry {
   address: string;
@@ -38,6 +39,7 @@ function TickerItems({ holders }: { holders: HolderEntry[] }) {
 
 export function HoldersTicker() {
   const client = usePublicClient();
+  const { t } = useLang();
   const [holders, setHolders] = useState<HolderEntry[]>([]);
   const trackRef = useRef<HTMLDivElement>(null);
 
@@ -129,7 +131,7 @@ export function HoldersTicker() {
         }}
       >
         <span className="live-dot" style={{ width: 6, height: 6 }} />
-        TOP HOLDERS
+        {t.chart_top_holders.toUpperCase()}
       </div>
 
       {/* Scrolling track — overflow hidden wrapper */}

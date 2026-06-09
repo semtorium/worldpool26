@@ -7,6 +7,7 @@ import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
 import { useBasename } from "@/lib/useBasename";
 import { useUsername } from "@/lib/useUsername";
+import { useLang } from "@/lib/LanguageContext";
 
 interface Props {
   address: `0x${string}`;
@@ -16,6 +17,7 @@ interface Props {
 export function UsernameModal({ address, onDone }: Props) {
   const { name: basename, loading: bnLoading } = useBasename(address);
   const { saveUsername, markPrompted }          = useUsername(address);
+  const { t } = useLang();
 
   const [input, setInput]         = useState("");
   const [error, setError]         = useState("");
@@ -63,12 +65,12 @@ export function UsernameModal({ address, onDone }: Props) {
   useEffect(() => {
     if (!checkName || isBanFetching || isTakenFetching) return;
     if (isBanned) {
-      setError("This username is not allowed.");
+      setError(t.unm_err_banned);
       setCheckName(undefined);
       return;
     }
     if (isTaken) {
-      setError("This username is already taken.");
+      setError(t.unm_err_taken);
       setCheckName(undefined);
       return;
     }
@@ -117,12 +119,12 @@ export function UsernameModal({ address, onDone }: Props) {
 
   // Status label inside Apply button
   const btnLabel = isWalletPending
-    ? "Waiting for wallet…"
+    ? t.unm_waiting_wallet
     : isConfirming
-      ? "Confirming…"
+      ? t.unm_confirming_tx
       : (isBanFetching || isTakenFetching)
-        ? "Checking…"
-        : "Apply";
+        ? t.unm_checking
+        : t.unm_apply;
 
   return (
     <div
@@ -161,9 +163,9 @@ export function UsernameModal({ address, onDone }: Props) {
             <User size={18} style={{ color: "#60A5FA" }} />
           </div>
           <div>
-            <h2 className="font-black text-white text-base leading-tight">Set a Username</h2>
+            <h2 className="font-black text-white text-base leading-tight">{t.unm_title}</h2>
             <p className="text-xs mt-0.5" style={{ color: "#6b7a9a" }}>
-              Shown on leaderboard &amp; activity feed
+              {t.unm_subtitle}
             </p>
           </div>
         </div>
@@ -188,7 +190,7 @@ export function UsernameModal({ address, onDone }: Props) {
               value={input}
               onChange={e => { setInput(e.target.value); setError(""); }}
               onKeyDown={handleKeyDown}
-              placeholder="(Optional)"
+              placeholder={t.unm_placeholder}
               className="flex-1 bg-transparent border-none outline-none text-white font-semibold text-sm placeholder:text-[#3d4a63]"
             />
             {input && (
@@ -206,12 +208,14 @@ export function UsernameModal({ address, onDone }: Props) {
 
           {basename && !bnLoading && (
             <p className="text-xs" style={{ color: "rgba(96,165,250,0.7)" }}>
-              ✦ Basename detected: <span className="font-bold text-blue-400">{basename}</span>
+              {t.unm_basename.split("{name}")[0]}
+              <span className="font-bold text-blue-400">{basename}</span>
+              {t.unm_basename.split("{name}")[1]}
             </p>
           )}
 
           <p className="text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
-            Max 32 characters · stored on-chain · globally unique
+            {t.unm_hint}
           </p>
         </div>
 
@@ -230,7 +234,7 @@ export function UsernameModal({ address, onDone }: Props) {
             onMouseEnter={e => { if (!isBusy) (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.08)"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.04)"; }}
           >
-            Skip
+            {t.unm_skip}
           </button>
           <button
             onClick={handleApply}

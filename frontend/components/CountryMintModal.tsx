@@ -323,11 +323,9 @@ export function CountryMintModal({
               }}>
                 <Zap size={13} style={{ color: "#fbbf24", flexShrink: 0 }} />
                 <p style={{ fontSize: 12, color: "rgba(251,191,36,0.8)" }}>
-                  Your share if {country.name} wins:{" "}
-                  <strong style={{ color: "#fbbf24" }}>
-                    {((Number(userBalance) / Number(totalSupply)) * 100).toFixed(2)}%
-                  </strong>
-                  {" "}of prize pool
+                  {t.cmt_prize_share
+                    .replace("{country}", country.name)
+                    .replace("{pct}", ((Number(userBalance) / Number(totalSupply)) * 100).toFixed(2))}
                 </p>
               </div>
             )}
@@ -395,7 +393,7 @@ export function CountryMintModal({
                         </span>
                       </div>
                       <p style={{ fontSize: 10, color: "rgba(251,191,36,0.55)", marginTop: 2, paddingLeft: 14 }}>
-                        {slotsRemaining} / {EARLY_BIRD_SUPPLY} slots left · {t.eb_max_tx}
+                        {slotsRemaining} / {EARLY_BIRD_SUPPLY} {t.eb_slots} · {t.eb_max_tx}
                       </p>
                     </div>
                     <span style={{
@@ -414,7 +412,7 @@ export function CountryMintModal({
                     {t.cmt_quantity}
                     {isEarlyBird && (
                       <span style={{ marginLeft: 6, color: "rgba(251,191,36,0.5)", fontWeight: 600, textTransform: "none", letterSpacing: 0, fontSize: 10 }}>
-                        (max {slotsRemaining})
+                        {t.cmt_max_slots.replace("{n}", String(slotsRemaining))}
                       </span>
                     )}
                   </p>
@@ -464,7 +462,7 @@ export function CountryMintModal({
                     </span>
                     {isEarlyBird && (
                       <p style={{ fontSize: 10, color: "rgba(251,191,36,0.55)", margin: 0 }}>
-                        vs {formatEth(MINT_PRICE * BigInt(amount), 4)} ETH normal
+                        {t.cmt_vs_normal.replace("{amount}", formatEth(MINT_PRICE * BigInt(amount), 4))}
                       </p>
                     )}
                   </div>
@@ -495,7 +493,7 @@ export function CountryMintModal({
                     ? <><Loader2 size={15} className="animate-spin" />{isConfirming ? t.card_confirming : t.card_minting}</>
                     : mintDone           ? t.card_minted
                     : !isConnected       ? t.card_connect
-                    : isWrongChain       ? "⚠️ Switch to Base Sepolia"
+                    : isWrongChain       ? `⚠️ ${t.switch_network}`
                     : !hasEnoughEth      ? t.cmt_insufficient_eth
                     : (
                       <span className="flex flex-col items-center leading-tight gap-0.5">

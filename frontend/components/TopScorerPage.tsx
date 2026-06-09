@@ -217,7 +217,7 @@ export function TopScorerPage() {
             {isClaimSuccess ? (
               <span className="text-xs font-semibold shrink-0 px-3 py-1.5 rounded-xl flex items-center gap-1.5"
                 style={{ background: "rgba(0,82,255,0.1)", border: "1px solid rgba(0,82,255,0.3)", color: "#0052FF" }}>
-                ✓ Claimed
+                {t.ts_claimed_badge}
               </span>
             ) : userWinnerVoteCount > 0 ? (
               /* Active claim button */
@@ -233,7 +233,7 @@ export function TopScorerPage() {
               /* No winning votes */
               <span className="text-xs font-semibold shrink-0 px-3 py-1.5 rounded-xl"
                 style={{ background: "rgba(255,255,255,0.04)", color: "#6b7a9a" }}>
-                No winning votes
+                {t.ts_no_winning_votes}
               </span>
             )}
           </div>
@@ -246,8 +246,8 @@ export function TopScorerPage() {
           style={{ borderColor: "rgba(239,68,68,0.35)", background: "rgba(239,68,68,0.06)" }}>
           <span style={{ fontSize: 20 }}>🔒</span>
           <div>
-            <p className="font-black text-sm" style={{ color: "#ef4444" }}>Voting Closed</p>
-            <p className="text-xs mt-0.5" style={{ color: "rgba(239,68,68,0.6)" }}>Ticket purchases and voting have been disabled by the admin</p>
+            <p className="font-black text-sm" style={{ color: "#ef4444" }}>{t.ts_voting_closed}</p>
+            <p className="text-xs mt-0.5" style={{ color: "rgba(239,68,68,0.6)" }}>{t.ts_voting_closed_sub}</p>
           </div>
         </div>
       )}
@@ -301,11 +301,11 @@ export function TopScorerPage() {
                   buyTickets({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "buyScorerTickets", args: [BigInt(ticketQty)], value: totalCost });
                 }}
                 disabled={isBuying || isBuyConfirming || (!isWrongChain && !hasEnoughEth)}
-                title={!hasEnoughEth ? "Insufficient ETH balance" : undefined}
+                title={!hasEnoughEth ? t.ts_insufficient_eth : undefined}
                 className="btn-neon flex items-center justify-center gap-2 w-full sm:w-auto"
                 style={!hasEnoughEth ? { opacity: 0.45, cursor: "not-allowed", background: "rgba(255,60,60,0.15)", border: "1px solid rgba(255,60,60,0.3)", color: "#ff6060" } : undefined}>
                 {(isBuying || isBuyConfirming) && <Loader2 size={16} className="animate-spin" />}
-                {!hasEnoughEth ? t.ts_insufficient_eth : (
+                {isWrongChain ? t.switch_network : !hasEnoughEth ? t.ts_insufficient_eth : (
                   <span className="flex flex-col items-center leading-tight gap-0.5">
                     <span>{t.ts_buy_btn} · {formatEth(totalCost, 4)} ETH</span>
                     {ethUsd && (

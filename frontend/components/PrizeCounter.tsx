@@ -39,9 +39,7 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
   const accent    = isScorer ? "#60A5FA" : "#F59E0B";
   const accentRgb = isScorer ? "96,165,250" : "245,158,11";
   const label     = isScorer ? t.ts_pool : t.prize_label;
-  const subtitle  = isScorer
-    ? "Grows with every ticket"
-    : "Grows with every mint · Claim when your nation wins";
+  const subtitle  = isScorer ? t.ts_pool_sub : t.prize_sub;
 
   return (
     <div
@@ -89,7 +87,7 @@ export function PrizeCounter({ activeTab }: PrizeCounterProps) {
         {/* USD equivalent */}
         {usd !== null && (
           <p className="mt-1 font-mono" style={{ fontSize: "clamp(0.7rem,2vw,0.95rem)", color: `rgba(${accentRgb},0.38)` }}>
-            est. dollar value ≈ ${usd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+            {t.prize_usd_est}{usd.toLocaleString("en-US", { maximumFractionDigits: 0 })}
           </p>
         )}
 

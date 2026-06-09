@@ -174,7 +174,7 @@ export function ProfileDrawer({ open, onClose, onSetUsername }: ProfileDrawerPro
                 {totalSpentWei > 0n && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full"
                     style={{ background: "rgba(245,158,11,0.12)", color: "#f59e0b", border: "1px solid rgba(245,158,11,0.2)" }}>
-                    {totalSpentEth} ETH yatırıldı
+                    {t.pd_invested.replace("{amount}", totalSpentEth)}
                   </span>
                 )}
               </div>
@@ -206,7 +206,7 @@ export function ProfileDrawer({ open, onClose, onSetUsername }: ProfileDrawerPro
                   <button
                     onClick={toggleHide}
                     disabled={hideBusy}
-                    title={displayHidden ? "Show username publicly" : "Hide username from others"}
+                    title={displayHidden ? t.pd_show_username : t.pd_hide_username}
                     className="flex items-center gap-1 px-2 py-1 rounded-lg transition-all"
                     style={{
                       background: displayHidden ? "rgba(251,191,36,0.08)" : "rgba(255,255,255,0.04)",
@@ -223,7 +223,7 @@ export function ProfileDrawer({ open, onClose, onSetUsername }: ProfileDrawerPro
                         : <Eye     size={11} style={{ color: "#6b7a9a" }} />
                     }
                     <span className="text-[10px] font-semibold" style={{ color: displayHidden ? "#fbbf24" : "#6b7a9a" }}>
-                      {displayHidden ? "Hidden" : "Hide"}
+                      {displayHidden ? t.pd_hidden_label : t.pd_hide_label}
                     </span>
                   </button>
                 </div>
@@ -239,7 +239,7 @@ export function ProfileDrawer({ open, onClose, onSetUsername }: ProfileDrawerPro
                   onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(255,255,255,0.1)"; }}
                 >
                   <UserPlus size={12} style={{ color: "#6b7a9a" }} />
-                  <span className="text-xs font-semibold" style={{ color: "#6b7a9a" }}>Set username</span>
+                  <span className="text-xs font-semibold" style={{ color: "#6b7a9a" }}>{t.pd_set_username}</span>
                 </button>
               )}
             </div>
@@ -308,7 +308,7 @@ export function ProfileDrawer({ open, onClose, onSetUsername }: ProfileDrawerPro
                         onMouseEnter={e => (e.currentTarget.style.background = "rgba(32,129,226,0.22)")}
                         onMouseLeave={e => (e.currentTarget.style.background = "rgba(32,129,226,0.12)")}>
                         <ExternalLink size={10} />
-                        Trade on OpenSea
+                        {t.pd_trade_opensea}
                       </a>
                     </div>
                   );

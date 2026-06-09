@@ -34,14 +34,16 @@ interface ActivityItem {
   votes?: bigint;
 }
 
-function relativeTime(blockNumber: bigint, latestBlock: bigint): string {
+type RelTimeT = { time_ago_s: string; time_ago_m: string; time_ago_h: string; time_ago_d: string };
+
+function relativeTime(blockNumber: bigint, latestBlock: bigint, t: RelTimeT): string {
   // Rough estimate: ~2s per block on Base Sepolia
   const diff = Number(latestBlock - blockNumber);
   const secs = diff * 2;
-  if (secs < 60)  return `${secs}s ago`;
-  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
-  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`;
-  return `${Math.floor(secs / 86400)}d ago`;
+  if (secs < 60)   return t.time_ago_s.replace("{n}", String(secs));
+  if (secs < 3600)  return t.time_ago_m.replace("{n}", String(Math.floor(secs / 60)));
+  if (secs < 86400) return t.time_ago_h.replace("{n}", String(Math.floor(secs / 3600)));
+  return t.time_ago_d.replace("{n}", String(Math.floor(secs / 86400)));
 }
 
 function kindMeta(kind: EventKind) {
@@ -126,7 +128,7 @@ function ActivityRow({ item, latestBlock, usernameMap }: {
             {label}
           </span>
           <span className="text-[11px]" style={{ color: "#6b7a9a" }}>
-            {relativeTime(item.blockNumber, latestBlock)}
+            {relativeTime(item.blockNumber, latestBlock, t)}
           </span>
         </div>
       </div>
@@ -269,7 +271,7 @@ export function ActivityPage() {
         </div>
         <div className="flex items-center gap-1.5">
           <div className="live-dot" />
-          <span className="text-xs font-bold" style={{ color: "#0052FF" }}>LIVE</span>
+          <span className="text-xs font-bold" style={{ color: "#0052FF" }}>{t.live_label}</span>
         </div>
       </div>
 

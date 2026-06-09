@@ -131,7 +131,7 @@ export function NationsCupWinnerModal({ winningCountryId, onClose, onClaimed }: 
           <div className="flex-1">
             <p className="font-black text-white text-2xl">{winner.name}</p>
             <p className="text-sm font-semibold mt-0.5" style={{ color: "#fbbf24" }}>
-              {t.ncw_champion} · Group {winner.group}
+              {t.ncw_champion} · {t.ncw_group} {winner.group}
             </p>
           </div>
           <Trophy size={36} style={{ color: "#fbbf24", flexShrink: 0 }} />

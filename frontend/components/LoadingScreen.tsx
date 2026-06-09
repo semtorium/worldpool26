@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLang } from "@/lib/LanguageContext";
 
 interface Props {
   onDone: () => void;
@@ -9,6 +10,7 @@ interface Props {
 
 export function LoadingScreen({ onDone, isReady }: Props) {
   const [exiting, setExiting] = useState(false);
+  const { t } = useLang();
   const MIN_MS = 1800;
 
   useEffect(() => {
@@ -32,11 +34,11 @@ export function LoadingScreen({ onDone, isReady }: Props) {
 
   useEffect(() => {
     // Absolute fallback: never block more than 5s
-    const t = setTimeout(() => {
+    const timer = setTimeout(() => {
       setExiting(true);
       setTimeout(onDone, 550);
     }, 5000);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [onDone]);
 
   return (
@@ -117,7 +119,7 @@ export function LoadingScreen({ onDone, isReady }: Props) {
           textTransform: "uppercase",
           marginBottom: 56,
         }}>
-          2026 World Cup
+          {t.loading_tagline}
         </p>
 
         {/* Progress bar */}

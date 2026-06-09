@@ -121,7 +121,7 @@ export function LeaderboardPage() {
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="live-dot" />
-          <span className="text-xs font-bold" style={{ color: "#0052FF" }}>LIVE</span>
+          <span className="text-xs font-bold" style={{ color: "#0052FF" }}>{t.live_label}</span>
         </div>
       </div>
 
@@ -256,7 +256,7 @@ export function LeaderboardPage() {
                         className="text-[10px] font-black px-1.5 py-0.5 rounded-full shrink-0"
                         style={{ background: "rgba(0,82,255,0.15)", color: "#4d88ff", border: "1px solid rgba(0,82,255,0.35)" }}
                       >
-                        YOU
+                        {t.lb_you_badge}
                       </span>
                     )}
                     <span className="sm:hidden ml-auto text-xs shrink-0" style={{ color: "#6b7a9a" }}>
@@ -314,7 +314,7 @@ export function LeaderboardPage() {
                       className="text-[10px] font-black px-1.5 py-0.5 rounded-full shrink-0"
                       style={{ background: "rgba(0,82,255,0.15)", color: "#4d88ff", border: "1px solid rgba(0,82,255,0.35)" }}
                     >
-                      YOU
+                      {t.lb_you_badge}
                     </span>
                     <span className="sm:hidden ml-auto text-xs shrink-0" style={{ color: "#6b7a9a" }}>
                       🌍{userEntry.nfts} ⚽{userEntry.votes}

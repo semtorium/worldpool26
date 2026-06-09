@@ -153,7 +153,7 @@ export function TopScorerWinnerModal({ winnerName, onClose, onClaimed }: Props) 
             <div className="space-y-1.5 text-sm mb-4">
               <div className="flex justify-between">
                 <span style={{ color: "#6b7a9a" }}>{t.tsw_your_votes}</span>
-                <span className="font-bold text-white">{uVotes} ticket{uVotes > 1 ? "s" : ""}</span>
+                <span className="font-bold text-white">{uVotes} {uVotes === 1 ? t.tsw_ticket_one : t.tsw_ticket_many}</span>
               </div>
               <div className="flex justify-between">
                 <span style={{ color: "#6b7a9a" }}>{t.tsw_total_votes}</span>

@@ -427,6 +427,7 @@ function BracketStageView({ rows, divider, lang }: {
 }
 
 function SFView({ lang }: { lang: string }) {
+  const { t } = useLang();
   return (
     <div className="space-y-6">
       <BracketUnit row={SF_ROW} lang={lang} />
@@ -435,7 +436,7 @@ function SFView({ lang }: { lang: string }) {
         <div className="px-0.5">
           <span className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded"
             style={{ background: "rgba(251,191,36,0.13)", color: "#fbbf24" }}>
-            3rd Place
+            {t.stg_third_place}
           </span>
         </div>
         <MatchCard m={THIRD_MATCH} lang={lang} />
@@ -445,18 +446,19 @@ function SFView({ lang }: { lang: string }) {
 }
 
 function FinalView({ lang }: { lang: string }) {
+  const { t } = useLang();
   return (
     <div className="space-y-5">
       <div className="text-center py-3">
         <p className="text-3xl">🏆</p>
         <p className="text-xs font-bold mt-1" style={{ color: "#4d5e7a" }}>
-          MetLife Stadium · Jul 19, 2026
+          {t.stg_final_venue}
         </p>
       </div>
       <MatchCard m={FINAL_MATCH} lang={lang} />
       <div className="flex items-center gap-3">
         <div className="flex-1 h-px" style={{ background: "#0e1c33" }} />
-        <span className="text-[10px] font-bold" style={{ color: "#2a3a5c" }}>3rd Place</span>
+        <span className="text-[10px] font-bold" style={{ color: "#2a3a5c" }}>{t.stg_third_place}</span>
         <div className="flex-1 h-px" style={{ background: "#0e1c33" }} />
       </div>
       <MatchCard m={THIRD_MATCH} lang={lang} />
@@ -579,12 +581,12 @@ export function GroupsPage() {
   }
 
   const STAGE_TABS: { id: StageTab; label: string }[] = [
-    { id: "GE",  label: "GE"      },
-    { id: "R32", label: "R32"     },
-    { id: "R16", label: "R16"     },
-    { id: "QF",  label: t.stg_qf },
-    { id: "SF",  label: t.stg_sf },
-    { id: "F",   label: "F"       },
+    { id: "GE",  label: t.stg_ge  },
+    { id: "R32", label: t.stg_r32 },
+    { id: "R16", label: t.stg_r16 },
+    { id: "QF",  label: t.stg_qf  },
+    { id: "SF",  label: t.stg_sf  },
+    { id: "F",   label: t.stg_f   },
   ];
 
   return (
@@ -599,7 +601,7 @@ export function GroupsPage() {
           <div className="flex items-center justify-center gap-1.5 mt-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[10px] font-bold" style={{ color: "#10b981" }}>
-              LIVE · {lastUpdated.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}
+              {t.live_label} · {lastUpdated.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}
             </span>
           </div>
         )}

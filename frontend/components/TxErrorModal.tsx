@@ -119,7 +119,7 @@ export function TxErrorModal({ info, onClose }: Props) {
               </code>
               <button
                 onClick={handleCopy}
-                title="Copy error code"
+                title={t.err_copy_title}
                 style={{
                   background: "transparent", border: "none",
                   color: copied ? "#22c55e" : "#6b7a9a",

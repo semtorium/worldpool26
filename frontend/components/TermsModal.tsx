@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLang } from "@/lib/LanguageContext";
 
 interface Props {
   onAccept: () => void;
@@ -8,12 +9,20 @@ interface Props {
 
 export function TermsModal({ onAccept }: Props) {
   const [checked, setChecked] = useState(false);
+  const { t } = useLang();
 
   const handleAccept = () => {
     if (!checked) return;
     localStorage.setItem("tos_accepted", "true");
     onAccept();
   };
+
+  const ITEMS = [
+    { icon: "🎮", text: t.tos_item1 },
+    { icon: "⛓️", text: t.tos_item2 },
+    { icon: "🏆", text: t.tos_item3 },
+    { icon: "🔞", text: t.tos_item4 },
+  ];
 
   return (
     <div style={{
@@ -56,10 +65,10 @@ export function TermsModal({ onAccept }: Props) {
             </div>
             <div>
               <h2 style={{ fontSize: 17, fontWeight: 900, color: "#fff", margin: 0 }}>
-                Terms of Use
+                {t.tos_title}
               </h2>
               <p style={{ fontSize: 12, color: "#6b7a9a", margin: 0, marginTop: 2 }}>
-                Please read before continuing
+                {t.tos_subtitle}
               </p>
             </div>
           </div>
@@ -73,12 +82,7 @@ export function TermsModal({ onAccept }: Props) {
             marginBottom: 20,
             display: "flex", flexDirection: "column", gap: 10,
           }}>
-            {[
-              { icon: "🎮", text: "WorldPool26 is an entertainment & prediction platform, not a gambling or financial product." },
-              { icon: "⛓️", text: "All transactions are on-chain and irreversible. You are responsible for your wallet and funds." },
-              { icon: "🏆", text: "NFTs are digital collectibles. Prize pools are distributed by smart contract based on World Cup results." },
-              { icon: "🔞", text: "You must be 18+ years of age and not a US resident to use this platform." },
-            ].map((item, i) => (
+            {ITEMS.map((item, i) => (
               <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
                 <span style={{ fontSize: 15, flexShrink: 0, marginTop: 1 }}>{item.icon}</span>
                 <p style={{ fontSize: 12.5, color: "#b0bcd4", lineHeight: 1.6, margin: 0 }}>
@@ -90,14 +94,14 @@ export function TermsModal({ onAccept }: Props) {
 
           {/* Read full link */}
           <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 20, textAlign: "center" }}>
-            Want to read the full document?{" "}
+            {t.tos_read_prompt}{" "}
             <a
               href="/terms"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: "#0052FF", fontWeight: 700, textDecoration: "none" }}
             >
-              View Terms of Use →
+              {t.tos_read_link}
             </a>
           </p>
 
@@ -133,7 +137,7 @@ export function TermsModal({ onAccept }: Props) {
               style={{ fontSize: 13, color: "#d0daf0", lineHeight: 1.55, userSelect: "none" }}
               onClick={() => setChecked(!checked)}
             >
-              I confirm that I am 18 years of age or older, I am not a US resident, and I have read and agree to the{" "}
+              {t.tos_checkbox.split("{link}")[0]}
               <a
                 href="/terms"
                 target="_blank"
@@ -141,8 +145,9 @@ export function TermsModal({ onAccept }: Props) {
                 onClick={e => e.stopPropagation()}
                 style={{ color: "#0052FF", fontWeight: 700, textDecoration: "none" }}
               >
-                Terms of Use
-              </a>.
+                {t.tos_title}
+              </a>
+              {t.tos_checkbox.split("{link}")[1]}
             </span>
           </label>
 
@@ -164,10 +169,9 @@ export function TermsModal({ onAccept }: Props) {
                 : "rgba(255,255,255,0.05)",
               color: checked ? "#060914" : "#4a5568",
               boxShadow: checked ? "0 0 24px rgba(0,82,255,0.3)" : "none",
-              transform: checked ? "translateY(0)" : "none",
             }}
           >
-            {checked ? "Enter WorldPool26 →" : "Check the box above to continue"}
+            {checked ? t.tos_enter : t.tos_check_first}
           </button>
 
         </div>
@@ -179,8 +183,8 @@ export function TermsModal({ onAccept }: Props) {
           to   { opacity: 1; }
         }
         @keyframes tosModalIn {
-          from { transform: scale(0.88) translateY(20px); opacity: 0; }
-          to   { transform: scale(1) translateY(0);       opacity: 1; }
+          from { opacity: 0; transform: scale(0.92) translateY(20px); }
+          to   { opacity: 1; transform: scale(1)    translateY(0);    }
         }
       `}</style>
     </div>
