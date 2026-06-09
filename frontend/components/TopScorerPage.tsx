@@ -100,9 +100,14 @@ export function TopScorerPage() {
   }, [isClaimTxSuccess, address, queryClient]);
 
   // isClaimSuccess: tx just confirmed OR on-chain mapping true (cross-device) OR localStorage flag
-  const isClaimSuccess = isClaimTxSuccess ||
+  // Guard: only show "Claimed" if the user actually had winning votes — prevents false positive
+  // when onChainHasClaimed is true but userWinnerVoteCount is 0 (e.g. stale on-chain state from
+  // a previous test run, or the user never voted for the winner).
+  const isClaimSuccess = userWinnerVoteCount > 0 && (
+    isClaimTxSuccess ||
     !!onChainHasClaimed ||
-    (!!address && localStorage.getItem(TS_CLAIMED_KEY(address.toLowerCase())) === "true");
+    (!!address && localStorage.getItem(TS_CLAIMED_KEY(address.toLowerCase())) === "true")
+  );
 
   // Show modal + refetch after buy
   useEffect(() => {
