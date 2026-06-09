@@ -193,7 +193,8 @@ const t = {
     // NationsCupPage (extra)
     nc_starts_in:           "TOURNAMENT STARTS IN",
     nc_mint_closed_badge:   "MINT CLOSED",
-    nc_mint_closed_opensea: "Group stage ended · NFTs tradeable on OpenSea",
+    nc_mint_closed_opensea: "NFTs are tradeable on OpenSea",
+    nc_trade_opensea:       "Trade on OpenSea",
     nc_last_chance:         "LAST CHANCE TO MINT",
     nc_last_chance_sub:     "Minting closes when group stage ends · After that — OpenSea only",
     nc_filter_mine:         "My NFTs",
@@ -420,7 +421,8 @@ const t = {
 
     nc_starts_in:           "TURNUVA BAŞLIYOR",
     nc_mint_closed_badge:   "MİNT KAPANDI",
-    nc_mint_closed_opensea: "Grup aşaması bitti · NFT'ler OpenSea'de alınabilir",
+    nc_mint_closed_opensea: "NFT'ler OpenSea'de alınıp satılabilir",
+    nc_trade_opensea:       "OpenSea'de İşlem Yap",
     nc_last_chance:         "SON ŞANS: MİNT ET",
     nc_last_chance_sub:     "Mint, grup aşaması bitince kapanır · Sonrasında OpenSea",
     nc_filter_mine:         "NFT'lerim",
@@ -643,7 +645,8 @@ const t = {
 
     nc_starts_in:           "EL TORNEO EMPIEZA EN",
     nc_mint_closed_badge:   "MINTEO CERRADO",
-    nc_mint_closed_opensea: "Fase de grupos terminada · NFTs disponibles en OpenSea",
+    nc_mint_closed_opensea: "Los NFTs se pueden intercambiar en OpenSea",
+    nc_trade_opensea:       "Intercambiar en OpenSea",
     nc_last_chance:         "ÚLTIMA OPORTUNIDAD DE MINTEAR",
     nc_last_chance_sub:     "El minteo cierra al final de la fase de grupos · Después solo en OpenSea",
     nc_filter_mine:         "Mis NFTs",
@@ -866,7 +869,8 @@ const t = {
 
     nc_starts_in:           "赛事将于此后开始",
     nc_mint_closed_badge:   "铸造已关闭",
-    nc_mint_closed_opensea: "小组赛已结束 · NFT 可在 OpenSea 交易",
+    nc_mint_closed_opensea: "NFT 可在 OpenSea 交易",
+    nc_trade_opensea:       "在 OpenSea 交易",
     nc_last_chance:         "最后机会铸造",
     nc_last_chance_sub:     "铸造将在小组赛结束时关闭 · 之后仅限 OpenSea",
     nc_filter_mine:         "我的 NFT",
@@ -1089,7 +1093,8 @@ const t = {
 
     nc_starts_in:           "البطولة تبدأ بعد",
     nc_mint_closed_badge:   "السك مغلق",
-    nc_mint_closed_opensea: "انتهى دور المجموعات · NFT قابل للتداول على OpenSea",
+    nc_mint_closed_opensea: "NFT قابل للتداول على OpenSea",
+    nc_trade_opensea:       "تداول على OpenSea",
     nc_last_chance:         "آخر فرصة للسك",
     nc_last_chance_sub:     "يُغلق السك عند نهاية دور المجموعات · بعدها OpenSea فقط",
     nc_filter_mine:         "NFT الخاصة بي",
@@ -1312,7 +1317,8 @@ const t = {
 
     nc_starts_in:           "대회 시작까지",
     nc_mint_closed_badge:   "민팅 종료",
-    nc_mint_closed_opensea: "조별리그 종료 · NFT는 OpenSea에서 거래 가능",
+    nc_mint_closed_opensea: "NFT는 OpenSea에서 거래 가능",
+    nc_trade_opensea:       "OpenSea에서 거래",
     nc_last_chance:         "마지막 민팅 기회",
     nc_last_chance_sub:     "조별리그 종료 시 민팅 마감 · 이후 OpenSea에서만 구매 가능",
     nc_filter_mine:         "내 NFT",

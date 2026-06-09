@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useAccount } from "wagmi";
 import { useQueryClient } from "@tanstack/react-query";
 import { ABI } from "@/lib/abi";
-import { CONTRACT_ADDRESS, EARLY_BIRD_SUPPLY } from "@/lib/config";
+import { CONTRACT_ADDRESS, EARLY_BIRD_SUPPLY, CHAIN } from "@/lib/config";
+import { baseSepolia } from "viem/chains";
 import { COUNTRIES } from "@/lib/countries";
 import { CountryCard } from "./CountryCard";
 import { MintBarChart } from "./MintBarChart";
@@ -349,86 +350,114 @@ export function NationsCupPage() {
         </div>
       )}
 
-      {/* Mint deadline banner — only shown when admin has set a deadline on-chain */}
-      {!tournamentFinalized && mintEndTimeMs > 0 && (
-        <div
-          style={{
-            borderRadius: "14px",
-            border: mintDeadline.expired
-              ? "1px solid rgba(239,68,68,0.45)"
-              : "1px solid rgba(251,191,36,0.45)",
-            background: mintDeadline.expired
-              ? "rgba(239,68,68,0.07)"
-              : "linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(245,158,11,0.04) 100%)",
-            boxShadow: mintDeadline.expired
-              ? "0 0 24px rgba(239,68,68,0.10), inset 0 1px 0 rgba(255,255,255,0.04)"
-              : "0 0 28px rgba(251,191,36,0.12), inset 0 1px 0 rgba(255,255,255,0.05)",
-            padding: "14px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "12px",
-            flexWrap: "wrap",
-          }}
-        >
-          {mintDeadline.expired ? (
-            /* ── CLOSED state ── */
-            <div className="flex items-center gap-2 flex-wrap">
-              <span style={{ fontSize: "16px" }}>🔒</span>
-              <span className="font-black tracking-widest uppercase text-sm" style={{ color: "#ef4444" }}>
-                {t.nc_mint_closed_badge}
-              </span>
-              <span className="text-xs font-semibold" style={{ color: "rgba(239,68,68,0.55)" }}>
-                · {t.nc_mint_closed_opensea}
+      {/* Mint Closed banner — shows whenever mint is closed for any reason */}
+      {mintClosed && (
+        <div style={{
+          borderRadius: "14px",
+          border: "1px solid rgba(239,68,68,0.45)",
+          background: "rgba(239,68,68,0.07)",
+          boxShadow: "0 0 24px rgba(239,68,68,0.10), inset 0 1px 0 rgba(255,255,255,0.04)",
+          padding: "14px 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}>
+          {/* Left */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span style={{ fontSize: "16px" }}>🔒</span>
+            <span className="font-black tracking-widest uppercase text-sm" style={{ color: "#ef4444" }}>
+              {t.nc_mint_closed_badge}
+            </span>
+            <span className="text-xs font-semibold" style={{ color: "rgba(239,68,68,0.45)" }}>
+              · {t.nc_mint_closed_opensea}
+            </span>
+          </div>
+          {/* Right: Trade on OpenSea button */}
+          <a
+            href={
+              CHAIN.id === baseSepolia.id
+                ? `https://testnets.opensea.io/assets/base_sepolia/${CONTRACT_ADDRESS}`
+                : `https://opensea.io/assets/base/${CONTRACT_ADDRESS}`
+            }
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              background: "linear-gradient(135deg, #2081e2, #1868b7)",
+              border: "none",
+              borderRadius: "10px",
+              padding: "9px 18px",
+              fontWeight: 900,
+              fontSize: "13px",
+              color: "#fff",
+              textDecoration: "none",
+              flexShrink: 0,
+              boxShadow: "0 0 18px rgba(32,129,226,0.35)",
+              transition: "transform 0.15s, box-shadow 0.15s",
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1.04)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.transform = "scale(1)"; }}
+          >
+            <svg width="16" height="16" viewBox="0 0 90 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M45 0C20.15 0 0 20.15 0 45C0 69.85 20.15 90 45 90C69.85 90 90 69.85 90 45C90 20.15 69.85 0 45 0ZM22.18 46.36L22.31 46.14L34.38 27.09C34.56 26.81 34.98 26.84 35.11 27.14C37.06 31.61 38.74 37.18 37.96 40.71C37.63 42.17 36.68 44.14 35.62 45.96C35.49 46.2 35.34 46.43 35.19 46.65C35.12 46.76 35 46.82 34.87 46.82H22.49C22.16 46.82 21.97 46.46 22.18 46.36ZM74.38 52.28C74.38 52.46 74.27 52.62 74.1 52.69C73.38 52.97 71.01 54.04 70.05 55.39C67.63 58.85 65.79 63.82 61.77 63.82H44.46C38.36 63.82 33.41 58.85 33.41 52.72V52.48C33.41 52.31 33.55 52.17 33.72 52.17H47.11C47.31 52.17 47.46 52.35 47.45 52.55C47.38 53.2 47.5 53.86 47.8 54.46C48.38 55.65 49.59 56.41 50.9 56.41H57.35V52.57H50.97C50.64 52.57 50.44 52.19 50.63 51.92C50.7 51.81 50.78 51.7 50.87 51.58C51.5 50.71 52.42 49.37 53.33 47.84C53.96 46.8 54.57 45.68 55.06 44.56C55.16 44.35 55.24 44.13 55.32 43.91C55.46 43.52 55.6 43.16 55.71 42.79C55.82 42.47 55.91 42.14 55.98 41.82C56.19 40.84 56.28 39.8 56.28 38.72C56.28 38.31 56.26 37.88 56.22 37.47C56.2 37.04 56.14 36.61 56.08 36.18C56.03 35.79 55.96 35.4 55.87 35.02C55.76 34.54 55.63 34.07 55.48 33.6L55.43 33.43C55.3 33.01 55.14 32.6 54.97 32.2C54.39 30.73 53.72 29.31 52.99 27.98C52.73 27.5 52.45 27.04 52.17 26.59C51.87 26.1 51.56 25.63 51.23 25.19C51.02 24.9 50.8 24.62 50.57 24.36C50.34 24.08 50.1 23.82 49.87 23.57C49.53 23.22 49.2 22.9 48.86 22.6L47.93 21.82C47.79 21.71 47.7 21.54 47.72 21.36L48.17 18.12C48.21 17.82 48.53 17.66 48.8 17.8L74.1 31.52C74.27 31.61 74.38 31.78 74.38 31.97V52.28Z" fill="white"/>
+            </svg>
+            {t.nc_trade_opensea ?? "Trade on OpenSea"}
+          </a>
+        </div>
+      )}
+
+      {/* Mint deadline countdown — only shown when deadline is set and mint still open */}
+      {mintEndTimeMs > 0 && !mintClosed && (
+        <div style={{
+          borderRadius: "14px",
+          border: "1px solid rgba(251,191,36,0.45)",
+          background: "linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(245,158,11,0.04) 100%)",
+          boxShadow: "0 0 28px rgba(251,191,36,0.12), inset 0 1px 0 rgba(255,255,255,0.05)",
+          padding: "14px 20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}>
+          {/* Left */}
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-2">
+              <div style={{ width: 7, height: 7, minWidth: 7, borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 8px #fbbf24", animation: "liveDotPulse 1.5s ease-in-out infinite" }} />
+              <span className="font-black tracking-[0.2em] uppercase" style={{ fontSize: "13px", color: "#fbbf24" }}>
+                🔥 {t.nc_last_chance}
               </span>
             </div>
-          ) : (
-            /* ── LIVE countdown state ── */
-            <>
-              {/* Left */}
-              <div className="flex flex-col gap-0.5">
-                <div className="flex items-center gap-2">
-                  <div style={{ width: 7, height: 7, minWidth: 7, borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 8px #fbbf24", animation: "liveDotPulse 1.5s ease-in-out infinite" }} />
-                  <span className="font-black tracking-[0.2em] uppercase" style={{ fontSize: "13px", color: "#fbbf24" }}>
-                    🔥 {t.nc_last_chance}
-                  </span>
-                </div>
-                <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.5)", paddingLeft: "15px" }}>
-                  {t.nc_last_chance_sub}
-                </span>
-              </div>
-
-              {/* Right: ticking countdown pill */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  background: "rgba(251,191,36,0.08)",
-                  border: "1px solid rgba(251,191,36,0.2)",
-                  borderRadius: "10px",
-                  padding: "6px 14px",
-                  flexShrink: 0,
-                }}
-              >
-                {mintDeadline.days > 0 && (
-                  <>
-                    <span className="font-black font-mono text-white" style={{ fontSize: "17px" }}>{mintDeadline.days}</span>
-                    <span style={{ fontSize: "11px", color: "#6b7a9a" }}>d</span>
-                    <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.3)", margin: "0 3px" }}>·</span>
-                  </>
-                )}
-                <span className="font-black font-mono text-white" style={{ fontSize: "17px" }}>{String(mintDeadline.hours).padStart(2, "0")}</span>
-                <span style={{ fontSize: "11px", color: "#6b7a9a" }}>h</span>
+            <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.5)", paddingLeft: "15px" }}>
+              {t.nc_last_chance_sub}
+            </span>
+          </div>
+          {/* Right: ticking countdown pill */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: "4px",
+            background: "rgba(251,191,36,0.08)", border: "1px solid rgba(251,191,36,0.2)",
+            borderRadius: "10px", padding: "6px 14px", flexShrink: 0,
+          }}>
+            {mintDeadline.days > 0 && (
+              <>
+                <span className="font-black font-mono text-white" style={{ fontSize: "17px" }}>{mintDeadline.days}</span>
+                <span style={{ fontSize: "11px", color: "#6b7a9a" }}>d</span>
                 <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.3)", margin: "0 3px" }}>·</span>
-                <span className="font-black font-mono text-white" style={{ fontSize: "17px" }}>{String(mintDeadline.mins).padStart(2, "0")}</span>
-                <span style={{ fontSize: "11px", color: "#6b7a9a" }}>m</span>
-                <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.3)", margin: "0 3px" }}>·</span>
-                <span className="font-black font-mono" style={{ fontSize: "17px", color: "#fbbf24" }}>{String(mintDeadline.secs).padStart(2, "0")}</span>
-                <span style={{ fontSize: "11px", color: "#6b7a9a" }}>s</span>
-              </div>
-            </>
-          )}
+              </>
+            )}
+            <span className="font-black font-mono text-white" style={{ fontSize: "17px" }}>{String(mintDeadline.hours).padStart(2, "0")}</span>
+            <span style={{ fontSize: "11px", color: "#6b7a9a" }}>h</span>
+            <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.3)", margin: "0 3px" }}>·</span>
+            <span className="font-black font-mono text-white" style={{ fontSize: "17px" }}>{String(mintDeadline.mins).padStart(2, "0")}</span>
+            <span style={{ fontSize: "11px", color: "#6b7a9a" }}>m</span>
+            <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.3)", margin: "0 3px" }}>·</span>
+            <span className="font-black font-mono" style={{ fontSize: "17px", color: "#fbbf24" }}>{String(mintDeadline.secs).padStart(2, "0")}</span>
+            <span style={{ fontSize: "11px", color: "#6b7a9a" }}>s</span>
+          </div>
         </div>
       )}
 
