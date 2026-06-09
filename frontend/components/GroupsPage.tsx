@@ -6,14 +6,35 @@ import { COUNTRIES, GROUPS, getFlagUrl } from "@/lib/countries";
 import { GROUP_STANDINGS, getPts, getGD, sortStandings } from "@/lib/tournamentData";
 import {
   MatchData, MatchSlot, BracketRow,
-  R32_MATCHES,
+  R32_MATCHES, R32_ROWS,
   R16_ROWS, QF_ROWS, SF_ROW,
   FINAL_MATCH, THIRD_MATCH,
 } from "@/lib/tournamentSchedule";
 import { useLang } from "@/lib/LanguageContext";
 import type { Translations } from "@/lib/i18n";
 
-type StageTab = "GE" | "R32" | "R16" | "QF" | "SF" | "F";
+type StageTab  = "GE" | "R32" | "R16" | "QF" | "SF" | "F";
+type ViewMode  = "table" | "split" | "bracket" | "r32bracket" | "trophy";
+
+/** Which view modes are available per stage (order = icon order) */
+const STAGE_MODES: Record<StageTab, ViewMode[]> = {
+  GE:  ["table", "split"],
+  R32: ["split", "r32bracket"],
+  R16: ["bracket"],
+  QF:  ["bracket"],
+  SF:  ["bracket"],
+  F:   ["trophy"],
+};
+
+/** Default view mode when entering a stage */
+const DEFAULT_MODE: Record<StageTab, ViewMode> = {
+  GE:  "table",
+  R32: "split",
+  R16: "bracket",
+  QF:  "bracket",
+  SF:  "bracket",
+  F:   "trophy",
+};
 
 // ── Date localization ─────────────────────────────────────────────────────────
 
@@ -413,23 +434,130 @@ function FinalView({ lang }: { lang: string }) {
   );
 }
 
+// ── View mode icons (inline SVG, no external deps) ───────────────────────────
+
+function IconList() {
+  return (
+    <svg width="18" height="14" viewBox="0 0 18 14" fill="none">
+      <rect x="0" y="0"  width="18" height="2.5" rx="1.25" fill="currentColor"/>
+      <rect x="0" y="5.75" width="18" height="2.5" rx="1.25" fill="currentColor"/>
+      <rect x="0" y="11.5" width="18" height="2.5" rx="1.25" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function IconSplit() {
+  return (
+    <svg width="20" height="14" viewBox="0 0 20 14" fill="none">
+      {/* Left panel lines */}
+      <rect x="0"  y="0"    width="8" height="2" rx="1" fill="currentColor"/>
+      <rect x="0"  y="4.5"  width="8" height="2" rx="1" fill="currentColor"/>
+      <rect x="0"  y="9"    width="8" height="2" rx="1" fill="currentColor"/>
+      <rect x="0"  y="13.5" width="5" height="2" rx="1" fill="currentColor" opacity="0.5"/>
+      {/* Divider */}
+      <rect x="9.5" y="0" width="1" height="15" rx="0.5" fill="currentColor" opacity="0.3"/>
+      {/* Right panel lines */}
+      <rect x="12" y="0"    width="8" height="2" rx="1" fill="currentColor"/>
+      <rect x="12" y="4.5"  width="8" height="2" rx="1" fill="currentColor"/>
+      <rect x="12" y="9"    width="5" height="2" rx="1" fill="currentColor" opacity="0.5"/>
+    </svg>
+  );
+}
+
+function IconBracket() {
+  return (
+    <svg width="20" height="16" viewBox="0 0 20 16" fill="none">
+      {/* Left top match */}
+      <rect x="0" y="1"  width="7" height="1.8" rx="0.9" fill="currentColor"/>
+      <rect x="0" y="4"  width="7" height="1.8" rx="0.9" fill="currentColor"/>
+      {/* Left bottom match */}
+      <rect x="0" y="10" width="7" height="1.8" rx="0.9" fill="currentColor"/>
+      <rect x="0" y="13" width="7" height="1.8" rx="0.9" fill="currentColor"/>
+      {/* Top bracket arm */}
+      <rect x="7"   y="1.9"  width="3"   height="1"   rx="0.5" fill="currentColor" opacity="0.5"/>
+      <rect x="9.5" y="1.9"  width="1"   height="6.2" rx="0.5" fill="currentColor" opacity="0.5"/>
+      <rect x="7"   y="13"   width="3"   height="1"   rx="0.5" fill="currentColor" opacity="0.5"/>
+      <rect x="9.5" y="7.1"  width="3.5" height="1"   rx="0.5" fill="currentColor" opacity="0.5"/>
+      {/* Right result */}
+      <rect x="13" y="6.3" width="7" height="1.8" rx="0.9" fill="currentColor"/>
+    </svg>
+  );
+}
+
+function IconTrophy() {
+  return <span style={{ fontSize: 15, lineHeight: 1 }}>🏆</span>;
+}
+
+const MODE_ICONS: Record<ViewMode, React.ReactNode> = {
+  table:     <IconList />,
+  split:     <IconSplit />,
+  bracket:   <IconBracket />,
+  r32bracket:<IconBracket />,
+  trophy:    <IconTrophy />,
+};
+
+// ── Mode selector bar ─────────────────────────────────────────────────────────
+
+function ModeBar({
+  modes, active, onChange,
+}: {
+  modes: ViewMode[];
+  active: ViewMode;
+  onChange: (m: ViewMode) => void;
+}) {
+  if (modes.length <= 1) return null; // single-mode stages: hide bar
+
+  return (
+    <div className="flex justify-center">
+      <div className="flex items-center gap-1 p-1 rounded-2xl"
+        style={{ background: "#090f1e", border: "1px solid #141e34" }}>
+        {modes.map(mode => {
+          const isActive = mode === active;
+          return (
+            <button
+              key={mode}
+              onClick={() => onChange(mode)}
+              className="flex items-center justify-center rounded-xl transition-all"
+              style={{
+                width: 42, height: 36,
+                background: isActive ? "#0d1e42" : "transparent",
+                color: isActive ? "#4d88ff" : "#2a3a5c",
+                border: isActive ? "1px solid #1a3a80" : "1px solid transparent",
+                boxShadow: isActive ? "0 0 10px rgba(0,82,255,0.2)" : undefined,
+              }}
+            >
+              {MODE_ICONS[mode]}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export function GroupsPage() {
   const { t, lang } = useLang();
-  const [stage, setStage] = useState<StageTab>("R32");
+  const [stage,    setStage]    = useState<StageTab>("R32");
+  const [viewMode, setViewMode] = useState<ViewMode>(DEFAULT_MODE["R32"]);
+
+  function handleStageChange(s: StageTab) {
+    setStage(s);
+    setViewMode(DEFAULT_MODE[s]); // reset view mode to default for new stage
+  }
 
   const STAGE_TABS: { id: StageTab; label: string }[] = [
-    { id: "GE",  label: "GE"       },
-    { id: "R32", label: "R32"      },
-    { id: "R16", label: "R16"      },
-    { id: "QF",  label: t.stg_qf  },
-    { id: "SF",  label: t.stg_sf  },
-    { id: "F",   label: "F"        },
+    { id: "GE",  label: "GE"      },
+    { id: "R32", label: "R32"     },
+    { id: "R16", label: "R16"     },
+    { id: "QF",  label: t.stg_qf },
+    { id: "SF",  label: t.stg_sf },
+    { id: "F",   label: "F"       },
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Header */}
       <div className="text-center space-y-0.5">
         <h1 className="text-xl font-black text-white">{t.grp_title}</h1>
@@ -443,7 +571,7 @@ export function GroupsPage() {
           {STAGE_TABS.map(tab => {
             const active = stage === tab.id;
             return (
-              <button key={tab.id} onClick={() => setStage(tab.id)}
+              <button key={tab.id} onClick={() => handleStageChange(tab.id)}
                 className="px-4 py-2 rounded-xl text-sm font-black transition-all"
                 style={active ? {
                   background: "linear-gradient(135deg,#0052FF,#1d4ed8)",
@@ -461,9 +589,32 @@ export function GroupsPage() {
         </div>
       </div>
 
-      {/* Stage content */}
-      {stage === "GE"  && <SplitView full={true}  t={t} lang={lang} />}
-      {stage === "R32" && <SplitView full={false} t={t} lang={lang} />}
+      {/* View mode icon bar — only shows when stage has 2+ modes */}
+      <ModeBar
+        modes={STAGE_MODES[stage]}
+        active={viewMode}
+        onChange={setViewMode}
+      />
+
+      {/* ── Content: (stage + viewMode) → render ── */}
+
+      {/* GE: full standings table OR split with R32 schedule */}
+      {stage === "GE" && viewMode === "table" && (
+        <FullGroupList t={t} />
+      )}
+      {stage === "GE" && viewMode === "split" && (
+        <SplitView full={true} t={t} lang={lang} />
+      )}
+
+      {/* R32: split (compact + schedule) OR R32 bracket tree */}
+      {stage === "R32" && viewMode === "split" && (
+        <SplitView full={false} t={t} lang={lang} />
+      )}
+      {stage === "R32" && viewMode === "r32bracket" && (
+        <BracketStageView rows={R32_ROWS} divider={4} lang={lang} />
+      )}
+
+      {/* R16, QF, SF — bracket only */}
       {stage === "R16" && <BracketStageView rows={R16_ROWS} divider={2} lang={lang} />}
       {stage === "QF"  && <BracketStageView rows={QF_ROWS}              lang={lang} />}
       {stage === "SF"  && <SFView  lang={lang} />}
