@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, type CSSProperties } from "react";
 import { useReadContract, useAccount } from "wagmi";
 import { Navbar, type Tab }              from "@/components/Navbar";
 import { NationsCupPage }                from "@/components/NationsCupPage";
@@ -27,6 +27,8 @@ const STORAGE_KEY = "wp26_active_tab";
 
 export default function Home() {
   const [activeTab, setActiveTab]       = useState<Tab>("nations");
+  // Tabs that have been visited at least once → keep mounted (display:none) to avoid re-loading images
+  const [mountedTabs, setMountedTabs]   = useState<Set<Tab>>(new Set(["nations"]));
   const [appReady, setAppReady]         = useState(false);
   const [showLoader, setShowLoader]     = useState(true);
   const [showTerms, setShowTerms]       = useState(false);
@@ -137,9 +139,14 @@ export default function Home() {
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
+    setMountedTabs(prev => (prev.has(tab) ? prev : new Set([...prev, tab])));
     localStorage.setItem(STORAGE_KEY, tab);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  // Helper: returns CSS to hide/show a tab without unmounting it
+  const tabStyle = (tab: Tab): CSSProperties =>
+    activeTab === tab ? {} : { display: "none" };
 
   return (
     <>
@@ -180,11 +187,13 @@ export default function Home() {
         <Navbar activeTab={activeTab} onTabChange={handleTabChange} />
         <PrizeCounter activeTab={activeTab} />
         <main className="max-w-7xl mx-auto px-4 py-6">
-          {activeTab === "nations"     && <NationsCupPage />}
-          {activeTab === "groups"      && <GroupsPage />}
-          {activeTab === "scorer"      && <TopScorerPage />}
-          {activeTab === "leaderboard" && <LeaderboardPage />}
-          {activeTab === "activity"    && <ActivityPage />}
+          {/* Tabs are mounted on first visit and kept in the DOM (display:none) after that.
+              This prevents NFT images and other assets from re-loading on every tab switch. */}
+          {mountedTabs.has("nations")     && <div style={tabStyle("nations")}><NationsCupPage /></div>}
+          {mountedTabs.has("groups")      && <div style={tabStyle("groups")}><GroupsPage /></div>}
+          {mountedTabs.has("scorer")      && <div style={tabStyle("scorer")}><TopScorerPage /></div>}
+          {mountedTabs.has("leaderboard") && <div style={tabStyle("leaderboard")}><LeaderboardPage /></div>}
+          {mountedTabs.has("activity")    && <div style={tabStyle("activity")}><ActivityPage /></div>}
         </main>
       </div>
     </>
