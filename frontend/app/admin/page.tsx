@@ -96,6 +96,10 @@ export default function AdminPage() {
   // Pending dev balance
   const [pendingDev, setPendingDev] = useState<bigint>(0n);
 
+  // Mint end time
+  const [mintEndTimeVal,   setMintEndTimeVal]   = useState<bigint>(0n);
+  const [mintEndTimeInput, setMintEndTimeInput] = useState("");
+
   // Tx state
   const [ncWinnerId,    setNcWinnerId]    = useState("");
   const [tsPlayer,      setTsPlayer]      = useState("");
@@ -115,7 +119,7 @@ export default function AdminPage() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [tp, ncp, sp, tv, ncF, tsF, wId, fs, owner, mintClosed, votingClosed, paused, maint, elim, ncAt, tsAt, pendDev] = await Promise.all([
+      const [tp, ncp, sp, tv, ncF, tsF, wId, fs, owner, mintClosed, votingClosed, paused, maint, elim, ncAt, tsAt, pendDev, mintET] = await Promise.all([
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "totalLockedPrizePool" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "nationsCupPoolBalance" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerPoolBalance" }),
@@ -133,6 +137,7 @@ export default function AdminPage() {
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "nationsCupFinalizedAt" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "topScorerFinalizedAt" }),
         publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "pendingDevBalance" }),
+        publicClient.readContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "mintEndTime" }),
       ]);
 
       setTotalPool(tp as bigint);
@@ -152,6 +157,16 @@ export default function AdminPage() {
       setNcFinalizedAt(ncAt as bigint);
       setTsFinalizedAt(tsAt as bigint);
       setPendingDev(pendDev as bigint);
+      const et = mintET as bigint;
+      setMintEndTimeVal(et);
+      // Pre-fill input with current value if set
+      if (et > 0n) {
+        const d = new Date(Number(et) * 1000);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        setMintEndTimeInput(
+          `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+        );
+      }
 
       // Fetch supplies for active countries
       const supplies = await Promise.all(
@@ -493,6 +508,70 @@ export default function AdminPage() {
               {txPending === "mintToggle" && <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />}
               {txPending === "mintToggle" ? "Confirming…" : isMintClosed ? "✓ Open Mint" : "🔒 Close Mint"}
             </button>
+          </div>
+        </div>
+
+        {/* Mint Deadline */}
+        <div style={{ ...sectionStyle, marginBottom: 24, borderColor: mintEndTimeVal > 0n ? "rgba(251,191,36,0.35)" : "rgba(255,255,255,0.07)" }}>
+          <h2 style={{ fontSize: 15, fontWeight: 800, color: "#fff", marginBottom: 4 }}>⏰ Mint Deadline</h2>
+          <p style={{ fontSize: 12, color: "#6b7a9a", marginBottom: 16 }}>
+            Opsiyonel. Belirtilen tarih/saatten sonra mint işlemi kontrat seviyesinde bloklanır. Sıfırla = süresiz açık.
+          </p>
+
+          {/* Current value */}
+          <div style={{ padding: "12px 16px", borderRadius: 12, marginBottom: 16,
+            background: mintEndTimeVal > 0n ? "rgba(251,191,36,0.06)" : "rgba(255,255,255,0.02)",
+            border: `1px solid ${mintEndTimeVal > 0n ? "rgba(251,191,36,0.25)" : "rgba(255,255,255,0.07)"}` }}>
+            {mintEndTimeVal === 0n ? (
+              <p style={{ color: "#6b7a9a", fontSize: 13 }}>🟢 Deadline ayarlanmamış — mint süresiz açık</p>
+            ) : (
+              <div>
+                <p style={{ color: "#fbbf24", fontWeight: 800, fontSize: 13 }}>
+                  ⏰ Deadline: {new Date(Number(mintEndTimeVal) * 1000).toLocaleString("tr-TR")}
+                </p>
+                <p style={{ color: "#6b7a9a", fontSize: 11, marginTop: 3 }}>
+                  {Date.now() / 1000 > Number(mintEndTimeVal)
+                    ? "🔒 Deadline geçti — mint kapalı (kontrat engelliyor)"
+                    : `⏳ ${Math.ceil((Number(mintEndTimeVal) - Date.now()/1000) / 3600)} saat kaldı`}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Input + buttons */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <input
+              type="datetime-local"
+              value={mintEndTimeInput}
+              onChange={e => setMintEndTimeInput(e.target.value)}
+              style={{ ...inputStyle, maxWidth: 240, colorScheme: "dark" }}
+            />
+            <button
+              disabled={!mintEndTimeInput || txPending === "setMintEnd"}
+              onClick={() => {
+                const ts = BigInt(Math.floor(new Date(mintEndTimeInput).getTime() / 1000));
+                sendTx("setMintEndTime", [ts], "setMintEnd");
+              }}
+              style={{
+                background: mintEndTimeInput ? "linear-gradient(135deg,#fbbf24,#f59e0b)" : "rgba(255,255,255,0.05)",
+                color: mintEndTimeInput ? "#060914" : "#4a5568",
+                border: "none", borderRadius: 12, padding: "10px 20px",
+                fontWeight: 800, fontSize: 13,
+                cursor: mintEndTimeInput ? "pointer" : "not-allowed",
+                display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap",
+              }}>
+              {txPending === "setMintEnd" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+              {txPending === "setMintEnd" ? "Confirming…" : "⏰ Set Deadline"}
+            </button>
+            {mintEndTimeVal > 0n && (
+              <button
+                disabled={txPending === "clearMintEnd"}
+                onClick={() => { setMintEndTimeInput(""); sendTx("setMintEndTime", [0n], "clearMintEnd"); }}
+                style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, padding: "10px 20px", color: "#ef4444", fontWeight: 800, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+                {txPending === "clearMintEnd" && <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} />}
+                {txPending === "clearMintEnd" ? "Confirming…" : "✕ Sıfırla"}
+              </button>
+            )}
           </div>
         </div>
 

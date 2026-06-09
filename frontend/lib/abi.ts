@@ -16,6 +16,8 @@ export const ABI = [
   // ── View: early-bird (v7) ─────────────────────────────────────
   { type: "function", name: "totalNFTsMinted",      inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
   { type: "function", name: "EARLY_BIRD_SUPPLY",    inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
+  { type: "function", name: "mintEndTime",           inputs: [], outputs: [{ type: "uint256" }],  stateMutability: "view" },
+  { type: "function", name: "setMintEndTime",        inputs: [{ name: "ts", type: "uint256" }], outputs: [], stateMutability: "nonpayable" },
   {
     type: "function", name: "calcMintCost",
     inputs: [{ name: "amount", type: "uint256" }],

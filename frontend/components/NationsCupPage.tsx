@@ -16,9 +16,6 @@ import { parseWriteError } from "@/lib/parseError";
 // June 11 2026 16:00 UTC — opening match kick-off
 const TOURNAMENT_START = new Date("2026-06-11T16:00:00Z").getTime();
 
-// June 26 2026 23:59 UTC — last group stage match ends, minting closes
-const MINT_DEADLINE = new Date("2026-06-26T23:59:00Z").getTime();
-
 function useCountdown() {
   // null on server / first render to avoid SSR hydration mismatch
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -41,21 +38,22 @@ function useCountdown() {
   return { days, hours, mins, secs, lastHour };
 }
 
-function useMintDeadlineCountdown() {
-  // null on server / first render to avoid SSR hydration mismatch
+// Dynamic mint deadline countdown — driven by on-chain mintEndTime (ms)
+function useMintDeadlineCountdown(deadlineMs: number) {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   useEffect(() => {
-    const tick = () => setTimeLeft(Math.max(0, MINT_DEADLINE - Date.now()));
+    if (!deadlineMs) { setTimeLeft(0); return; }
+    const tick = () => setTimeLeft(Math.max(0, deadlineMs - Date.now()));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [deadlineMs]);
 
   // Return "not expired, zeros" until mounted so SSR HTML is stable
   if (timeLeft === null) return { expired: false, days: 0, hours: 0, mins: 0, secs: 0 };
 
-  const expired = timeLeft <= 0;
+  const expired = deadlineMs > 0 && timeLeft <= 0;
   const totalSecs = Math.floor(timeLeft / 1000);
   const days  = Math.floor(totalSecs / 86400);
   const hours = Math.floor((totalSecs % 86400) / 3600);
@@ -72,7 +70,15 @@ export function NationsCupPage() {
   const [flashCards, setFlashCards] = useState(false);
   const cardsGridRef = useRef<HTMLDivElement>(null);
   const countdown = useCountdown();
-  const mintDeadline = useMintDeadlineCountdown();
+
+  // On-chain mint deadline (admin-configurable via setMintEndTime)
+  const { data: mintEndTimeOnChain } = useReadContract({
+    address: CONTRACT_ADDRESS, abi: ABI,
+    functionName: "mintEndTime",
+    query: { refetchInterval: 30_000 },
+  });
+  const mintEndTimeMs = mintEndTimeOnChain ? Number(mintEndTimeOnChain as bigint) * 1000 : 0;
+  const mintDeadline = useMintDeadlineCountdown(mintEndTimeMs);
   const { address } = useAccount();
   const { t } = useLang();
   const queryClient = useQueryClient();
@@ -106,8 +112,8 @@ export function NationsCupPage() {
   const ebRemaining    = Math.max(0, EARLY_BIRD_SUPPLY - mintedCount);
   const showEarlyBird  = !tournamentFinalized && ebRemaining > 0;
 
-  // Mint is "closed" when mintClosed flag set OR emergency paused OR tournament finalized OR deadline passed
-  const mintClosed = !!contractMintClosed || !!contractPaused || !!tournamentFinalized || mintDeadline.expired;
+  // Mint is "closed" when mintClosed flag set OR emergency paused OR tournament finalized OR on-chain deadline passed
+  const mintClosed = !!contractMintClosed || !!contractPaused || !!tournamentFinalized || (mintEndTimeMs > 0 && mintDeadline.expired);
   const { data: userBalance }         = useReadContract({
     address: CONTRACT_ADDRESS, abi: ABI, functionName: "balanceOf",
     args: address && winningCountryId ? [address, winningCountryId] : undefined,
@@ -343,8 +349,8 @@ export function NationsCupPage() {
         </div>
       )}
 
-      {/* Mint deadline banner — hidden after tournament finalized */}
-      {!tournamentFinalized && (
+      {/* Mint deadline banner — only shown when admin has set a deadline on-chain */}
+      {!tournamentFinalized && mintEndTimeMs > 0 && (
         <div
           style={{
             borderRadius: "14px",

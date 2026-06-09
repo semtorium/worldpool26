@@ -68,6 +68,9 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     /// @notice Total NFTs minted across all countries — used for early-bird tracking.
     uint256 public totalNFTsMinted;
 
+    /// @notice Optional mint deadline (Unix timestamp). 0 = no deadline.
+    uint256 public mintEndTime;
+
     /// @notice Single shared pool for all Nations Cup mints.
     ///         Every mint contributes here regardless of country.
     ///         Final champion's NFT holders split this entire pool.
@@ -131,6 +134,7 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     event PendingDevWithdrawn(uint256 amount, uint256 timestamp);
     event DevWalletUpdated(address indexed oldWallet, address indexed newWallet);
     event BaseURIUpdated(string oldURI, string newURI);
+    event MintEndTimeSet(uint256 mintEndTime);
     event MintClosedChanged(bool mintClosed);
     event VotingClosedChanged(bool votingClosed);
     event PausedStateChanged(bool paused);
@@ -146,6 +150,7 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     modifier whenMintOpen() {
         require(!mintClosed, "Mint is closed");
         require(!paused, "Contract is paused");
+        require(mintEndTime == 0 || block.timestamp <= mintEndTime, "Mint deadline passed");
         _;
     }
 
@@ -507,6 +512,13 @@ contract WorldPool26 is ERC1155, ERC2981, Ownable, ReentrancyGuard {
     // ─────────────────────────────────────────────────────────────
     // Admin: Config
     // ─────────────────────────────────────────────────────────────
+
+    /// @notice Set or clear the optional mint deadline.
+    ///         Pass 0 to remove the deadline.
+    function setMintEndTime(uint256 ts) external onlyOwner {
+        mintEndTime = ts;
+        emit MintEndTimeSet(ts);
+    }
 
     function setMintClosed(bool _mintClosed) external onlyOwner {
         mintClosed = _mintClosed;
