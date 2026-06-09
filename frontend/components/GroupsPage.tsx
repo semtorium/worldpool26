@@ -4,173 +4,361 @@ import Image from "next/image";
 import { useState } from "react";
 import { COUNTRIES, GROUPS, getCountriesByGroup, getFlagUrl } from "@/lib/countries";
 import { GROUP_STANDINGS, getPts, getGD, sortStandings } from "@/lib/tournamentData";
+import {
+  MatchData, MatchSlot, BracketRow,
+  R32_ROWS, R16_ROWS, QF_ROWS, SF_ROW,
+  SF_MATCHES, FINAL_MATCH, THIRD_MATCH,
+} from "@/lib/tournamentSchedule";
 import { useLang } from "@/lib/LanguageContext";
 
 type InnerTab = "groups" | "bracket" | "table";
+type StageTab = "GE" | "R32" | "R16" | "QF" | "SF" | "F";
 
-// Sort group teams by favoriteRank → pos 1 = likely winner, pos 2 = likely runner-up
+const STAGE_TABS: { id: StageTab; label: string }[] = [
+  { id: "GE",  label: "GE"  },
+  { id: "R32", label: "R32" },
+  { id: "R16", label: "R16" },
+  { id: "QF",  label: "QF"  },
+  { id: "SF",  label: "SF"  },
+  { id: "F",   label: "F"   },
+];
+
+// ── Shared sub-components ─────────────────────────────────────────────────────
+
 function sortedGroupTeams(group: string) {
   return [...getCountriesByGroup(group)].sort((a, b) => a.favoriteRank - b.favoriteRank);
 }
+function teamAt(group: string, pos: 1 | 2) { return sortedGroupTeams(group)[pos - 1]; }
 
-function teamAt(group: string, pos: 1 | 2) {
-  return sortedGroupTeams(group)[pos - 1];
-}
-
-// ── Bracket data ──────────────────────────────────────────────────────────────
-type GroupSlot = { kind: "group"; group: string; pos: 1 | 2 };
-type ThirdSlot = { kind: "third"; groups: string[] };
-type MatchSlot = GroupSlot | ThirdSlot;
-
-interface R32 { id: string; a: MatchSlot; b: MatchSlot }
-interface Quadrant { qfLabel: string; r16s: { r16Id: string; r32: [R32, R32] }[] }
-
-const QUADRANTS: Quadrant[] = [
-  {
-    qfLabel: "QF 1",
-    r16s: [
-      { r16Id: "R16-M89", r32: [
-        { id: "M74", a: { kind: "group", group: "E", pos: 1 }, b: { kind: "third", groups: ["A","B","C","D","F"] } },
-        { id: "M77", a: { kind: "group", group: "I", pos: 1 }, b: { kind: "third", groups: ["C","D","F","G","H"] } },
-      ]},
-      { r16Id: "R16-M90", r32: [
-        { id: "M73", a: { kind: "group", group: "A", pos: 2 }, b: { kind: "group", group: "B", pos: 2 } },
-        { id: "M75", a: { kind: "group", group: "F", pos: 1 }, b: { kind: "group", group: "C", pos: 2 } },
-      ]},
-    ],
-  },
-  {
-    qfLabel: "QF 2",
-    r16s: [
-      { r16Id: "R16-M93", r32: [
-        { id: "M83", a: { kind: "group", group: "K", pos: 2 }, b: { kind: "group", group: "L", pos: 2 } },
-        { id: "M84", a: { kind: "group", group: "H", pos: 1 }, b: { kind: "group", group: "J", pos: 2 } },
-      ]},
-      { r16Id: "R16-M94", r32: [
-        { id: "M81", a: { kind: "group", group: "D", pos: 1 }, b: { kind: "third", groups: ["B","E","F","I","J"] } },
-        { id: "M82", a: { kind: "group", group: "G", pos: 1 }, b: { kind: "third", groups: ["A","E","H","I","J"] } },
-      ]},
-    ],
-  },
-  {
-    qfLabel: "QF 3",
-    r16s: [
-      { r16Id: "R16-M91", r32: [
-        { id: "M76", a: { kind: "group", group: "C", pos: 1 }, b: { kind: "group", group: "F", pos: 2 } },
-        { id: "M78", a: { kind: "group", group: "E", pos: 2 }, b: { kind: "group", group: "I", pos: 2 } },
-      ]},
-      { r16Id: "R16-M92", r32: [
-        { id: "M79", a: { kind: "group", group: "A", pos: 1 }, b: { kind: "third", groups: ["C","E","F","H","I"] } },
-        { id: "M80", a: { kind: "group", group: "L", pos: 1 }, b: { kind: "third", groups: ["E","H","I","J","K"] } },
-      ]},
-    ],
-  },
-  {
-    qfLabel: "QF 4",
-    r16s: [
-      { r16Id: "R16-M95", r32: [
-        { id: "M86", a: { kind: "group", group: "J", pos: 1 }, b: { kind: "group", group: "H", pos: 2 } },
-        { id: "M88", a: { kind: "group", group: "D", pos: 2 }, b: { kind: "group", group: "G", pos: 2 } },
-      ]},
-      { r16Id: "R16-M96", r32: [
-        { id: "M85", a: { kind: "group", group: "B", pos: 1 }, b: { kind: "third", groups: ["E","F","G","I","J"] } },
-        { id: "M87", a: { kind: "group", group: "K", pos: 1 }, b: { kind: "third", groups: ["D","E","I","J","L"] } },
-      ]},
-    ],
-  },
-];
-
-// ── Bracket sub-components ────────────────────────────────────────────────────
-
-function SlotTeam({ slot }: { slot: MatchSlot }) {
-  if (slot.kind === "third") {
+/** Circular avatar — flag if known, grey ring if TBD */
+function SlotAvatar({ slot }: { slot: MatchSlot }) {
+  if (slot.flagCode) {
     return (
-      <div className="flex items-center gap-2 min-w-0">
-        <div className="shrink-0 w-7 h-[18px] rounded-sm flex items-center justify-center text-[9px] font-black"
-          style={{ background: "rgba(255,255,255,0.07)", color: "#6b7a9a", border: "1px solid rgba(255,255,255,0.08)" }}>
-          3rd
-        </div>
-        <div className="min-w-0">
-          <p className="text-[11px] font-bold text-white leading-tight">Best 3rd Place</p>
-          <p className="text-[9px] leading-tight truncate" style={{ color: "#6b7a9a" }}>
-            Groups {slot.groups.join("/")}
-          </p>
-        </div>
-      </div>
+      <Image src={getFlagUrl(slot.flagCode, 40)} alt={slot.label}
+        width={26} height={18} className="rounded-[4px] object-cover shrink-0" unoptimized />
     );
   }
-  const team = teamAt(slot.group, slot.pos);
-  const posLabel = slot.pos === 1 ? "Winner" : "Runner-up";
+  const isTbd = slot.label === "TBD";
   return (
-    <div className="flex items-center gap-2 min-w-0">
-      <Image src={getFlagUrl(team.flagCode, 40)} alt={team.name}
-        width={28} height={18} className="rounded-sm object-cover shrink-0" unoptimized />
-      <div className="min-w-0">
-        <p className="text-[11px] font-bold text-white leading-tight truncate">{team.name}</p>
-        <p className="text-[9px] leading-tight" style={{ color: "#6b7a9a" }}>
-          Group {slot.group} · {posLabel}
-        </p>
+    <div className="w-7 h-7 rounded-full shrink-0 flex items-center justify-center"
+      style={{ background: "#0d1526", border: `1px solid ${isTbd ? "#1f2d4a" : "#2a3a5c"}` }}>
+      {!isTbd && (
+        <span className="text-[7px] font-black leading-none" style={{ color: "#3d5280" }}>
+          {slot.label.slice(0, 2)}
+        </span>
+      )}
+    </div>
+  );
+}
+
+/** Single match card — date header + two team rows */
+function MatchCard({ m }: { m: MatchData }) {
+  const isTbdA = m.a.label === "TBD";
+  const isTbdB = m.b.label === "TBD";
+  return (
+    <div className="space-y-1.5">
+      {/* Date / note header */}
+      <div className="flex items-center gap-1.5 px-0.5">
+        {m.note && (
+          <span className="text-[9px] font-black uppercase tracking-wide px-1.5 py-0.5 rounded"
+            style={{ background: "rgba(251,191,36,0.13)", color: "#fbbf24" }}>
+            {m.note}
+          </span>
+        )}
+        <span className="text-[10px] font-medium" style={{ color: "#3d5280" }}>
+          {m.date} · {m.time}
+        </span>
+      </div>
+      {/* Card */}
+      <div className="rounded-xl overflow-hidden"
+        style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
+        {/* Team A */}
+        <div className="flex items-center gap-2 px-3 py-2.5"
+          style={{ borderBottom: "1px solid #111e35" }}>
+          <SlotAvatar slot={m.a} />
+          <span className="text-[12px] font-semibold leading-tight truncate"
+            style={{ color: isTbdA ? "#1f2d4a" : "#c8d6f0" }}>
+            {isTbdA ? "TBD" : m.a.label}
+          </span>
+        </div>
+        {/* Team B */}
+        <div className="flex items-center gap-2 px-3 py-2.5">
+          <SlotAvatar slot={m.b} />
+          <span className="text-[12px] font-semibold leading-tight truncate"
+            style={{ color: isTbdB ? "#1f2d4a" : "#c8d6f0" }}>
+            {isTbdB ? "TBD" : m.b.label}
+          </span>
+        </div>
       </div>
     </div>
   );
 }
 
-function R32Card({ match }: { match: R32 }) {
+/** Two matches on left → one match on right, with CSS bracket connector */
+function BracketUnit({ row }: { row: BracketRow }) {
   return (
-    <div className="rounded-xl overflow-hidden"
-      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-      <div className="px-3 py-1.5 border-b" style={{ borderColor: "rgba(255,255,255,0.04)" }}>
-        <SlotTeam slot={match.a} />
+    <div className="flex items-center gap-0" style={{ minHeight: 160 }}>
+
+      {/* LEFT: two match cards stacked */}
+      <div className="flex-1 space-y-3 min-w-0">
+        <MatchCard m={row.left1} />
+        <MatchCard m={row.left2} />
       </div>
-      <div className="px-3 flex items-center gap-1 py-0.5">
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.04)" }} />
-        <span className="text-[8px] font-black tracking-widest" style={{ color: "#6b7a9a" }}>VS</span>
-        <div className="flex-1 h-px" style={{ background: "rgba(255,255,255,0.04)" }} />
+
+      {/* CONNECTOR — pure CSS bracket */}
+      <div className="shrink-0 relative self-stretch" style={{ width: 22 }}>
+        {/* Top horizontal arm */}
+        <div className="absolute" style={{
+          top: "25%", right: 0, left: 0,
+          height: 1, background: "#1a2a45",
+        }} />
+        {/* Bottom horizontal arm */}
+        <div className="absolute" style={{
+          bottom: "25%", right: 0, left: 0,
+          height: 1, background: "#1a2a45",
+        }} />
+        {/* Vertical spine */}
+        <div className="absolute" style={{
+          top: "25%", bottom: "25%", right: 0,
+          width: 1, background: "#1a2a45",
+        }} />
+        {/* Mid output line */}
+        <div className="absolute" style={{
+          top: "calc(50% - 0.5px)", left: 0, right: 0,
+          height: 1, background: "#1a2a45",
+        }} />
       </div>
-      <div className="px-3 py-1.5">
-        <SlotTeam slot={match.b} />
+
+      {/* RIGHT: next-round match, vertically centered */}
+      <div className="flex items-center" style={{ width: "44%", minWidth: 0 }}>
+        <div className="w-full"><MatchCard m={row.right} /></div>
       </div>
     </div>
   );
 }
 
-function QuadrantCard({ q, sfLabel }: { q: Quadrant; sfLabel: string }) {
+// ── Stage views ───────────────────────────────────────────────────────────────
+
+/** GE — compact group standings with mini table */
+function GEView() {
+  const { t } = useLang();
+  const countryById = Object.fromEntries(COUNTRIES.map(c => [c.id, c]));
+
   return (
-    <div className="glass-card p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-xs font-black uppercase tracking-widest" style={{ color: "#0052FF" }}>
-          {q.qfLabel}
-        </span>
-        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
-          style={{ background: "rgba(0,82,255,0.07)", color: "#6b7a9a", border: "1px solid rgba(0,82,255,0.12)" }}>
-          → {sfLabel}
-        </span>
-      </div>
-      {q.r16s.map((r16, ri) => (
-        <div key={r16.r16Id} className="space-y-1.5">
-          <div className="space-y-1">
-            {r16.r32.map(m => <R32Card key={m.id} match={m} />)}
-          </div>
-          <div className="flex items-center gap-2 pl-2">
-            <div className="text-[9px]" style={{ color: "#2563EB" }}>↓ winner</div>
-            <div className="flex-1 h-px" style={{ background: "rgba(0,82,255,0.2)" }} />
-            <div className="text-[9px] font-bold px-2 py-0.5 rounded"
-              style={{ background: "rgba(0,82,255,0.1)", color: "#2563EB" }}>
-              Round of 16
+    <div className="space-y-3">
+      {GROUPS.map(group => {
+        const raw    = GROUP_STANDINGS[group] ?? [];
+        const sorted = sortStandings(raw).sort((a, b) => {
+          if (getPts(a) !== getPts(b) || getGD(a) !== getGD(b) || a.gf !== b.gf) return 0;
+          return (countryById[a.countryId]?.favoriteRank ?? 99) - (countryById[b.countryId]?.favoriteRank ?? 99);
+        });
+
+        return (
+          <div key={group} className="rounded-2xl overflow-hidden"
+            style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
+            {/* Group header */}
+            <div className="flex items-center gap-2 px-4 py-2.5"
+              style={{ background: "#0d1830", borderBottom: "1px solid #1a2a45" }}>
+              <span className="w-6 h-6 rounded-md flex items-center justify-center text-xs font-black"
+                style={{ background: "#0f2050", color: "#4d7aff", border: "1px solid #1a3a80" }}>
+                {group}
+              </span>
+              <span className="text-xs font-black text-white">Group {group}</span>
+              {/* Column headers aligned right */}
+              <div className="ml-auto flex items-center gap-3 text-[9px] font-bold"
+                style={{ color: "#2a3a5c" }}>
+                <span className="w-5 text-center">{t.tbl_p}</span>
+                <span className="w-5 text-center">{t.tbl_w}</span>
+                <span className="w-5 text-center">{t.tbl_gd}</span>
+                <span className="w-6 text-center" style={{ color: "#fbbf24" }}>{t.tbl_pts}</span>
+              </div>
             </div>
+
+            {/* Team rows */}
+            {sorted.map((row, idx) => {
+              const c = countryById[row.countryId];
+              if (!c) return null;
+              const pts = getPts(row);
+              const gd  = getGD(row);
+              return (
+                <div key={row.countryId}
+                  className="flex items-center gap-2 px-4 py-2.5"
+                  style={{
+                    borderBottom: idx < 3 ? "1px solid #0e1c33" : undefined,
+                    background:   idx < 2 ? "rgba(0,82,255,0.03)" : undefined,
+                  }}>
+                  {/* Rank dot */}
+                  <div className="w-1 h-5 rounded-full shrink-0"
+                    style={{ background: idx === 0 ? "#0052FF" : idx === 1 ? "#1d4ed8" : "transparent" }} />
+                  {/* Flag */}
+                  <Image src={getFlagUrl(c.flagCode, 40)} alt={c.name}
+                    width={22} height={15} className="rounded-[3px] object-cover shrink-0" unoptimized />
+                  {/* Name */}
+                  <span className="text-xs font-semibold flex-1 truncate"
+                    style={{ color: idx < 2 ? "#c8d6f0" : "#4d5e7a" }}>
+                    {c.name}
+                  </span>
+                  {/* Stats */}
+                  <div className="flex items-center gap-3 text-[11px] font-bold"
+                    style={{ color: "#4d5e7a" }}>
+                    <span className="w-5 text-center">{row.p}</span>
+                    <span className="w-5 text-center" style={{ color: row.w > 0 ? "#4ade80" : undefined }}>{row.w}</span>
+                    <span className="w-5 text-center" style={{ color: gd > 0 ? "#4ade80" : gd < 0 ? "#f87171" : undefined }}>
+                      {gd > 0 ? `+${gd}` : gd}
+                    </span>
+                    <span className="w-6 text-center font-black"
+                      style={{ color: idx < 2 ? "#d1d5db" : "#3d5280" }}>
+                      {pts}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          {ri < q.r16s.length - 1 && (
-            <div className="h-px mx-2" style={{ background: "rgba(255,255,255,0.04)" }} />
+        );
+      })}
+    </div>
+  );
+}
+
+/** Generic bracket stage view — takes an array of BracketRows */
+function BracketStageView({ rows, divider }: { rows: BracketRow[]; divider?: number }) {
+  // divider splits rows into two half-bracket sections (SF1 path / SF2 path)
+  const half = divider ?? rows.length;
+  return (
+    <div className="space-y-5">
+      {/* First half */}
+      {rows.slice(0, half).map((row, i) => (
+        <div key={row.left1.id}>
+          <BracketUnit row={row} />
+          {i < half - 1 && (
+            <div className="h-px mt-5" style={{ background: "#0e1c33" }} />
           )}
         </div>
       ))}
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-px" style={{ background: "rgba(251,191,36,0.2)" }} />
-        <div className="text-[9px] font-bold px-2 py-0.5 rounded"
-          style={{ background: "rgba(251,191,36,0.08)", color: "#fbbf24" }}>
-          Quarterfinal
+
+      {/* Section divider (SF1 / SF2 path separator) */}
+      {divider && divider < rows.length && (
+        <div className="flex items-center gap-3 py-1">
+          <div className="flex-1 h-px" style={{ background: "#0e1c33" }} />
+          <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full"
+            style={{ background: "#0d1830", color: "#2a3a5c", border: "1px solid #1a2a45" }}>
+            ·  ·  ·
+          </span>
+          <div className="flex-1 h-px" style={{ background: "#0e1c33" }} />
         </div>
-        <div className="flex-1 h-px" style={{ background: "rgba(251,191,36,0.2)" }} />
+      )}
+
+      {/* Second half */}
+      {divider && rows.slice(half).map((row, i) => (
+        <div key={row.left1.id}>
+          <BracketUnit row={row} />
+          {i < rows.length - half - 1 && (
+            <div className="h-px mt-5" style={{ background: "#0e1c33" }} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** SF view: two SF matches → Final, plus 3rd place */
+function SFView() {
+  return (
+    <div className="space-y-6">
+      {/* SF → Final bracket */}
+      <BracketUnit row={SF_ROW} />
+
+      {/* 3rd place match */}
+      <div className="h-px" style={{ background: "#0e1c33" }} />
+      <div className="flex items-start gap-3">
+        <div className="flex-[0.9] min-w-0">
+          <MatchCard m={THIRD_MATCH} />
+        </div>
+        <div className="flex-[1.1] min-w-0">
+          <div className="rounded-xl flex items-center justify-center py-8 text-center"
+            style={{ background: "#0b1427", border: "1px dashed #1a2a45" }}>
+            <p className="text-xs font-bold" style={{ color: "#2a3a5c" }}>
+              Losers of both SF matches
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** F (Final) view: final + 3rd place side by side */
+function FinalView() {
+  return (
+    <div className="space-y-5">
+      {/* Trophy header */}
+      <div className="text-center py-4">
+        <p className="text-2xl font-black text-white">🏆</p>
+        <p className="text-xs font-bold mt-1" style={{ color: "#4d5e7a" }}>
+          MetLife Stadium, East Rutherford · Jul 19, 2026
+        </p>
+      </div>
+
+      {/* Final */}
+      <MatchCard m={FINAL_MATCH} />
+
+      {/* 3rd place divider */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px" style={{ background: "#0e1c33" }} />
+        <span className="text-[10px] font-bold" style={{ color: "#2a3a5c" }}>3rd Place</span>
+        <div className="flex-1 h-px" style={{ background: "#0e1c33" }} />
+      </div>
+
+      {/* 3rd place match */}
+      <MatchCard m={THIRD_MATCH} />
+    </div>
+  );
+}
+
+// ── Bracket tab (with stage sub-navigation) ───────────────────────────────────
+
+function BracketView() {
+  const [stage, setStage] = useState<StageTab>("R32");
+
+  return (
+    <div className="space-y-5">
+      {/* Stage tab bar — matches the screenshot pill bar */}
+      <div className="overflow-x-auto pb-0.5" style={{ scrollbarWidth: "none" }}>
+        <div className="flex items-center gap-1 p-1 rounded-2xl min-w-max"
+          style={{ background: "#090f1e", border: "1px solid #141e34" }}>
+          {STAGE_TABS.map(tab => {
+            const active = stage === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setStage(tab.id)}
+                className="px-4 py-2 rounded-xl text-sm font-black transition-all"
+                style={active ? {
+                  background: "linear-gradient(135deg,#0052FF,#1d4ed8)",
+                  color: "#fff",
+                  boxShadow: "0 0 14px rgba(0,82,255,0.4)",
+                  border: "1px solid rgba(0,82,255,0.5)",
+                } : {
+                  color: "#2a3a5c",
+                  border: "1px solid transparent",
+                }}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Stage content */}
+      <div>
+        {stage === "GE"  && <GEView />}
+        {stage === "R32" && <BracketStageView rows={R32_ROWS} divider={4} />}
+        {stage === "R16" && <BracketStageView rows={R16_ROWS} divider={2} />}
+        {stage === "QF"  && <BracketStageView rows={QF_ROWS}  />}
+        {stage === "SF"  && <SFView />}
+        {stage === "F"   && <FinalView />}
       </div>
     </div>
   );
@@ -182,19 +370,17 @@ function GroupsGrid() {
   const { t } = useLang();
   return (
     <div className="space-y-4">
-      <div className="text-center space-y-1 pb-2">
-        <p className="text-sm" style={{ color: "#6b7a9a" }}>
-          {t.grp_hosts} · {t.grp_format_note}
-        </p>
-      </div>
+      <p className="text-center text-sm" style={{ color: "#4d5e7a" }}>
+        {t.grp_hosts} · {t.grp_format_note}
+      </p>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {GROUPS.map((group) => {
+        {GROUPS.map(group => {
           const teams = sortedGroupTeams(group);
           return (
             <div key={group} className="glass-card p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center font-black text-sm shrink-0"
-                  style={{ background: "linear-gradient(135deg,rgba(0,82,255,0.2),rgba(0,82,255,0.2))", border: "1px solid rgba(0,82,255,0.2)", color: "#0052FF" }}>
+                  style={{ background: "rgba(0,82,255,0.12)", border: "1px solid rgba(0,82,255,0.2)", color: "#4d7aff" }}>
                   {group}
                 </div>
                 <span className="font-black text-white">Group {group}</span>
@@ -203,7 +389,7 @@ function GroupsGrid() {
                 {teams.map((team, idx) => (
                   <div key={team.id} className="flex items-center gap-2.5">
                     <span className="text-[10px] font-bold w-4 text-right shrink-0"
-                      style={{ color: idx < 2 ? "#0052FF" : "#6b7a9a" }}>
+                      style={{ color: idx < 2 ? "#4d7aff" : "#3d5280" }}>
                       {idx + 1}
                     </span>
                     <Image src={getFlagUrl(team.flagCode, 80)} alt={team.name}
@@ -212,8 +398,8 @@ function GroupsGrid() {
                   </div>
                 ))}
               </div>
-              <p className="text-[10px]" style={{ color: "#6b7a9a" }}>
-                Top 2 advance · 3rd place may qualify as best 3rd
+              <p className="text-[10px]" style={{ color: "#3d5280" }}>
+                Top 2 advance · best 3rd may qualify
               </p>
             </div>
           );
@@ -223,222 +409,103 @@ function GroupsGrid() {
   );
 }
 
-// ── Bracket sub-tab ───────────────────────────────────────────────────────────
-
-function BracketView() {
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center gap-3 justify-center text-[11px]" style={{ color: "#6b7a9a" }}>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-2 h-2 rounded-full" style={{ background: "#0052FF" }} />
-          Team = most likely finalist of that group by pre-tournament odds
-        </span>
-        <span>·</span>
-        <span>3rd place pairings confirmed after group stage ends (June 27)</span>
-      </div>
-      <div>
-        <div className="flex items-center gap-3 mb-3">
-          <div className="h-px flex-1" style={{ background: "rgba(251,191,36,0.15)" }} />
-          <span className="text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full"
-            style={{ background: "rgba(251,191,36,0.08)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.2)" }}>
-            Semi-Final 1 Path
-          </span>
-          <div className="h-px flex-1" style={{ background: "rgba(251,191,36,0.15)" }} />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <QuadrantCard q={QUADRANTS[0]} sfLabel="SF 1" />
-          <QuadrantCard q={QUADRANTS[1]} sfLabel="SF 1" />
-        </div>
-      </div>
-      <div>
-        <div className="flex items-center gap-3 mb-3">
-          <div className="h-px flex-1" style={{ background: "rgba(37,99,235,0.2)" }} />
-          <span className="text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full"
-            style={{ background: "rgba(37,99,235,0.08)", color: "#2563EB", border: "1px solid rgba(37,99,235,0.2)" }}>
-            Semi-Final 2 Path
-          </span>
-          <div className="h-px flex-1" style={{ background: "rgba(37,99,235,0.2)" }} />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <QuadrantCard q={QUADRANTS[2]} sfLabel="SF 2" />
-          <QuadrantCard q={QUADRANTS[3]} sfLabel="SF 2" />
-        </div>
-      </div>
-      <div className="glass-card p-5 text-center"
-        style={{ borderColor: "rgba(251,191,36,0.25)", boxShadow: "0 0 40px rgba(251,191,36,0.06)" }}>
-        <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "#fbbf24" }}>
-          🏆 Final
-        </p>
-        <p className="font-bold text-white">SF 1 Winner vs SF 2 Winner</p>
-        <p className="text-xs mt-1" style={{ color: "#6b7a9a" }}>
-          MetLife Stadium, East Rutherford · July 19, 2026
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // ── Table (standings) sub-tab ─────────────────────────────────────────────────
 
 function TableView() {
   const { t } = useLang();
-  const [selectedGroup, setSelectedGroup] = useState<string>("A");
-
-  // Build id → country lookup
+  const [selected, setSelected] = useState("A");
   const countryById = Object.fromEntries(COUNTRIES.map(c => [c.id, c]));
 
-  // Sorted standings for selected group (tiebreak: favoriteRank)
-  const rawRows = GROUP_STANDINGS[selectedGroup] ?? [];
+  const rawRows = GROUP_STANDINGS[selected] ?? [];
   const sorted  = sortStandings(rawRows).sort((a, b) => {
-    // secondary tiebreak: if pts/gd/gf all equal → favoriteRank
-    const pa = getPts(a), pb = getPts(b);
-    const gda = getGD(a), gdb = getGD(b);
-    if (pa !== pb || gda !== gdb || a.gf !== b.gf) return 0; // already sorted by sortStandings
+    const [pa, pb] = [getPts(a), getPts(b)];
+    const [gda, gdb] = [getGD(a), getGD(b)];
+    if (pa !== pb || gda !== gdb || a.gf !== b.gf) return 0;
     return (countryById[a.countryId]?.favoriteRank ?? 99) - (countryById[b.countryId]?.favoriteRank ?? 99);
   });
-
   const allZero = sorted.every(r => r.p === 0);
 
   return (
     <div className="space-y-4">
-
-      {/* Group selector — horizontal scroll pills */}
+      {/* Group selector */}
       <div className="overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-        <div className="flex gap-1.5 min-w-max px-0.5">
+        <div className="flex gap-1.5 min-w-max">
           {GROUPS.map(g => (
-            <button
-              key={g}
-              onClick={() => setSelectedGroup(g)}
+            <button key={g} onClick={() => setSelected(g)}
               className="w-9 h-9 rounded-xl text-sm font-black transition-all shrink-0"
-              style={selectedGroup === g
-                ? { background: "linear-gradient(135deg,#0052FF,#2563EB)", color: "#fff", boxShadow: "0 0 16px rgba(0,82,255,0.35)", border: "1px solid rgba(0,82,255,0.5)" }
-                : { background: "rgba(255,255,255,0.03)", color: "#6b7a9a", border: "1px solid rgba(255,255,255,0.07)" }
-              }
-            >
+              style={selected === g
+                ? { background: "linear-gradient(135deg,#0052FF,#1d4ed8)", color: "#fff", boxShadow: "0 0 14px rgba(0,82,255,0.35)", border: "1px solid rgba(0,82,255,0.5)" }
+                : { background: "rgba(255,255,255,0.03)", color: "#3d5280", border: "1px solid #141e34" }
+              }>
               {g}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Table card */}
-      <div className="glass-card overflow-hidden" style={{ padding: 0 }}>
-
+      {/* Table */}
+      <div className="rounded-2xl overflow-hidden" style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
         {/* Header */}
         <div className="flex items-center gap-2 px-4 py-3"
-          style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,82,255,0.04)" }}>
-          <div className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm shrink-0"
-            style={{ background: "linear-gradient(135deg,rgba(0,82,255,0.25),rgba(37,99,235,0.15))", border: "1px solid rgba(0,82,255,0.3)", color: "#60A5FA" }}>
-            {selectedGroup}
-          </div>
-          <span className="font-black text-white text-sm">{t.tbl_group} {selectedGroup}</span>
+          style={{ borderBottom: "1px solid #1a2a45", background: "#0d1830" }}>
+          <span className="w-7 h-7 rounded-lg flex items-center justify-center font-black text-sm shrink-0"
+            style={{ background: "#0f2050", color: "#4d7aff", border: "1px solid #1a3a80" }}>
+            {selected}
+          </span>
+          <span className="font-black text-white text-sm">{t.tbl_group} {selected}</span>
           {!allZero && (
-            <span className="ml-auto flex items-center gap-1 text-[10px] font-bold" style={{ color: "#10b981" }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              LIVE
+            <span className="ml-auto flex items-center gap-1.5 text-[10px] font-bold" style={{ color: "#10b981" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />LIVE
             </span>
           )}
         </div>
 
-        {/* Column headers */}
+        {/* Column labels */}
         <div className="grid px-4 py-2"
-          style={{
-            gridTemplateColumns: "24px 1fr 32px 28px 28px 28px 36px 36px",
-            borderBottom: "1px solid rgba(255,255,255,0.05)",
-            background: "rgba(255,255,255,0.015)",
-          }}>
-          <span className="text-[10px] font-bold" style={{ color: "#6b7a9a" }}></span>
-          <span className="text-[10px] font-bold" style={{ color: "#6b7a9a" }}></span>
-          <span className="text-[10px] font-bold text-center" style={{ color: "#6b7a9a" }}>{t.tbl_p}</span>
-          <span className="text-[10px] font-bold text-center" style={{ color: "#6b7a9a" }}>{t.tbl_w}</span>
-          <span className="text-[10px] font-bold text-center" style={{ color: "#6b7a9a" }}>{t.tbl_d}</span>
-          <span className="text-[10px] font-bold text-center" style={{ color: "#6b7a9a" }}>{t.tbl_l}</span>
-          <span className="text-[10px] font-bold text-center" style={{ color: "#6b7a9a" }}>{t.tbl_gd}</span>
+          style={{ gridTemplateColumns: "20px 1fr 32px 26px 26px 26px 34px 34px", borderBottom: "1px solid #0e1c33", background: "#0a1220" }}>
+          <span /><span />
+          {[t.tbl_p, t.tbl_w, t.tbl_d, t.tbl_l, t.tbl_gd].map(h => (
+            <span key={h} className="text-[10px] font-bold text-center" style={{ color: "#2a3a5c" }}>{h}</span>
+          ))}
           <span className="text-[10px] font-bold text-center" style={{ color: "#fbbf24" }}>{t.tbl_pts}</span>
         </div>
 
         {/* Rows */}
         {sorted.map((row, idx) => {
-          const country = countryById[row.countryId];
-          if (!country) return null;
-          const pts  = getPts(row);
-          const gd   = getGD(row);
-          const isQ1 = idx === 0; // 1st place
-          const isQ2 = idx === 1; // 2nd place
-          const isQ3 = idx === 2; // 3rd (may qualify as best 3rd)
-
-          let rowBg = "transparent";
-          let leftAccent = "transparent";
-          if (isQ1) { rowBg = "rgba(0,82,255,0.055)"; leftAccent = "#0052FF"; }
-          else if (isQ2) { rowBg = "rgba(0,82,255,0.030)"; leftAccent = "#2563EB"; }
-          else if (isQ3) { rowBg = "rgba(251,191,36,0.025)"; leftAccent = "rgba(251,191,36,0.4)"; }
+          const c   = countryById[row.countryId];
+          if (!c) return null;
+          const pts = getPts(row);
+          const gd  = getGD(row);
+          const bg  = idx === 0 ? "rgba(0,82,255,0.07)" : idx === 1 ? "rgba(0,82,255,0.04)" : idx === 2 ? "rgba(251,191,36,0.025)" : "transparent";
+          const accent = idx === 0 ? "#0052FF" : idx === 1 ? "#1d4ed8" : idx === 2 ? "rgba(251,191,36,0.5)" : "transparent";
 
           return (
-            <div
-              key={row.countryId}
-              className="grid items-center px-4 py-3 transition-colors relative"
-              style={{
-                gridTemplateColumns: "24px 1fr 32px 28px 28px 28px 36px 36px",
-                background: rowBg,
-                borderBottom: idx < 3 ? "1px solid rgba(255,255,255,0.04)" : "none",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.background = isQ1 ? "rgba(0,82,255,0.09)" : isQ2 ? "rgba(0,82,255,0.06)" : isQ3 ? "rgba(251,191,36,0.05)" : "rgba(255,255,255,0.02)"; }}
-              onMouseLeave={e => { e.currentTarget.style.background = rowBg; }}
-            >
-              {/* Left qualifying accent bar */}
-              <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-r"
-                style={{ background: leftAccent }} />
-
-              {/* Rank */}
-              <span className="text-xs font-black text-center shrink-0"
-                style={{ color: isQ1 ? "#60A5FA" : isQ2 ? "#7dd3fc" : isQ3 ? "#fcd34d" : "#6b7a9a" }}>
-                {idx + 1}
-              </span>
-
-              {/* Flag + Name */}
+            <div key={row.countryId} className="grid items-center px-4 py-3 relative"
+              style={{ gridTemplateColumns: "20px 1fr 32px 26px 26px 26px 34px 34px", background: bg, borderBottom: idx < 3 ? "1px solid #0e1c33" : undefined }}>
+              <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-r" style={{ background: accent }} />
+              <span className="text-[11px] font-black text-center" style={{ color: idx < 2 ? "#4d7aff" : idx === 2 ? "#fcd34d" : "#2a3a5c" }}>{idx + 1}</span>
               <div className="flex items-center gap-2 min-w-0">
-                <Image
-                  src={getFlagUrl(country.flagCode, 40)} alt={country.name}
-                  width={24} height={16} className="rounded-[3px] object-cover shrink-0" unoptimized
-                />
-                <span className="text-sm font-semibold text-white truncate leading-tight">
-                  {country.name}
-                </span>
+                <Image src={getFlagUrl(c.flagCode, 40)} alt={c.name} width={22} height={15} className="rounded-[3px] object-cover shrink-0" unoptimized />
+                <span className="text-xs font-semibold truncate" style={{ color: idx < 2 ? "#c8d6f0" : "#4d5e7a" }}>{c.name}</span>
               </div>
-
-              {/* Stats */}
-              <span className="text-xs font-bold text-center" style={{ color: "#9ca3af" }}>{row.p}</span>
-              <span className="text-xs font-bold text-center" style={{ color: row.w > 0 ? "#4ade80" : "#9ca3af" }}>{row.w}</span>
-              <span className="text-xs font-bold text-center" style={{ color: row.d > 0 ? "#facc15" : "#9ca3af" }}>{row.d}</span>
-              <span className="text-xs font-bold text-center" style={{ color: row.l > 0 ? "#f87171" : "#9ca3af" }}>{row.l}</span>
-              <span className="text-xs font-bold text-center"
-                style={{ color: gd > 0 ? "#4ade80" : gd < 0 ? "#f87171" : "#9ca3af" }}>
-                {gd > 0 ? `+${gd}` : gd}
-              </span>
-              <span className="text-sm font-black text-center"
-                style={{ color: isQ1 || isQ2 ? "#f0f4ff" : "#9ca3af" }}>
-                {pts}
-              </span>
+              <span className="text-[11px] font-bold text-center" style={{ color: "#3d5280" }}>{row.p}</span>
+              <span className="text-[11px] font-bold text-center" style={{ color: row.w > 0 ? "#4ade80" : "#3d5280" }}>{row.w}</span>
+              <span className="text-[11px] font-bold text-center" style={{ color: row.d > 0 ? "#facc15" : "#3d5280" }}>{row.d}</span>
+              <span className="text-[11px] font-bold text-center" style={{ color: row.l > 0 ? "#f87171" : "#3d5280" }}>{row.l}</span>
+              <span className="text-[11px] font-bold text-center" style={{ color: gd > 0 ? "#4ade80" : gd < 0 ? "#f87171" : "#3d5280" }}>{gd > 0 ? `+${gd}` : gd}</span>
+              <span className="text-sm font-black text-center" style={{ color: idx < 2 ? "#e2e8f0" : "#3d5280" }}>{pts}</span>
             </div>
           );
         })}
 
-        {/* Qualifying legend */}
-        <div className="px-4 py-3 space-y-1.5"
-          style={{ background: "rgba(255,255,255,0.01)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-          <div className="flex items-center gap-2">
-            <div className="w-0.5 h-3.5 rounded-full" style={{ background: "#0052FF" }} />
-            <span className="text-[10px]" style={{ color: "#6b7a9a" }}>{t.tbl_qualifies}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-0.5 h-3.5 rounded-full" style={{ background: "rgba(251,191,36,0.6)" }} />
-            <span className="text-[10px]" style={{ color: "#6b7a9a" }}>{t.tbl_third}</span>
-          </div>
+        {/* Legend */}
+        <div className="px-4 py-3 space-y-1" style={{ background: "#080f1e", borderTop: "1px solid #0e1c33" }}>
+          <div className="flex items-center gap-2"><div className="w-0.5 h-3 rounded-full" style={{ background: "#0052FF" }} /><span className="text-[10px]" style={{ color: "#2a3a5c" }}>{t.tbl_qualifies}</span></div>
+          <div className="flex items-center gap-2"><div className="w-0.5 h-3 rounded-full" style={{ background: "rgba(251,191,36,0.5)" }} /><span className="text-[10px]" style={{ color: "#2a3a5c" }}>{t.tbl_third}</span></div>
         </div>
       </div>
 
-      {/* Info note */}
-      <p className="text-center text-xs" style={{ color: "rgba(107,122,154,0.55)" }}>
+      <p className="text-center text-xs" style={{ color: "#1a2a45" }}>
         {allZero ? t.tbl_not_started : t.tbl_live_note}
       </p>
     </div>
@@ -449,43 +516,39 @@ function TableView() {
 
 export function GroupsPage() {
   const { t } = useLang();
-  const [innerTab, setInnerTab] = useState<InnerTab>("groups");
+  const [innerTab, setInnerTab] = useState<InnerTab>("bracket");
 
   const TABS: { id: InnerTab; label: string }[] = [
-    { id: "groups",  label: "Groups"    },
-    { id: "table",   label: t.tbl_tab   },
-    { id: "bracket", label: "Bracket"   },
+    { id: "groups",  label: "Groups"   },
+    { id: "table",   label: t.tbl_tab  },
+    { id: "bracket", label: "Bracket"  },
   ];
 
   return (
     <div className="space-y-5">
-      {/* Page header */}
       <div className="text-center space-y-1">
         <h1 className="text-2xl font-black text-white">{t.grp_title}</h1>
-        <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.grp_sub}</p>
+        <p className="text-sm" style={{ color: "#4d5e7a" }}>{t.grp_sub}</p>
       </div>
 
       {/* Inner tabs */}
       <div className="flex justify-center">
         <div className="flex items-center gap-1 p-1 rounded-xl"
-          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
           {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setInnerTab(tab.id)}
+            <button key={tab.id} onClick={() => setInnerTab(tab.id)}
               className="px-5 py-2 rounded-lg text-sm font-bold transition-all"
               style={innerTab === tab.id
-                ? { background: "rgba(0,82,255,0.12)", color: "#0052FF", border: "1px solid rgba(0,82,255,0.25)" }
-                : { color: "#6b7a9a", border: "1px solid transparent" }
-              }
-            >
+                ? { background: "rgba(0,82,255,0.12)", color: "#4d7aff", border: "1px solid rgba(0,82,255,0.25)" }
+                : { color: "#3d5280", border: "1px solid transparent" }
+              }>
               {tab.label}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Tab content */}
+      {/* Content */}
       {innerTab === "groups"  && <GroupsGrid />}
       {innerTab === "table"   && <TableView />}
       {innerTab === "bracket" && <BracketView />}
