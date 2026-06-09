@@ -77,13 +77,17 @@ export function NationsCupPage() {
   const { t } = useLang();
   const queryClient = useQueryClient();
 
-  // Scroll to country cards grid and flash them
+  // Scroll to country cards grid (accounting for sticky header) and flash them
   const handleMintNow = () => {
-    cardsGridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (cardsGridRef.current) {
+      const headerEl    = document.querySelector("header");
+      const headerH     = (headerEl?.offsetHeight ?? 110) + 16; // header + 16px breathing room
+      const elTop       = cardsGridRef.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: elTop - headerH, behavior: "smooth" });
+    }
     setFlashCards(false);
-    // Small delay so the class re-applies if already animating
     setTimeout(() => setFlashCards(true), 50);
-    setTimeout(() => setFlashCards(false), 1750); // 3 × 0.55s ≈ 1.65s + buffer
+    setTimeout(() => setFlashCards(false), 1750);
   };
 
   const { data: tournamentFinalized, isLoading } = useReadContract({ address: CONTRACT_ADDRESS, abi: ABI, functionName: "tournamentFinalized" });
