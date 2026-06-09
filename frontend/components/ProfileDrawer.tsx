@@ -3,15 +3,17 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { useAccount, useDisconnect, useReadContract, useBalance } from "wagmi";
-import { X, LogOut, Ticket, Trophy, ExternalLink } from "lucide-react";
+import { X, LogOut, Ticket, ExternalLink, Pencil, UserPlus } from "lucide-react";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS, formatEth, shortenAddress, TOP_SCORER_PLAYERS, MINT_PRICE, TICKET_PRICE } from "@/lib/config";
 import { COUNTRIES, getFlagUrl } from "@/lib/countries";
 import { useLang } from "@/lib/LanguageContext";
+import { useUsername } from "@/lib/useUsername";
 
 interface ProfileDrawerProps {
   open: boolean;
   onClose: () => void;
+  onSetUsername?: () => void;
 }
 
 function AddressAvatar({ address }: { address: string }) {
@@ -33,10 +35,11 @@ function AddressAvatar({ address }: { address: string }) {
   );
 }
 
-export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
+export function ProfileDrawer({ open, onClose, onSetUsername }: ProfileDrawerProps) {
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
   const { t } = useLang();
+  const { username } = useUsername(address);
   const overlayRef = useRef<HTMLDivElement>(null);
 
   // Close on ESC
@@ -126,9 +129,9 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-5 shrink-0"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <AddressAvatar address={address} />
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="font-mono text-sm font-bold text-white">{shortenAddress(address)}</p>
               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                 <p className="text-xs" style={{ color: "#6b7a9a" }}>
@@ -141,10 +144,35 @@ export function ProfileDrawer({ open, onClose }: ProfileDrawerProps) {
                   </span>
                 )}
               </div>
+
+              {/* Username row */}
+              <button
+                onClick={() => { onSetUsername?.(); onClose(); }}
+                className="flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-lg transition-all"
+                style={{
+                  background: username ? "rgba(0,82,255,0.08)" : "rgba(255,255,255,0.04)",
+                  border: `1px solid ${username ? "rgba(0,82,255,0.25)" : "rgba(255,255,255,0.1)"}`,
+                  maxWidth: "100%",
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = username ? "rgba(0,82,255,0.5)" : "rgba(255,255,255,0.22)"; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = username ? "rgba(0,82,255,0.25)" : "rgba(255,255,255,0.1)"; }}
+              >
+                {username ? (
+                  <>
+                    <span className="text-sm font-bold truncate" style={{ color: "#60A5FA" }}>@{username}</span>
+                    <Pencil size={11} style={{ color: "#6b7a9a", flexShrink: 0 }} />
+                  </>
+                ) : (
+                  <>
+                    <UserPlus size={12} style={{ color: "#6b7a9a" }} />
+                    <span className="text-xs font-semibold" style={{ color: "#6b7a9a" }}>Set username</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
           <button onClick={onClose}
-            className="p-2 rounded-xl transition-colors"
+            className="p-2 rounded-xl transition-colors shrink-0 self-start"
             style={{ color: "#6b7a9a" }}
             onMouseEnter={e => (e.currentTarget.style.color = "#f0f4ff")}
             onMouseLeave={e => (e.currentTarget.style.color = "#6b7a9a")}>

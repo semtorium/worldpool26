@@ -26,7 +26,10 @@ export function useUsername(address?: string) {
     return owner !== address?.toLowerCase();
   };
 
-  /** Save username + update taken registry */
+  /** Save username + update taken registry.
+   *  Passing "" means "skip / clear display name" — key is written as ""
+   *  so the Navbar knows the user was already prompted and won't re-show the modal.
+   *  Use clearUsername() to fully remove the key (re-enables auto-prompt). */
   const applyUsername = (name: string) => {
     if (!address || typeof window === "undefined") return;
     const trimmed = name.trim();
@@ -35,11 +38,10 @@ export function useUsername(address?: string) {
     const old = localStorage.getItem(unameKey(address));
     if (old) localStorage.removeItem(takenKey(old));
 
+    // Always write the key — "" = skipped, non-empty = active username
+    localStorage.setItem(unameKey(address), trimmed);
     if (trimmed) {
-      localStorage.setItem(unameKey(address), trimmed);
       localStorage.setItem(takenKey(trimmed), address.toLowerCase());
-    } else {
-      localStorage.removeItem(unameKey(address));
     }
     setUsernameState(trimmed);
   };

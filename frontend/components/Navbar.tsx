@@ -178,7 +178,11 @@ export function Navbar({ activeTab, onTabChange }: NavbarProps) {
       </header>
 
       {/* Profile Drawer */}
-      <ProfileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <ProfileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        onSetUsername={() => { setDrawerOpen(false); setShowUsernameModal(true); }}
+      />
 
       {/* Username Modal — shown once on first connect */}
       {showUsernameModal && address && (

@@ -59,7 +59,7 @@ export function UsernameModal({ address, onDone }: Props) {
 
   const handleApply = () => {
     const trimmed = input.trim();
-    if (!trimmed) { onDone(); return; } // empty = same as skip
+    if (!trimmed) { applyUsername(""); onDone(); return; } // empty = same as skip, but mark as prompted
     if (isTaken(trimmed)) {
       setError("This username is already taken by another wallet.");
       return;
