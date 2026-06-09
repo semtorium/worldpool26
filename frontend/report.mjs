@@ -9,7 +9,7 @@ import { createPublicClient, http, formatEther, decodeEventLog } from "viem";
 import { baseSepolia } from "viem/chains";
 
 // ── Config ─────────────────────────────────────────────────────
-const CONTRACT = "0xee37Ddb34a737AD274671423Feb838C72e7999e4";
+const CONTRACT = "0xA1bdaCCb41a5bbF049cEE4Db5732E42Ca4985362";
 
 const COUNTRIES = [
   { id:  1, name: "Mexico" },        { id:  2, name: "South Africa" },
