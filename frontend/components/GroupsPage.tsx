@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, createContext, useContext } from "react";
 import { COUNTRIES, GROUPS, getFlagUrl } from "@/lib/countries";
-import { GROUP_STANDINGS, getPts, getGD, sortStandings } from "@/lib/tournamentData";
+import { GROUP_STANDINGS, getPts, getGD, sortStandings, type TeamStanding } from "@/lib/tournamentData";
 import {
   MatchData, MatchSlot, BracketRow,
   R32_MATCHES, R32_ROWS,
@@ -13,9 +13,15 @@ import {
 import { useLang } from "@/lib/LanguageContext";
 import type { Translations } from "@/lib/i18n";
 import { resolveSlot } from "@/lib/tournamentLogic";
+import { useLiveStandings } from "@/lib/useLiveStandings";
+import type { GroupStandings } from "@/app/api/tournament/route";
 
 type StageTab  = "GE" | "R32" | "R16" | "QF" | "SF" | "F";
 type ViewMode  = "table" | "split" | "bracket" | "r32bracket" | "trophy";
+
+// ── Standings context (avoids prop drilling to MatchCard / group lists) ────────
+const StandingsCtx = createContext<GroupStandings>(GROUP_STANDINGS);
+const useStandings = () => useContext(StandingsCtx);
 
 /** Which view modes are available per stage (order = icon order) */
 const STAGE_MODES: Record<StageTab, ViewMode[]> = {
@@ -73,8 +79,7 @@ function fmtDate(dateStr: string, time: string, lang: string): string {
 
 const cById = Object.fromEntries(COUNTRIES.map(c => [c.id, c]));
 
-function getSortedGroup(group: string) {
-  const raw = GROUP_STANDINGS[group] ?? [];
+function sortGroup(raw: TeamStanding[]) {
   return sortStandings(raw).sort((a, b) => {
     if (getPts(a) !== getPts(b) || getGD(a) !== getGD(b) || a.gf !== b.gf) return 0;
     return (cById[a.countryId]?.favoriteRank ?? 99) - (cById[b.countryId]?.favoriteRank ?? 99);
@@ -84,10 +89,11 @@ function getSortedGroup(group: string) {
 // ── Left column: compact standings (R32 tab) ──────────────────────────────────
 
 function CompactGroupList({ t }: { t: Translations }) {
+  const standings = useStandings();
   return (
     <div className="space-y-2 pr-1">
       {GROUPS.map(group => {
-        const sorted = getSortedGroup(group);
+        const sorted = sortGroup(standings[group] ?? []);
         return (
           <div key={group} className="rounded-xl overflow-hidden"
             style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
@@ -138,11 +144,12 @@ function CompactGroupList({ t }: { t: Translations }) {
 // ── Left column: full standings (GE tab) ──────────────────────────────────────
 
 function FullGroupList({ t }: { t: Translations }) {
+  const standings = useStandings();
   const cols = [t.tbl_p, t.tbl_w, t.tbl_d, t.tbl_l, t.tbl_gd, t.tbl_pts];
   return (
     <div className="space-y-2 pr-1">
       {GROUPS.map(group => {
-        const sorted = getSortedGroup(group);
+        const sorted = sortGroup(standings[group] ?? []);
         return (
           <div key={group} className="rounded-xl overflow-hidden"
             style={{ background: "#0b1427", border: "1px solid #1a2a45" }}>
@@ -216,8 +223,9 @@ const R32_BY_DATE: { date: string; matches: MatchData[] }[] = [];
 }
 
 function ScheduleCard({ m, lang }: { m: MatchData; lang: string }) {
-  const slotA = resolveSlot(m.a.label);
-  const slotB = resolveSlot(m.b.label);
+  const standings = useStandings();
+  const slotA = resolveSlot(m.a.label, standings);
+  const slotB = resolveSlot(m.b.label, standings);
   const resolvedA = !!slotA.flagCode;
   const resolvedB = !!slotB.flagCode;
   return (
@@ -311,9 +319,10 @@ function SlotAvatar({ slot }: { slot: MatchSlot }) {
 }
 
 function MatchCard({ m, lang }: { m: MatchData; lang: string }) {
-  // Resolve slot labels → real team (once group data is available)
-  const slotA = resolveSlot(m.a.label);
-  const slotB = resolveSlot(m.b.label);
+  // Resolve slot labels → real team using live standings
+  const standings = useStandings();
+  const slotA = resolveSlot(m.a.label, standings);
+  const slotB = resolveSlot(m.b.label, standings);
   const isTbdA = slotA.label === "TBD";
   const isTbdB = slotB.label === "TBD";
   // A slot is "resolved" (real team known) when it has a flagCode
@@ -562,6 +571,7 @@ export function GroupsPage() {
   const { t, lang } = useLang();
   const [stage,    setStage]    = useState<StageTab>("R32");
   const [viewMode, setViewMode] = useState<ViewMode>(DEFAULT_MODE["R32"]);
+  const { standings, live, lastUpdated } = useLiveStandings();
 
   function handleStageChange(s: StageTab) {
     setStage(s);
@@ -578,11 +588,21 @@ export function GroupsPage() {
   ];
 
   return (
+    <StandingsCtx.Provider value={standings}>
     <div className="space-y-3">
       {/* Header */}
       <div className="text-center space-y-0.5">
         <h1 className="text-xl font-black text-white">{t.grp_title}</h1>
         <p className="text-sm" style={{ color: "#4d5e7a" }}>{t.grp_sub}</p>
+        {/* Live data indicator */}
+        {live && lastUpdated && (
+          <div className="flex items-center justify-center gap-1.5 mt-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[10px] font-bold" style={{ color: "#10b981" }}>
+              LIVE · {lastUpdated.toLocaleTimeString([], { hour:"2-digit", minute:"2-digit" })}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Stage tabs */}
@@ -641,5 +661,6 @@ export function GroupsPage() {
       {stage === "SF"  && <SFView  lang={lang} />}
       {stage === "F"   && <FinalView lang={lang} />}
     </div>
+    </StandingsCtx.Provider>
   );
 }
