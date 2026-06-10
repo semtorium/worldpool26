@@ -308,84 +308,122 @@ export function NationsCupPage() {
         </div>
       )}
 
-      {/* Early-Bird Banner — visible while discount slots remain */}
-      {showEarlyBird && (
-        <div
-          style={{
-            borderRadius: "14px",
-            border: "1px solid rgba(251,191,36,0.5)",
-            background: "linear-gradient(135deg, rgba(251,191,36,0.10) 0%, rgba(245,158,11,0.04) 100%)",
-            boxShadow: "0 0 28px rgba(251,191,36,0.12), inset 0 1px 0 rgba(255,255,255,0.05)",
-            padding: "14px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "12px",
-            flexWrap: "wrap",
-          }}
-        >
-          {/* Left */}
-          <div className="flex flex-col gap-0.5">
-            <div className="flex items-center gap-2">
-              <div style={{ width: 7, height: 7, minWidth: 7, borderRadius: "50%", background: "#fbbf24", boxShadow: "0 0 8px #fbbf24", animation: "liveDotPulse 1.5s ease-in-out infinite" }} />
-              <span className="font-black tracking-[0.2em] uppercase" style={{ fontSize: "13px", color: "#fbbf24" }}>
-                🔥 {t.eb_title}
-              </span>
-            </div>
-            <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.5)", paddingLeft: "15px" }}>
-              {t.eb_max_tx}
+      {/* Combined FOMO + Early Bird mega banner */}
+      {!mintClosed && !tournamentFinalized && (showEarlyBird || mintEndTimeMs > 0) && (
+        <div style={{
+          borderRadius: "18px",
+          border: "1px solid rgba(251,191,36,0.55)",
+          background: "linear-gradient(135deg, rgba(251,191,36,0.13) 0%, rgba(245,158,11,0.07) 50%, rgba(239,68,68,0.08) 100%)",
+          boxShadow: "0 0 48px rgba(251,191,36,0.18), 0 0 96px rgba(251,191,36,0.06), inset 0 1px 0 rgba(255,255,255,0.09)",
+          padding: "20px 22px",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* Background glows */}
+          <div style={{ position: "absolute", top: "-40%", left: "-5%", width: "50%", height: "180%", background: "radial-gradient(ellipse, rgba(251,191,36,0.07) 0%, transparent 65%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", top: "-40%", right: "-5%", width: "50%", height: "180%", background: "radial-gradient(ellipse, rgba(239,68,68,0.05) 0%, transparent 65%)", pointerEvents: "none" }} />
+
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: mintEndTimeMs > 0 ? "#ef4444" : "#fbbf24", boxShadow: `0 0 10px ${mintEndTimeMs > 0 ? "#ef4444" : "#fbbf24"}`, animation: "liveDotPulse 1s ease-in-out infinite", flexShrink: 0 }} />
+            <span className="font-black tracking-[0.22em] uppercase" style={{ fontSize: "11px", color: mintEndTimeMs > 0 ? "#ef4444" : "#fbbf24" }}>
+              {mintEndTimeMs > 0 ? "MINT WINDOW CLOSING SOON" : `🔥 ${t.eb_title}`}
             </span>
           </div>
 
-          {/* Right: slot counter + mint now button */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                background: "rgba(251,191,36,0.10)",
-                border: "1px solid rgba(251,191,36,0.3)",
-                borderRadius: "10px",
-                padding: "6px 14px",
-                flexShrink: 0,
-              }}
-            >
-              <span className="font-black font-mono" style={{ fontSize: "18px", color: "#fff" }}>{ebRemaining}</span>
-              <span style={{ fontSize: "11px", color: "#6b7a9a" }}>/ {EARLY_BIRD_SUPPLY}</span>
-              <span style={{ fontSize: "11px", color: "rgba(251,191,36,0.5)", marginLeft: 2 }}>slots</span>
-              <span style={{
-                marginLeft: 6, padding: "2px 8px", borderRadius: 99,
-                background: "rgba(251,191,36,0.18)", border: "1px solid rgba(251,191,36,0.35)",
-                fontSize: 11, fontWeight: 900, color: "#fbbf24",
-              }}>
-                {t.eb_discount}
-              </span>
+          {/* Three steps */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", flexWrap: "wrap", marginBottom: "18px" }}>
+            {([
+              { icon: "🎨", label: "Mint NFT",      sub: "Pick your country" },
+              { icon: "🏆", label: "Hold NFT",       sub: "Support your team" },
+              { icon: "💰", label: "Win Prize Pool", sub: "Claim your ETH"    },
+            ] as const).map((step, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", minWidth: "82px" }}>
+                  <div style={{ fontSize: "26px", marginBottom: "5px", filter: "drop-shadow(0 0 8px rgba(251,191,36,0.4))", animation: i === 0 ? "fomoIconPop 2s ease-in-out infinite" : undefined }}>{step.icon}</div>
+                  <span className="font-black text-white" style={{ fontSize: "13px", lineHeight: 1.2 }}>{step.label}</span>
+                  <span style={{ fontSize: "10px", color: "rgba(251,191,36,0.5)", marginTop: "2px" }}>{step.sub}</span>
+                </div>
+                {i < 2 && <span style={{ fontSize: "18px", color: "rgba(251,191,36,0.5)", flexShrink: 0, filter: "drop-shadow(0 0 6px rgba(251,191,36,0.3))" }}>→</span>}
+              </div>
+            ))}
+          </div>
+
+          {/* Early Bird row — only when slots remain */}
+          {showEarlyBird && (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px",
+              borderTop: "1px solid rgba(251,191,36,0.15)", paddingTop: "14px", marginBottom: "14px",
+            }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <span className="font-black" style={{ fontSize: "12px", color: "#fbbf24" }}>🔥 {t.eb_title}</span>
+                <span style={{ fontSize: "10px", color: "rgba(251,191,36,0.5)" }}>{t.eb_max_tx}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", background: "rgba(251,191,36,0.10)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: "10px", padding: "6px 14px", flexShrink: 0 }}>
+                <span className="font-black font-mono text-white" style={{ fontSize: "18px" }}>{ebRemaining}</span>
+                <span style={{ fontSize: "11px", color: "#6b7a9a" }}>/ {EARLY_BIRD_SUPPLY} slots</span>
+                <span style={{ marginLeft: 6, padding: "2px 8px", borderRadius: 99, background: "rgba(251,191,36,0.18)", border: "1px solid rgba(251,191,36,0.35)", fontSize: 11, fontWeight: 900, color: "#fbbf24" }}>
+                  {t.eb_discount}
+                </span>
+              </div>
             </div>
+          )}
+
+          {/* Countdown + CTA */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: mintEndTimeMs > 0 ? "space-between" : "flex-end", gap: "12px", flexWrap: "wrap" }}>
+            {/* Countdown — only when deadline is set */}
+            {mintEndTimeMs > 0 && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
+                {mintDeadline.days > 0 && (
+                  <>
+                    <div style={{ textAlign: "center" }}>
+                      <div className="font-black font-mono text-white" style={{ fontSize: "32px", lineHeight: 1 }}>{mintDeadline.days}</div>
+                      <div style={{ fontSize: "9px", color: "#6b7a9a", letterSpacing: "0.12em", marginTop: "2px" }}>DAYS</div>
+                    </div>
+                    <span style={{ fontSize: "24px", color: "rgba(251,191,36,0.35)", paddingBottom: "14px", alignSelf: "flex-end" }}>:</span>
+                  </>
+                )}
+                <div style={{ textAlign: "center" }}>
+                  <div className="font-black font-mono text-white" style={{ fontSize: "32px", lineHeight: 1 }}>{String(mintDeadline.hours).padStart(2, "0")}</div>
+                  <div style={{ fontSize: "9px", color: "#6b7a9a", letterSpacing: "0.12em", marginTop: "2px" }}>HRS</div>
+                </div>
+                <span style={{ fontSize: "24px", color: "rgba(251,191,36,0.35)", paddingBottom: "14px", alignSelf: "flex-end" }}>:</span>
+                <div style={{ textAlign: "center" }}>
+                  <div className="font-black font-mono text-white" style={{ fontSize: "32px", lineHeight: 1 }}>{String(mintDeadline.mins).padStart(2, "0")}</div>
+                  <div style={{ fontSize: "9px", color: "#6b7a9a", letterSpacing: "0.12em", marginTop: "2px" }}>MIN</div>
+                </div>
+                <span style={{ fontSize: "24px", color: "rgba(251,191,36,0.35)", paddingBottom: "14px", alignSelf: "flex-end" }}>:</span>
+                <div style={{ textAlign: "center" }}>
+                  <div className="font-black font-mono" style={{ fontSize: "32px", lineHeight: 1, color: "#fbbf24", filter: "drop-shadow(0 0 8px rgba(251,191,36,0.6))" }}>{String(mintDeadline.secs).padStart(2, "0")}</div>
+                  <div style={{ fontSize: "9px", color: "#6b7a9a", letterSpacing: "0.12em", marginTop: "2px" }}>SEC</div>
+                </div>
+              </div>
+            )}
 
             {/* Mint Now CTA */}
             <button
               onClick={handleMintNow}
               style={{
-                background: "linear-gradient(135deg, #fbbf24, #f59e0b)",
-                border: "none",
-                borderRadius: "10px",
-                padding: "8px 18px",
-                fontWeight: 900,
-                fontSize: "13px",
-                letterSpacing: "0.07em",
-                color: "#000",
-                cursor: "pointer",
-                flexShrink: 0,
-                boxShadow: "0 0 18px rgba(251,191,36,0.45)",
+                background: "linear-gradient(135deg, #ffd700, #fbbf24, #f59e0b)",
+                border: "none", borderRadius: "12px", padding: "13px 26px",
+                fontWeight: 900, fontSize: "14px", letterSpacing: "0.06em",
+                color: "#000", cursor: "pointer", flexShrink: 0,
+                boxShadow: "0 0 28px rgba(251,191,36,0.6), 0 4px 16px rgba(0,0,0,0.3)",
                 transition: "transform 0.15s, box-shadow 0.15s",
               }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.06)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 40px rgba(251,191,36,0.8), 0 4px 16px rgba(0,0,0,0.3)"; }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 28px rgba(251,191,36,0.6), 0 4px 16px rgba(0,0,0,0.3)"; }}
             >
-              {t.eb_mint_now} ↓
+              🔥 {t.eb_mint_now} ↓
             </button>
           </div>
+
+          <style>{`
+            @keyframes fomoIconPop {
+              0%,100% { transform: scale(1); }
+              50%      { transform: scale(1.15); }
+            }
+          `}</style>
         </div>
       )}
 
@@ -445,114 +483,6 @@ export function NationsCupPage() {
         </div>
       )}
 
-      {/* Mint deadline FOMO Banner — only shown when deadline is set and mint still open */}
-      {mintEndTimeMs > 0 && !mintClosed && (
-        <div style={{
-          borderRadius: "18px",
-          border: "1px solid rgba(251,191,36,0.55)",
-          background: "linear-gradient(135deg, rgba(251,191,36,0.13) 0%, rgba(245,158,11,0.07) 50%, rgba(239,68,68,0.08) 100%)",
-          boxShadow: "0 0 48px rgba(251,191,36,0.18), 0 0 96px rgba(251,191,36,0.06), inset 0 1px 0 rgba(255,255,255,0.09)",
-          padding: "20px 22px",
-          position: "relative",
-          overflow: "hidden",
-        }}>
-          {/* Background glow */}
-          <div style={{ position: "absolute", top: "-40%", left: "-5%", width: "50%", height: "180%", background: "radial-gradient(ellipse, rgba(251,191,36,0.07) 0%, transparent 65%)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", top: "-40%", right: "-5%", width: "50%", height: "180%", background: "radial-gradient(ellipse, rgba(239,68,68,0.05) 0%, transparent 65%)", pointerEvents: "none" }} />
-
-          {/* Header row */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#ef4444", boxShadow: "0 0 10px #ef4444", animation: "liveDotPulse 1s ease-in-out infinite", flexShrink: 0 }} />
-            <span className="font-black tracking-[0.22em] uppercase" style={{ fontSize: "11px", color: "#ef4444" }}>
-              MINT WINDOW CLOSING SOON
-            </span>
-          </div>
-
-          {/* Steps row */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", flexWrap: "wrap", marginBottom: "18px" }}>
-            {([
-              { icon: "🎨", label: "Mint NFT",       sub: "Pick your country" },
-              { icon: "🏆", label: "Hold NFT",        sub: "Support your team"  },
-              { icon: "💰", label: "Win Prize Pool",  sub: "Claim your ETH"     },
-            ] as const).map((step, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", minWidth: "82px" }}>
-                  <div style={{
-                    fontSize: "26px", marginBottom: "5px",
-                    filter: "drop-shadow(0 0 8px rgba(251,191,36,0.4))",
-                    animation: i === 0 ? "fomoIconPop 2s ease-in-out infinite" : undefined,
-                  }}>{step.icon}</div>
-                  <span className="font-black text-white" style={{ fontSize: "13px", lineHeight: 1.2 }}>{step.label}</span>
-                  <span style={{ fontSize: "10px", color: "rgba(251,191,36,0.5)", marginTop: "2px" }}>{step.sub}</span>
-                </div>
-                {i < 2 && (
-                  <span style={{ fontSize: "18px", color: "rgba(251,191,36,0.5)", flexShrink: 0, filter: "drop-shadow(0 0 6px rgba(251,191,36,0.3))" }}>→</span>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Countdown + CTA */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-            {/* Big countdown */}
-            <div style={{ display: "flex", alignItems: "flex-start", gap: "6px" }}>
-              {mintDeadline.days > 0 && (
-                <>
-                  <div style={{ textAlign: "center" }}>
-                    <div className="font-black font-mono text-white" style={{ fontSize: "32px", lineHeight: 1 }}>{mintDeadline.days}</div>
-                    <div style={{ fontSize: "9px", color: "#6b7a9a", letterSpacing: "0.12em", marginTop: "2px" }}>DAYS</div>
-                  </div>
-                  <span style={{ fontSize: "24px", color: "rgba(251,191,36,0.35)", paddingBottom: "14px", alignSelf: "flex-end" }}>:</span>
-                </>
-              )}
-              <div style={{ textAlign: "center" }}>
-                <div className="font-black font-mono text-white" style={{ fontSize: "32px", lineHeight: 1 }}>{String(mintDeadline.hours).padStart(2, "0")}</div>
-                <div style={{ fontSize: "9px", color: "#6b7a9a", letterSpacing: "0.12em", marginTop: "2px" }}>HRS</div>
-              </div>
-              <span style={{ fontSize: "24px", color: "rgba(251,191,36,0.35)", paddingBottom: "14px", alignSelf: "flex-end" }}>:</span>
-              <div style={{ textAlign: "center" }}>
-                <div className="font-black font-mono text-white" style={{ fontSize: "32px", lineHeight: 1 }}>{String(mintDeadline.mins).padStart(2, "0")}</div>
-                <div style={{ fontSize: "9px", color: "#6b7a9a", letterSpacing: "0.12em", marginTop: "2px" }}>MIN</div>
-              </div>
-              <span style={{ fontSize: "24px", color: "rgba(251,191,36,0.35)", paddingBottom: "14px", alignSelf: "flex-end" }}>:</span>
-              <div style={{ textAlign: "center" }}>
-                <div className="font-black font-mono" style={{ fontSize: "32px", lineHeight: 1, color: "#fbbf24", filter: "drop-shadow(0 0 8px rgba(251,191,36,0.6))" }}>{String(mintDeadline.secs).padStart(2, "0")}</div>
-                <div style={{ fontSize: "9px", color: "#6b7a9a", letterSpacing: "0.12em", marginTop: "2px" }}>SEC</div>
-              </div>
-            </div>
-
-            {/* Mint Now CTA */}
-            <button
-              onClick={handleMintNow}
-              style={{
-                background: "linear-gradient(135deg, #ffd700, #fbbf24, #f59e0b)",
-                border: "none",
-                borderRadius: "12px",
-                padding: "13px 26px",
-                fontWeight: 900,
-                fontSize: "14px",
-                letterSpacing: "0.06em",
-                color: "#000",
-                cursor: "pointer",
-                flexShrink: 0,
-                boxShadow: "0 0 28px rgba(251,191,36,0.6), 0 4px 16px rgba(0,0,0,0.3)",
-                transition: "transform 0.15s, box-shadow 0.15s",
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.06)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 40px rgba(251,191,36,0.8), 0 4px 16px rgba(0,0,0,0.3)"; }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)"; (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 0 28px rgba(251,191,36,0.6), 0 4px 16px rgba(0,0,0,0.3)"; }}
-            >
-              🔥 Mint Now ↓
-            </button>
-          </div>
-
-          <style>{`
-            @keyframes fomoIconPop {
-              0%,100% { transform: scale(1); }
-              50%      { transform: scale(1.15); }
-            }
-          `}</style>
-        </div>
-      )}
 
       {/* Filter */}
       <div className="flex gap-2">
