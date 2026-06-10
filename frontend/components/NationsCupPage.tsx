@@ -329,16 +329,16 @@ export function NationsCupPage() {
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", position: "relative" }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: mintEndTimeMs > 0 ? "#ef4444" : "#fbbf24", boxShadow: `0 0 10px ${mintEndTimeMs > 0 ? "#ef4444" : "#fbbf24"}`, animation: "liveDotPulse 1s ease-in-out infinite", flexShrink: 0 }} />
             <span className="font-black tracking-[0.22em] uppercase" style={{ fontSize: "11px", color: mintEndTimeMs > 0 ? "#ff6b6b" : "#fbbf24" }}>
-              {mintEndTimeMs > 0 ? "MINT WINDOW CLOSING SOON" : `🔥 ${t.eb_title}`}
+              {mintEndTimeMs > 0 ? t.nc_mint_closing : `🔥 ${t.eb_title}`}
             </span>
           </div>
 
           {/* Three steps */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", flexWrap: "wrap", marginBottom: "18px", position: "relative" }}>
             {([
-              { icon: "🎨", label: "Mint NFT",      sub: "Pick your country" },
-              { icon: "🏆", label: "Hold NFT",       sub: "Support your team" },
-              { icon: "💰", label: "Win Prize Pool", sub: "Claim your ETH"    },
+              { icon: "🎨", label: t.nc_step_mint, sub: t.nc_step_mint_sub },
+              { icon: "🏆", label: t.nc_step_hold, sub: t.nc_step_hold_sub },
+              { icon: "💰", label: t.nc_step_win,  sub: t.nc_step_win_sub  },
             ] as const).map((step, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", minWidth: "82px" }}>

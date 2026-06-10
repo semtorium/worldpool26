@@ -215,16 +215,16 @@ export function TopScorerPage() {
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", position: "relative" }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#0052FF", boxShadow: "0 0 10px #0052FF", animation: "liveDotPulse 1.5s ease-in-out infinite", flexShrink: 0 }} />
             <span className="font-black tracking-[0.22em] uppercase" style={{ fontSize: "11px", color: "#6699ff" }}>
-              ⚡ TOP SCORER POOL — LIVE NOW
+              {t.ts_pool_live}
             </span>
           </div>
 
           {/* Three steps */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", flexWrap: "wrap", position: "relative" }}>
             {([
-              { icon: "🎟️", label: "Buy Ticket",     sub: "Enter the pool"       },
-              { icon: "⚽",  label: "Vote Player",    sub: "Pick your top scorer" },
-              { icon: "💰",  label: "Win Prize Pool", sub: "Earn ETH rewards"     },
+              { icon: "🎟️", label: t.ts_step_buy,  sub: t.ts_step_buy_sub  },
+              { icon: "⚽",  label: t.ts_step_vote, sub: t.ts_step_vote_sub },
+              { icon: "💰",  label: t.nc_step_win,  sub: t.ts_step_win_sub  },
             ] as const).map((step, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", minWidth: "86px" }}>

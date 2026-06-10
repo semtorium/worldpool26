@@ -367,6 +367,21 @@ const t = {
     tos_checkbox:         "I confirm that I am 18 years of age or older, I am not a US resident, and I have read and agree to the {link}.",
     tos_enter:            "Enter WorldPool26 →",
     tos_check_first:      "Check the box above to continue",
+
+    // FOMO Banners
+    nc_mint_closing:      "MINT WINDOW CLOSING SOON",
+    nc_step_mint:         "Mint NFT",
+    nc_step_mint_sub:     "Pick your country",
+    nc_step_hold:         "Hold NFT",
+    nc_step_hold_sub:     "Support your team",
+    nc_step_win:          "Win Prize Pool",
+    nc_step_win_sub:      "Claim your ETH",
+    ts_pool_live:         "⚡ TOP SCORER POOL — LIVE NOW",
+    ts_step_buy:          "Buy Ticket",
+    ts_step_buy_sub:      "Enter the pool",
+    ts_step_vote:         "Vote Player",
+    ts_step_vote_sub:     "Pick your top scorer",
+    ts_step_win_sub:      "Earn ETH rewards",
   },
 
   tr: {
@@ -693,6 +708,21 @@ const t = {
     tos_checkbox:         "18 yaşında veya üzerinde olduğumu, ABD vatandaşı olmadığımı ve {link}'nı okuduğumu ve kabul ettiğimi onaylıyorum.",
     tos_enter:            "WorldPool26'ya Gir →",
     tos_check_first:      "Devam etmek için yukarıdaki kutuyu işaretleyin",
+
+    // FOMO Banner'ları
+    nc_mint_closing:      "MINT PENCERESİ KAPANIYOR",
+    nc_step_mint:         "NFT Mint Et",
+    nc_step_mint_sub:     "Ülkeni seç",
+    nc_step_hold:         "NFT Tut",
+    nc_step_hold_sub:     "Takımını destekle",
+    nc_step_win:          "Ödülü Kazan",
+    nc_step_win_sub:      "ETH'ini al",
+    ts_pool_live:         "⚡ GOL KRALI HAVUZU — CANLI",
+    ts_step_buy:          "Bilet Al",
+    ts_step_buy_sub:      "Havuza katıl",
+    ts_step_vote:         "Oyuncu Oyla",
+    ts_step_vote_sub:     "Gol kralını seç",
+    ts_step_win_sub:      "ETH kazan",
   },
 
   es: {
@@ -1019,6 +1049,21 @@ const t = {
     tos_checkbox:         "Confirmo que tengo 18 años o más, no soy residente de EE.UU. y he leído y acepto los {link}.",
     tos_enter:            "Entrar a WorldPool26 →",
     tos_check_first:      "Marca la casilla de arriba para continuar",
+
+    // Banners FOMO
+    nc_mint_closing:      "VENTANA DE MINT CERRANDO",
+    nc_step_mint:         "Mintear NFT",
+    nc_step_mint_sub:     "Elige tu país",
+    nc_step_hold:         "Mantener NFT",
+    nc_step_hold_sub:     "Apoya a tu equipo",
+    nc_step_win:          "Ganar Premio",
+    nc_step_win_sub:      "Reclama tu ETH",
+    ts_pool_live:         "⚡ POOL GOLEADOR — EN VIVO",
+    ts_step_buy:          "Comprar Entrada",
+    ts_step_buy_sub:      "Entra al pool",
+    ts_step_vote:         "Votar Jugador",
+    ts_step_vote_sub:     "Elige tu goleador",
+    ts_step_win_sub:      "Gana ETH",
   },
 
   zh: {
@@ -1345,6 +1390,21 @@ const t = {
     tos_checkbox:         "我确认我已年满18周岁，不是美国居民，并已阅读并同意{link}。",
     tos_enter:            "进入 WorldPool26 →",
     tos_check_first:      "请勾选上方复选框继续",
+
+    // FOMO 横幅
+    nc_mint_closing:      "铸造窗口即将关闭",
+    nc_step_mint:         "铸造 NFT",
+    nc_step_mint_sub:     "选择您的国家",
+    nc_step_hold:         "持有 NFT",
+    nc_step_hold_sub:     "支持您的队伍",
+    nc_step_win:          "赢取奖金",
+    nc_step_win_sub:      "领取您的 ETH",
+    ts_pool_live:         "⚡ 最佳射手奖池 — 进行中",
+    ts_step_buy:          "购买门票",
+    ts_step_buy_sub:      "加入奖池",
+    ts_step_vote:         "投票球员",
+    ts_step_vote_sub:     "选择最佳射手",
+    ts_step_win_sub:      "赢取 ETH",
   },
 
   ar: {
@@ -1671,6 +1731,21 @@ const t = {
     tos_checkbox:         "أؤكد أنني في الثامنة عشرة من عمري أو أكثر، ولست مقيماً في الولايات المتحدة، وقد قرأت {link} ووافقت عليها.",
     tos_enter:            "الدخول إلى WorldPool26 →",
     tos_check_first:      "حدّد المربع أعلاه للمتابعة",
+
+    // لافتات FOMO
+    nc_mint_closing:      "نافذة السك تُغلق قريباً",
+    nc_step_mint:         "سك NFT",
+    nc_step_mint_sub:     "اختر بلدك",
+    nc_step_hold:         "احتفظ بـ NFT",
+    nc_step_hold_sub:     "ادعم فريقك",
+    nc_step_win:          "اربح الجائزة",
+    nc_step_win_sub:      "استلم ETH الخاص بك",
+    ts_pool_live:         "⚡ مجمع هداف الكأس — مباشر",
+    ts_step_buy:          "شراء تذكرة",
+    ts_step_buy_sub:      "ادخل المجمع",
+    ts_step_vote:         "صوّت للاعب",
+    ts_step_vote_sub:     "اختر هدافك",
+    ts_step_win_sub:      "اربح ETH",
   },
 
   ko: {
@@ -1997,6 +2072,21 @@ const t = {
     tos_checkbox:         "저는 18세 이상이고 미국 거주자가 아님을 확인하며, {link}을 읽고 동의합니다.",
     tos_enter:            "WorldPool26 입장 →",
     tos_check_first:      "계속하려면 위의 체크박스를 선택하세요",
+
+    // FOMO 배너
+    nc_mint_closing:      "민팅 창이 곧 닫힙니다",
+    nc_step_mint:         "NFT 민팅",
+    nc_step_mint_sub:     "국가 선택",
+    nc_step_hold:         "NFT 보유",
+    nc_step_hold_sub:     "팀을 응원하세요",
+    nc_step_win:          "상금 수령",
+    nc_step_win_sub:      "ETH 청구",
+    ts_pool_live:         "⚡ 득점왕 풀 — 라이브",
+    ts_step_buy:          "티켓 구매",
+    ts_step_buy_sub:      "풀 참여",
+    ts_step_vote:         "선수 투표",
+    ts_step_vote_sub:     "득점왕 선택",
+    ts_step_win_sub:      "ETH 획득",
   },
 } as const;
 
