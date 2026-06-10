@@ -200,45 +200,45 @@ export function TopScorerPage() {
       {!topScorerFinalized && !votingClosed && (
         <div style={{
           borderRadius: "18px",
-          border: "1px solid rgba(37,99,235,0.5)",
-          background: "linear-gradient(135deg, rgba(37,99,235,0.14) 0%, rgba(0,82,255,0.07) 50%, rgba(99,102,241,0.10) 100%)",
-          boxShadow: "0 0 48px rgba(0,82,255,0.15), 0 0 96px rgba(37,99,235,0.05), inset 0 1px 0 rgba(255,255,255,0.08)",
+          border: "1px solid rgba(37,99,235,0.65)",
+          background: "linear-gradient(135deg, rgba(8,14,32,0.93) 0%, rgba(10,12,28,0.91) 100%)",
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 0 40px rgba(0,82,255,0.18), 0 8px 32px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.07)",
           padding: "20px 22px",
           position: "relative",
           overflow: "hidden",
         }}>
-          {/* Background glows */}
-          <div style={{ position: "absolute", top: "-40%", left: "-5%", width: "50%", height: "180%", background: "radial-gradient(ellipse, rgba(0,82,255,0.08) 0%, transparent 65%)", pointerEvents: "none" }} />
-          <div style={{ position: "absolute", top: "-40%", right: "-5%", width: "50%", height: "180%", background: "radial-gradient(ellipse, rgba(99,102,241,0.07) 0%, transparent 65%)", pointerEvents: "none" }} />
+          {/* Subtle blue tint overlay */}
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(37,99,235,0.08) 0%, rgba(99,102,241,0.05) 100%)", pointerEvents: "none", borderRadius: "18px" }} />
 
           {/* Header */}
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px", position: "relative" }}>
             <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#0052FF", boxShadow: "0 0 10px #0052FF", animation: "liveDotPulse 1.5s ease-in-out infinite", flexShrink: 0 }} />
-            <span className="font-black tracking-[0.22em] uppercase" style={{ fontSize: "11px", color: "#4d88ff" }}>
+            <span className="font-black tracking-[0.22em] uppercase" style={{ fontSize: "11px", color: "#6699ff" }}>
               ⚡ TOP SCORER POOL — LIVE NOW
             </span>
           </div>
 
           {/* Three steps */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", flexWrap: "wrap", position: "relative" }}>
             {([
-              { icon: "🎟️", label: "Buy Ticket",      sub: "Enter the pool"       },
-              { icon: "⚽", label: "Vote Player",      sub: "Pick your top scorer" },
-              { icon: "💰", label: "Win Prize Pool",   sub: "Earn ETH rewards"     },
+              { icon: "🎟️", label: "Buy Ticket",     sub: "Enter the pool"       },
+              { icon: "⚽",  label: "Vote Player",    sub: "Pick your top scorer" },
+              { icon: "💰",  label: "Win Prize Pool", sub: "Earn ETH rewards"     },
             ] as const).map((step, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", minWidth: "86px" }}>
                   <div style={{
                     fontSize: "26px", marginBottom: "5px",
-                    filter: "drop-shadow(0 0 8px rgba(0,82,255,0.45))",
+                    filter: "drop-shadow(0 0 10px rgba(37,99,235,0.6))",
                     animation: `tsIconPop${i} 2.4s ease-in-out infinite`,
                     animationDelay: `${i * 0.4}s`,
                   }}>{step.icon}</div>
-                  <span className="font-black text-white" style={{ fontSize: "13px", lineHeight: 1.2 }}>{step.label}</span>
-                  <span style={{ fontSize: "10px", color: "rgba(77,136,255,0.55)", marginTop: "2px" }}>{step.sub}</span>
+                  <span className="font-black" style={{ fontSize: "13px", lineHeight: 1.2, color: "#ffffff" }}>{step.label}</span>
+                  <span style={{ fontSize: "10px", color: "rgba(130,170,255,0.8)", marginTop: "2px" }}>{step.sub}</span>
                 </div>
                 {i < 2 && (
-                  <span style={{ fontSize: "18px", color: "rgba(0,82,255,0.5)", flexShrink: 0, filter: "drop-shadow(0 0 6px rgba(0,82,255,0.4))" }}>→</span>
+                  <span style={{ fontSize: "18px", color: "rgba(77,136,255,0.7)", flexShrink: 0 }}>→</span>
                 )}
               </div>
             ))}
