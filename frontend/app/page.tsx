@@ -72,7 +72,10 @@ export default function Home() {
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY) as Tab | null;
     const valid: Tab[] = ["nations", "groups", "scorer", "leaderboard", "activity"];
-    if (saved && valid.includes(saved)) setActiveTab(saved);
+    if (saved && valid.includes(saved)) {
+      setActiveTab(saved);
+      setMountedTabs(prev => new Set([...prev, saved]));
+    }
   }, []);
 
   // Decide which winner modals to show — runs ONCE after data is ready.
