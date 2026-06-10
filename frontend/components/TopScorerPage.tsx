@@ -196,6 +196,62 @@ export function TopScorerPage() {
   return (
     <div className="max-w-2xl mx-auto space-y-5">
 
+      {/* Top Scorer FOMO Banner — show only when pool is active */}
+      {!topScorerFinalized && !votingClosed && (
+        <div style={{
+          borderRadius: "18px",
+          border: "1px solid rgba(37,99,235,0.5)",
+          background: "linear-gradient(135deg, rgba(37,99,235,0.14) 0%, rgba(0,82,255,0.07) 50%, rgba(99,102,241,0.10) 100%)",
+          boxShadow: "0 0 48px rgba(0,82,255,0.15), 0 0 96px rgba(37,99,235,0.05), inset 0 1px 0 rgba(255,255,255,0.08)",
+          padding: "20px 22px",
+          position: "relative",
+          overflow: "hidden",
+        }}>
+          {/* Background glows */}
+          <div style={{ position: "absolute", top: "-40%", left: "-5%", width: "50%", height: "180%", background: "radial-gradient(ellipse, rgba(0,82,255,0.08) 0%, transparent 65%)", pointerEvents: "none" }} />
+          <div style={{ position: "absolute", top: "-40%", right: "-5%", width: "50%", height: "180%", background: "radial-gradient(ellipse, rgba(99,102,241,0.07) 0%, transparent 65%)", pointerEvents: "none" }} />
+
+          {/* Header */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#0052FF", boxShadow: "0 0 10px #0052FF", animation: "liveDotPulse 1.5s ease-in-out infinite", flexShrink: 0 }} />
+            <span className="font-black tracking-[0.22em] uppercase" style={{ fontSize: "11px", color: "#4d88ff" }}>
+              ⚡ TOP SCORER POOL — LIVE NOW
+            </span>
+          </div>
+
+          {/* Three steps */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", flexWrap: "wrap" }}>
+            {([
+              { icon: "🎟️", label: "Buy Ticket",      sub: "Enter the pool"       },
+              { icon: "⚽", label: "Vote Player",      sub: "Pick your top scorer" },
+              { icon: "💰", label: "Win Prize Pool",   sub: "Earn ETH rewards"     },
+            ] as const).map((step, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", minWidth: "86px" }}>
+                  <div style={{
+                    fontSize: "26px", marginBottom: "5px",
+                    filter: "drop-shadow(0 0 8px rgba(0,82,255,0.45))",
+                    animation: `tsIconPop${i} 2.4s ease-in-out infinite`,
+                    animationDelay: `${i * 0.4}s`,
+                  }}>{step.icon}</div>
+                  <span className="font-black text-white" style={{ fontSize: "13px", lineHeight: 1.2 }}>{step.label}</span>
+                  <span style={{ fontSize: "10px", color: "rgba(77,136,255,0.55)", marginTop: "2px" }}>{step.sub}</span>
+                </div>
+                {i < 2 && (
+                  <span style={{ fontSize: "18px", color: "rgba(0,82,255,0.5)", flexShrink: 0, filter: "drop-shadow(0 0 6px rgba(0,82,255,0.4))" }}>→</span>
+                )}
+              </div>
+            ))}
+          </div>
+
+          <style>{`
+            @keyframes tsIconPop0 { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+            @keyframes tsIconPop1 { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+            @keyframes tsIconPop2 { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+          `}</style>
+        </div>
+      )}
+
       {/* Claim banner */}
       {topScorerFinalized && isConnected && (
         <div className="glass-card p-5"
