@@ -40,7 +40,6 @@ export const wagmiConfig = createConfig({
   transports: {
     [base.id]: fallback([
       http(`https://base-mainnet.g.alchemy.com/v2/${process.env.NEXT_PUBLIC_ALCHEMY_KEY ?? ""}`, { batch: true }),
-      http("https://base.drpc.org"),
       http("https://base-rpc.publicnode.com"),
       http("https://rpc.ankr.com/base"),
       http("https://mainnet.base.org"),
