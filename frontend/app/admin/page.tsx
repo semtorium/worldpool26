@@ -425,7 +425,7 @@ export default function AdminPage() {
         )}
 
         {/* Wrong chain warning */}
-        {chainId !== null && chainId !== 84532 && (
+        {chainId !== null && chainId !== 8453 && (
           <div style={{ marginBottom: 20, padding: "12px 16px", background: "rgba(251,191,36,0.07)", border: "1px solid rgba(251,191,36,0.3)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <div>
               <p style={{ color: "#fbbf24", fontWeight: 700, fontSize: 13 }}>⚠️ Wrong Network — connected to chain {chainId}</p>
