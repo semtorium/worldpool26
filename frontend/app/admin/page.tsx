@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createPublicClient, createWalletClient, custom, http, type Address } from "viem";
+import { createPublicClient, createWalletClient, custom, http, fallback, type Address } from "viem";
 import { base } from "viem/chains";
 import { ABI } from "@/lib/abi";
 import { CONTRACT_ADDRESS } from "@/lib/config";
@@ -14,9 +14,14 @@ import Link from "next/link";
 const ADMIN_VERIFIED_KEY = `abs_admin_verified_${CONTRACT_ADDRESS}`;
 
 // ── Viem clients ──────────────────────────────────────────────
+const ALCHEMY_KEY = process.env.NEXT_PUBLIC_ALCHEMY_KEY ?? "";
 const publicClient = createPublicClient({
   chain: base,
-  transport: http("https://mainnet.base.org"),
+  transport: fallback([
+    http(ALCHEMY_KEY ? `https://base-mainnet.g.alchemy.com/v2/${ALCHEMY_KEY}` : "", { batch: true }),
+    http("https://mainnet.base.org"),
+    http("https://rpc.ankr.com/base"),
+  ].filter(t => t) as any),
 });
 
 function fmt(wei: bigint | undefined) {
@@ -401,7 +406,7 @@ export default function AdminPage() {
             <Link href="/" style={{ color: "#6b7a9a", fontSize: 12, textDecoration: "none" }}>← Back to site</Link>
             <h1 style={{ fontSize: 24, fontWeight: 900, color: "#fff", marginTop: 6 }}>🛠️ Admin Panel</h1>
             <p style={{ fontSize: 12, color: "#6b7a9a", marginTop: 2 }}>
-              {address?.slice(0,6)}...{address?.slice(-4)} · Testnet
+              {address?.slice(0,6)}...{address?.slice(-4)} · Base
             </p>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
