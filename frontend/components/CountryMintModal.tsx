@@ -42,6 +42,7 @@ export function CountryMintModal({
   const { t } = useLang();
   const ethUsd = useEthUsd();
   const [amount, setAmount]           = useState(1);
+  const [amountInput, setAmountInput] = useState("1");
   const [mintedAmt, setMintedAmt]     = useState(0);
   const [showSuccess, setShowSuccess] = useState(false);
   // Tracks button "Minted" state separately so we can reset it when congrats closes
@@ -107,6 +108,7 @@ export function CountryMintModal({
     setShowSuccess(false);
     setMintDone(false);
     setAmount(1);
+    setAmountInput("1");
     refetchSupply();
     refetchBalance();
   };
@@ -416,36 +418,69 @@ export function CountryMintModal({
                       </span>
                     )}
                   </p>
-                  <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <button
-                      onClick={() => setAmount(Math.max(1, amount - 1))}
-                      style={{
-                        width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
-                        background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-                        color: "white", cursor: "pointer",
-                      }}
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <div style={{
-                      flex: 1, textAlign: "center", fontFamily: "monospace",
-                      fontSize: 20, fontWeight: 900, color: "white",
-                    }}>
-                      {amount}
-                    </div>
-                    <button
-                      onClick={() => setAmount(Math.min(amount + 1, isEarlyBird ? slotsRemaining : 999))}
-                      style={{
-                        width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
-                        background: isEarlyBird && amount >= slotsRemaining ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        color: isEarlyBird && amount >= slotsRemaining ? "rgba(255,255,255,0.2)" : "white",
-                        cursor: isEarlyBird && amount >= slotsRemaining ? "not-allowed" : "pointer",
-                      }}
-                    >
-                      <Plus size={14} />
-                    </button>
-                  </div>
+                  {(() => {
+                    const maxAmt = isEarlyBird ? slotsRemaining : 999;
+                    const step = (delta: number) => {
+                      const next = Math.max(1, Math.min(amount + delta, maxAmt));
+                      setAmount(next);
+                      setAmountInput(String(next));
+                    };
+                    return (
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <button
+                          onClick={() => step(-1)}
+                          style={{
+                            width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+                            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
+                            color: "white", cursor: "pointer", flexShrink: 0,
+                          }}
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <input
+                          type="number"
+                          min={1}
+                          max={maxAmt}
+                          value={amountInput}
+                          onChange={e => {
+                            setAmountInput(e.target.value);
+                            const n = parseInt(e.target.value, 10);
+                            if (!isNaN(n) && n >= 1) setAmount(Math.min(n, maxAmt));
+                          }}
+                          onBlur={() => {
+                            const n = parseInt(amountInput, 10);
+                            const clamped = isNaN(n) || n < 1 ? 1 : Math.min(n, maxAmt);
+                            setAmount(clamped);
+                            setAmountInput(String(clamped));
+                          }}
+                          style={{
+                            flex: 1, textAlign: "center", fontFamily: "monospace",
+                            fontSize: 20, fontWeight: 900, color: "white",
+                            background: "rgba(255,255,255,0.05)",
+                            border: "1px solid rgba(255,255,255,0.12)",
+                            borderRadius: 10, padding: "6px 8px",
+                            outline: "none", width: 0,
+                            MozAppearance: "textfield",
+                          } as React.CSSProperties}
+                          onFocus={e => { e.currentTarget.style.borderColor = "rgba(0,82,255,0.6)"; }}
+                          onBlurCapture={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; }}
+                        />
+                        <button
+                          onClick={() => step(1)}
+                          style={{
+                            width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+                            background: isEarlyBird && amount >= maxAmt ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.05)",
+                            border: "1px solid rgba(255,255,255,0.1)",
+                            color: isEarlyBird && amount >= maxAmt ? "rgba(255,255,255,0.2)" : "white",
+                            cursor: isEarlyBird && amount >= maxAmt ? "not-allowed" : "pointer",
+                            flexShrink: 0,
+                          }}
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Cost */}
@@ -517,6 +552,9 @@ export function CountryMintModal({
       </div>
 
       <style>{`
+        input[type=number]::-webkit-outer-spin-button,
+        input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
         @media (max-width: 639px) {
           .cmt-modal {
             flex-direction: column !important;
