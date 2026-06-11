@@ -5,7 +5,7 @@ import { base } from "viem/chains";
 import { CONTRACT_ADDRESS } from "./config";
 
 const DEPLOY_BLOCK = 47128622n;
-const CHUNK_SIZE   = 2000n;
+const CHUNK_SIZE   = 20000n;
 
 // Dedicated client that bypasses the wagmi fallback chain (which tries Alchemy first).
 // Alchemy free tier limits eth_getLogs to 10-block ranges; publicnode supports 2000+.
