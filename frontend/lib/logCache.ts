@@ -1,10 +1,18 @@
 "use client";
 
-import { parseAbiItem } from "viem";
+import { createPublicClient, http, parseAbiItem } from "viem";
+import { base } from "viem/chains";
 import { CONTRACT_ADDRESS } from "./config";
 
 const DEPLOY_BLOCK = 47128622n;
 const CHUNK_SIZE   = 2000n;
+
+// Dedicated client that bypasses the wagmi fallback chain (which tries Alchemy first).
+// Alchemy free tier limits eth_getLogs to 10-block ranges; publicnode supports 2000+.
+const LOG_CLIENT = createPublicClient({
+  chain: base,
+  transport: http("https://base-rpc.publicnode.com"),
+});
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyLog = any;
@@ -18,7 +26,7 @@ const cache   = new Map<string, CacheEntry>();
 const inFlight = new Map<string, Promise<AnyLog[]>>();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function doFetchChunks(client: any, params: any, fromBlock: bigint, toBlock: bigint): Promise<AnyLog[]> {
+async function doFetchChunks(_client: unknown, params: any, fromBlock: bigint, toBlock: bigint): Promise<AnyLog[]> {
   const ranges: { from: bigint; to: bigint }[] = [];
   for (let from = fromBlock; from <= toBlock; from += CHUNK_SIZE) {
     const to = from + CHUNK_SIZE - 1n < toBlock ? from + CHUNK_SIZE - 1n : toBlock;
@@ -31,7 +39,7 @@ async function doFetchChunks(client: any, params: any, fromBlock: bigint, toBloc
   for (let i = 0; i < ranges.length; i += BATCH) {
     const batch = ranges.slice(i, i + BATCH);
     const results = await Promise.all(
-      batch.map(r => client.getLogs({ ...params, fromBlock: r.from, toBlock: r.to }))
+      batch.map(r => LOG_CLIENT.getLogs({ ...params, fromBlock: r.from, toBlock: r.to }))
     );
     all.push(...results.flat());
   }
@@ -55,7 +63,7 @@ export async function fetchLogsWithCache(client: any, eventSig: string, extraArg
   const entry = cache.get(key) ?? { logs: [], lastBlock: DEPLOY_BLOCK - 1n };
 
   const promise = (async () => {
-    const currentBlock = (await client.getBlockNumber()) as bigint;
+    const currentBlock = (await LOG_CLIENT.getBlockNumber()) as bigint;
     if (entry.lastBlock >= currentBlock) return entry.logs;
 
     const params: Record<string, unknown> = {

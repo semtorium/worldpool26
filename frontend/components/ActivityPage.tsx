@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { usePublicClient, useAccount } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { usePublicClient } from "wagmi";
 import { CONTRACT_ADDRESS, shortenAddress, MINT_PRICE, TICKET_PRICE, formatEth } from "@/lib/config";
 import { COUNTRIES } from "@/lib/countries";
 import { Loader2, ExternalLink } from "lucide-react";
@@ -152,9 +151,6 @@ function ActivityRow({ item, latestBlock, usernameMap }: {
 
 export function ActivityPage() {
   const client = usePublicClient();
-  const { address, isConnected } = useAccount();
-  const { openConnectModal }    = useConnectModal();
-  const login = () => openConnectModal?.();
   const { t } = useLang();
   const [items,       setItems]       = useState<ActivityItem[]>([]);
   const [latestBlock, setLatestBlock] = useState(0n);
@@ -235,27 +231,6 @@ export function ActivityPage() {
     const id = setInterval(fetch, 30_000);
     return () => clearInterval(id);
   }, [client]);
-
-  if (!isConnected) {
-    return (
-      <div className="flex flex-col items-center justify-center py-28 gap-6">
-        <div style={{
-          width: 80, height: 80, borderRadius: "50%",
-          background: "rgba(0,82,255,0.07)",
-          border: "1px solid rgba(0,82,255,0.2)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 36,
-        }}>📡</div>
-        <div className="text-center space-y-2">
-          <p className="text-xl font-black text-white">{t.act_connect_title}</p>
-          <p className="text-sm" style={{ color: "#6b7a9a" }}>{t.act_connect_desc}</p>
-        </div>
-        <button onClick={login} className="btn-neon px-8 py-3 text-sm font-bold">
-          {t.connect}
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-2xl mx-auto">
